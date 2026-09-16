@@ -10,15 +10,18 @@
 <div class="teacher-container">
     <header class="teacher-header">
         <div class="teacher-header-info">
-            <h1>Welcome, {{ user.display_name }}</h1>
-            <p>Select an activity and session to start attendance</p>
+            <h1><span data-i18n="teacher_welcome">Welcome,</span> {{ user.display_name }}</h1>
+            <p data-i18n="teacher_instruction">Select an activity and session to start attendance</p>
         </div>
-        <a href="/logout" class="btn btn-outline-light">Logout</a>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div data-lang-switcher data-lang-class="lang-switcher-dark"></div>
+            <a href="/logout" class="btn btn-outline-light" data-i18n="nav_logout">Logout</a>
+        </div>
     </header>
 
     <div class="teacher-content">
         <div class="select-card">
-            <h2>1. Select Activity</h2>
+            <h2 data-i18n="select_activity">1. Select Activity</h2>
             <div class="activity-buttons" id="activityList">
                 {% for activity in activities %}
                 <button class="activity-btn" onclick="selectActivity({{ activity.id }}, '{{ activity.name }}')" data-id="{{ activity.id }}">
@@ -33,7 +36,7 @@
         </div>
 
         <div class="select-card" id="sessionSection" style="display:none">
-            <h2>2. Select Session</h2>
+            <h2 data-i18n="select_session">2. Select Session</h2>
             <div class="session-buttons" id="sessionList">
                 <!-- Populated dynamically -->
             </div>
@@ -44,7 +47,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32">
                     <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
-                Start Attendance
+                <span data-i18n="start_attendance">Start Attendance</span>
             </a>
         </div>
     </div>

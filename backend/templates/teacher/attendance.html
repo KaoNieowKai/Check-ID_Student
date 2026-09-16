@@ -13,16 +13,17 @@
             <h1>{{ activity.name }}</h1>
             <h2>{{ session.name }} — {{ session.date }}</h2>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" style="display: flex; align-items: center; gap: 10px;">
+            <div data-lang-switcher data-lang-class="lang-switcher-dark"></div>
             <a href="/teacher/not-checked-in/{{ session.id }}" class="btn btn-outline-light btn-lg">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                     <circle cx="9" cy="7" r="4"/>
                     <line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/>
                 </svg>
-                Not Checked In
+                <span data-i18n="not_checked_in">Not Checked In</span>
             </a>
-            <a href="/teacher/dashboard" class="btn btn-outline-light btn-lg">
+            <a href="/teacher/dashboard" class="btn btn-outline-light btn-lg" data-i18n="end_attendance">
                 End Attendance
             </a>
         </div>
@@ -38,7 +39,7 @@
                     <div class="timer-bar" id="timerBar"></div>
                 </div>
                 <p class="qr-refresh-text">
-                    QR Code refreshes in <span id="countdown">{{ qr_expire_seconds }}</span> seconds
+                    <span data-i18n="qr_refresh_prefix">QR Code refreshes in</span> <span id="countdown">{{ qr_expire_seconds }}</span> <span data-i18n="seconds">seconds</span>
                 </p>
             </div>
         </div>
@@ -46,21 +47,21 @@
         <div class="stats-section">
             <div class="stat-big stat-total">
                 <span class="stat-number" id="totalStudents">{{ total_students }}</span>
-                <span class="stat-label">Total Students</span>
+                <span class="stat-label" data-i18n="total_students_count">Total Students</span>
             </div>
             <div class="stat-big stat-present">
                 <span class="stat-number" id="presentCount">{{ present_count }}</span>
-                <span class="stat-label">Present</span>
+                <span class="stat-label" data-i18n="present_count">Present</span>
             </div>
             <div class="stat-big stat-absent">
                 <span class="stat-number" id="notCheckedIn">{{ not_checked_in }}</span>
-                <span class="stat-label">Not Checked In</span>
+                <span class="stat-label" data-i18n="not_checked_in">Not Checked In</span>
             </div>
             <div class="stat-big stat-percentage">
                 <span class="stat-number" id="percentage">
                     {% if total_students > 0 %}{{ "%.1f"|format(present_count / total_students * 100) }}%{% else %}0%{% endif %}
                 </span>
-                <span class="stat-label">Attendance</span>
+                <span class="stat-label" data-i18n="attendance">Attendance</span>
             </div>
 
             <div class="last-checkin" id="lastCheckin" style="display:none">

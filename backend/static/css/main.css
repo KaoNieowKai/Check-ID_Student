@@ -64,7 +64,7 @@ html {
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: 'Prompt', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     color: var(--text);
     background: var(--bg);
     line-height: 1.6;
@@ -876,3 +876,67 @@ code {
     }
     .session-actions { margin-left: 0; }
 }
+
+/* ─── Language Switcher Widget ────────────────── */
+.lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    background: #EEF2F6;
+    padding: 3px;
+    border-radius: 20px;
+    gap: 2px;
+    border: 1px solid var(--border);
+    user-select: none;
+}
+
+.lang-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    line-height: 1;
+}
+
+.lang-btn:hover {
+    color: var(--text);
+}
+
+.lang-btn.active {
+    background: var(--surface);
+    color: var(--primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+}
+
+.lang-btn .flag {
+    font-size: 14px;
+}
+
+/* Dark variant (for sidebar / dark headers) */
+.lang-switcher-dark {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.lang-switcher-dark .lang-btn {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.lang-switcher-dark .lang-btn:hover {
+    color: white;
+}
+
+.lang-switcher-dark .lang-btn.active {
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+

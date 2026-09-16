@@ -13,11 +13,11 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Username</th>
-                        <th>Display Name</th>
-                        <th>Status</th>
-                        <th>Created</th>
-                        <th>Actions</th>
+                        <th data-i18n="th_username">Username</th>
+                        <th data-i18n="th_display_name">Display Name</th>
+                        <th data-i18n="th_status">Status</th>
+                        <th data-i18n="th_created">Created</th>
+                        <th data-i18n="th_actions">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,25 +27,25 @@
                         <td>{{ teacher.display_name }}</td>
                         <td>
                             {% if teacher.is_active %}
-                            <span class="status-badge status-active">Active</span>
+                            <span class="status-badge status-active" data-i18n="status_active">Active</span>
                             {% else %}
-                            <span class="status-badge status-cancelled">Disabled</span>
+                            <span class="status-badge status-cancelled" data-i18n="status_disabled">Disabled</span>
                             {% endif %}
                         </td>
                         <td>{{ teacher.created_at.strftime('%Y-%m-%d') }}</td>
                         <td class="actions-cell">
                             <form method="POST" action="/admin/teachers/{{ teacher.id }}/toggle" style="display:inline">
                                 <button type="submit" class="btn btn-sm {% if teacher.is_active %}btn-outline{% else %}btn-primary{% endif %}">
-                                    {% if teacher.is_active %}Disable{% else %}Enable{% endif %}
+                                    {% if teacher.is_active %}<span data-i18n="disable">Disable</span>{% else %}<span data-i18n="enable">Enable</span>{% endif %}
                                 </button>
                             </form>
-                            <button class="btn btn-sm btn-outline" onclick="showResetModal({{ teacher.id }}, '{{ teacher.username }}')">Reset Password</button>
+                            <button class="btn btn-sm btn-outline" onclick="showResetModal({{ teacher.id }}, '{{ teacher.username }}')" data-i18n="reset_password">Reset Password</button>
                         </td>
                     </tr>
                     {% endfor %}
                     {% if not teachers %}
                     <tr>
-                        <td colspan="5" class="empty-state">No teachers yet.</td>
+                        <td colspan="5" class="empty-state" data-i18n="no_teachers_yet">No teachers yet.</td>
                     </tr>
                     {% endif %}
                 </tbody>
@@ -55,21 +55,21 @@
 
     <div class="column-side">
         <div class="form-card">
-            <h3>Add New Teacher</h3>
+            <h3 data-i18n="add_new_teacher">Add New Teacher</h3>
             <form method="POST" action="/admin/teachers/add">
                 <div class="form-group">
-                    <label for="username">Username</label>
+                    <label for="username" data-i18n="username">Username</label>
                     <input type="text" id="username" name="username" required placeholder="e.g. teacher01">
                 </div>
                 <div class="form-group">
-                    <label for="display_name">Display Name</label>
+                    <label for="display_name" data-i18n="display_name">Display Name</label>
                     <input type="text" id="display_name" name="display_name" required placeholder="e.g. Mr. Smith">
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password" data-i18n="password">Password</label>
                     <input type="password" id="password" name="password" required minlength="6" placeholder="Min 6 characters">
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">Add Teacher</button>
+                <button type="submit" class="btn btn-primary btn-block" data-i18n="add_teacher">Add Teacher</button>
             </form>
         </div>
     </div>
@@ -78,16 +78,16 @@
 <!-- Reset Password Modal -->
 <div class="modal-overlay" id="resetModal" style="display:none">
     <div class="modal-card">
-        <h3>Reset Password</h3>
-        <p>Reset password for: <strong id="resetUsername"></strong></p>
+        <h3 data-i18n="reset_password">Reset Password</h3>
+        <p><span data-i18n="reset_password_for">Reset password for:</span> <strong id="resetUsername"></strong></p>
         <form method="POST" id="resetForm">
             <div class="form-group">
-                <label for="new_password">New Password</label>
+                <label for="new_password" data-i18n="new_password">New Password</label>
                 <input type="password" id="new_password" name="new_password" required minlength="6">
             </div>
             <div class="form-actions">
-                <button type="button" class="btn btn-outline" onclick="document.getElementById('resetModal').style.display='none'">Cancel</button>
-                <button type="submit" class="btn btn-primary">Reset Password</button>
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('resetModal').style.display='none'" data-i18n="cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" data-i18n="reset_password">Reset Password</button>
             </div>
         </form>
     </div>

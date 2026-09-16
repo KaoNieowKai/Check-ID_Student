@@ -8,6 +8,9 @@
 
 {% block body %}
 <div class="checkin-container">
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+        <div data-lang-switcher></div>
+    </div>
     <div class="checkin-header">
         <div class="checkin-logo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36">
@@ -15,7 +18,7 @@
                 <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
             </svg>
         </div>
-        <h1>Attendance Check-In</h1>
+        <h1 data-i18n="checkin_title">Attendance Check-In</h1>
         {% if session_info %}
         <p class="session-label">{{ session_info.activity_name }} — {{ session_info.session_name }}</p>
         {% endif %}
@@ -34,7 +37,7 @@
     {% elif session_info %}
     <!-- Step 1: Grade Selection -->
     <div class="checkin-step" id="step1">
-        <h2>Step 1: Select Your Grade</h2>
+        <h2 data-i18n="step1_title">Step 1: Select Your Grade</h2>
         <div class="grade-grid">
             {% for g in grades %}
             <button class="grade-btn" onclick="selectGrade('{{ g }}')" data-grade="{{ g }}">{{ g }}</button>
@@ -44,45 +47,45 @@
 
     <!-- Step 2: Student ID -->
     <div class="checkin-step" id="step2" style="display:none">
-        <h2>Step 2: Enter Student ID</h2>
-        <p class="selected-grade">Grade: <strong id="selectedGradeLabel"></strong>
-            <button class="btn-link" onclick="backToStep1()">Change</button>
+        <h2 data-i18n="step2_title">Step 2: Enter Student ID</h2>
+        <p class="selected-grade"><span data-i18n="grade_label">Grade:</span> <strong id="selectedGradeLabel"></strong>
+            <button class="btn-link" onclick="backToStep1()" data-i18n="change">Change</button>
         </p>
         <div class="id-input-group">
             <input type="text" id="studentIdInput" inputmode="numeric" pattern="[0-9]*"
-                   placeholder="Enter your Student ID" maxlength="10" autofocus>
+                   data-i18n-placeholder="enter_student_id" placeholder="Enter your Student ID" maxlength="10" autofocus>
         </div>
         <button class="btn btn-primary btn-xl btn-block" onclick="verifyStudent()" id="verifyBtn">
-            Verify Student
+            <span data-i18n="verify_student">Verify Student</span>
         </button>
         <div class="verify-error" id="verifyError" style="display:none"></div>
     </div>
 
     <!-- Step 3: Confirmation -->
     <div class="checkin-step" id="step3" style="display:none">
-        <h2>Step 3: Confirm Your Information</h2>
+        <h2 data-i18n="step3_title">Step 3: Confirm Your Information</h2>
         <div class="student-info-display">
             <div class="info-field">
-                <span class="info-label">Name</span>
+                <span class="info-label" data-i18n="name">Name</span>
                 <span class="info-value" id="dispName"></span>
             </div>
             <div class="info-field">
-                <span class="info-label">Student ID</span>
+                <span class="info-label" data-i18n="student_id">Student ID</span>
                 <span class="info-value" id="dispId"></span>
             </div>
             <div class="info-field">
-                <span class="info-label">Grade</span>
+                <span class="info-label" data-i18n="th_grade">Grade</span>
                 <span class="info-value" id="dispGrade"></span>
             </div>
             <div class="info-field">
-                <span class="info-label">Room</span>
+                <span class="info-label" data-i18n="th_room">Room</span>
                 <span class="info-value" id="dispRoom"></span>
             </div>
         </div>
         <button class="btn btn-success btn-xl btn-block" onclick="confirmAttendance()" id="confirmBtn">
-            ✓ Confirm Attendance
+            <span data-i18n="confirm_checkin">✓ Confirm Attendance</span>
         </button>
-        <button class="btn btn-outline btn-block" onclick="backToStep2()">← Go Back</button>
+        <button class="btn btn-outline btn-block" onclick="backToStep2()" data-i18n="back">← Go Back</button>
     </div>
 
     <!-- Step 4: Success -->
@@ -94,7 +97,7 @@
                     <polyline points="22 4 12 14.01 9 11.01"/>
                 </svg>
             </div>
-            <h2>Attendance Recorded!</h2>
+            <h2 data-i18n="checkin_success">Attendance Recorded!</h2>
             <div class="success-info">
                 <p id="successName"></p>
                 <p id="successTime"></p>
