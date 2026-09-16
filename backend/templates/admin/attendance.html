@@ -1,0 +1,132 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Attendance — Admin{% endblock %}
+{% block page_title %}Attendance Management{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+    <form method="GET" action="/admin/attendance" class="filter-form" id="attendanceFilter">
+        <select name="activity_id" class="form-select" id="activitySelect" onchange="loadSessions(this.value)">
+            <option value="">Select Activity</option>
+            {% for act in activities %}
+            <option value="{{ act.id }}" {% if activity_id == act.id %}selected{% endif %}>{{ act.name }}</option>
+            {% endfor %}
+        </select>
+        <select name="session_id" class="form-select" id="sessionSelect">
+            <option value="">Select Session</option>
+            {% for s in sessions %}
+            <option value="{{ s.id }}" {% if session_id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.date }})</option>
+            {% endfor %}
+        </select>
+        <select name="grade" class="form-select">
+            <option value="">All Grades</option>
+            {% for g in grades %}
+            <option value="{{ g }}" {% if grade == g %}selected{% endif %}>{{ g }}</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="search" value="{{ search }}" placeholder="Search..." class="form-input-sm">
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    </form>
+</div>
+
+{% if selected_session %}
+<div class="section-header">
+    <h3>{{ selected_session.name }} — {{ selected_session.date }}</h3>
+    <span class="badge">{{ records|length }} records</span>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>Grade</th>
+                <th>Room</th>
+                <th>Status</th>
+                <th>Check-in Time</th>
+                <th>Method</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rec in records %}
+            <tr>
+                <td><code>{{ rec.student.student_id }}</code></td>
+                <td>{{ rec.student.full_name }}</td>
+                <td><span class="badge">{{ rec.student.grade }}</span></td>
+                <td>{{ rec.student.room }}</td>
+                <td><span class="status-badge status-active">{{ rec.status }}</span></td>
+                <td>{{ rec.checked_in_at.strftime('%H:%M:%S') if rec.checked_in_at else '—' }}</td>
+                <td>{{ rec.checked_in_method }}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline" onclick="correctAttendance({{ rec.id }}, '{{ rec.status }}')">Correct</button>
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not records %}
+            <tr><td colspan="8" class="empty-state">No attendance records found.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Manual Add Section -->
+<div class="manual-add-section">
+    <h3>Manually Add Attendance</h3>
+    <p class="text-muted">For students who attended but couldn't check in via QR.</p>
+    <form method="GET" action="/admin/attendance" class="inline-form" id="searchStudentForm">
+        <input type="hidden" name="session_id" value="{{ session_id }}">
+        <input type="hidden" name="activity_id" value="{{ activity_id }}">
+    </form>
+</div>
+{% endif %}
+
+<!-- Correct Attendance Modal -->
+<div class="modal-overlay" id="correctModal" style="display:none">
+    <div class="modal-card">
+        <h3>Correct Attendance</h3>
+        <form method="POST" id="correctForm">
+            <div class="form-group">
+                <label>New Status</label>
+                <select name="status" class="form-select" id="correctStatus">
+                    <option value="present">Present</option>
+                    <option value="manual">Manual</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Reason (required)</label>
+                <textarea name="reason" required rows="3" placeholder="e.g. Student attended but QR check-in failed."></textarea>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('correctModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Correction</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+function loadSessions(activityId) {
+    if (!activityId) return;
+    fetch('/admin/api/sessions/' + activityId)
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('sessionSelect');
+            sel.innerHTML = '<option value="">Select Session</option>';
+            data.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name + ' (' + s.date + ')';
+                sel.appendChild(opt);
+            });
+        });
+}
+function correctAttendance(id, currentStatus) {
+    document.getElementById('correctModal').style.display = 'flex';
+    document.getElementById('correctForm').action = '/admin/attendance/' + id + '/correct';
+    document.getElementById('correctStatus').value = currentStatus;
+}
+</script>
+{% endblock %}

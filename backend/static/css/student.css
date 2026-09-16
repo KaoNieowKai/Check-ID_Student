@@ -1,0 +1,264 @@
+/* ══════════════════════════════════════════════
+   STUDENT CSS — Mobile-first check-in styles
+   ══════════════════════════════════════════════ */
+
+.student-page {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #312E81 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.checkin-container {
+    width: 100%;
+    max-width: 480px;
+    padding: 20px;
+}
+
+/* ─── Header ──────────────────────────────────── */
+.checkin-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+.checkin-logo {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+    color: white;
+    box-shadow: 0 8px 32px rgba(79, 70, 229, 0.4);
+}
+.checkin-header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    color: white;
+}
+.session-label {
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+    margin-top: 4px;
+}
+
+/* ─── Steps ───────────────────────────────────── */
+.checkin-step {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    box-shadow: var(--shadow-xl);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.checkin-step h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+/* ─── Grade Selection ─────────────────────────── */
+.grade-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.grade-btn {
+    padding: 20px;
+    font-size: 20px;
+    font-weight: 700;
+    font-family: inherit;
+    background: #F8FAFC;
+    border: 3px solid #E2E8F0;
+    border-radius: var(--radius);
+    color: var(--text);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.grade-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+    transform: scale(1.03);
+}
+.grade-btn:active {
+    transform: scale(0.97);
+}
+.grade-btn.selected {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+}
+
+/* ─── Student ID Input ────────────────────────── */
+.selected-grade {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    font-size: 15px;
+}
+
+.id-input-group {
+    margin-bottom: 20px;
+}
+.id-input-group input {
+    width: 100%;
+    padding: 18px 20px;
+    font-size: 22px;
+    font-weight: 600;
+    font-family: inherit;
+    text-align: center;
+    border: 3px solid var(--border);
+    border-radius: var(--radius);
+    background: #F8FAFC;
+    color: var(--text);
+    outline: none;
+    transition: border-color var(--transition);
+    letter-spacing: 2px;
+}
+.id-input-group input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+}
+.id-input-group input::placeholder {
+    font-size: 16px;
+    letter-spacing: 0;
+    font-weight: 400;
+}
+
+.verify-error {
+    background: var(--danger-bg);
+    border: 1px solid #FCA5A5;
+    color: var(--danger);
+    padding: 14px 18px;
+    border-radius: var(--radius-sm);
+    margin-top: 16px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+/* ─── Student Info Display ────────────────────── */
+.student-info-display {
+    background: #F8FAFC;
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 2px solid var(--border);
+}
+
+.info-field {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+}
+.info-field:last-child { border-bottom: none; }
+
+.info-label {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+.info-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+/* ─── Success Display ─────────────────────────── */
+.success-display {
+    text-align: center;
+}
+.success-icon {
+    width: 96px;
+    height: 96px;
+    background: var(--success-bg);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    color: var(--success);
+    animation: successPop 0.5s ease;
+}
+@keyframes successPop {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.success-display h2 {
+    color: var(--success);
+    margin-bottom: 16px;
+}
+.success-info p {
+    color: var(--text-secondary);
+    font-size: 16px;
+    margin: 4px 0;
+}
+.success-info p:first-child {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+/* ─── Error State ─────────────────────────────── */
+.checkin-error {
+    background: rgba(255,255,255,0.95);
+    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
+    padding: 48px 32px;
+    text-align: center;
+    box-shadow: var(--shadow-xl);
+}
+.checkin-error svg {
+    color: var(--danger);
+    margin-bottom: 16px;
+}
+.checkin-error p {
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.error-hint {
+    color: var(--text-muted) !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+}
+
+/* ─── Buttons ─────────────────────────────────── */
+.checkin-step .btn-xl {
+    padding: 18px;
+    font-size: 18px;
+    border-radius: var(--radius);
+    margin-top: 8px;
+}
+
+.checkin-step .btn-success {
+    background: linear-gradient(135deg, #059669, #34D399);
+    border-color: transparent;
+    font-size: 20px;
+    padding: 20px;
+}
+.checkin-step .btn-success:hover {
+    background: linear-gradient(135deg, #047857, #059669);
+}
+
+.checkin-step .btn-outline {
+    margin-top: 12px;
+    color: var(--text-muted);
+}

@@ -1,0 +1,45 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Student History — Admin{% endblock %}
+{% block page_title %}Attendance History — {{ student.full_name }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/admin/students">Students</a> &gt; <strong>{{ student.full_name }}</strong>
+</div>
+
+<div class="student-info-card">
+    <div class="info-row"><strong>Student ID:</strong> {{ student.student_id }}</div>
+    <div class="info-row"><strong>Grade:</strong> {{ student.grade }}</div>
+    <div class="info-row"><strong>Room:</strong> {{ student.room }}</div>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Activity</th>
+                <th>Session</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Check-in Time</th>
+                <th>Method</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rec in records %}
+            <tr>
+                <td>{{ rec.session.activity.name }}</td>
+                <td>{{ rec.session.name }}</td>
+                <td>{{ rec.session.date }}</td>
+                <td><span class="status-badge status-active">{{ rec.status }}</span></td>
+                <td>{{ rec.checked_in_at.strftime('%H:%M:%S') if rec.checked_in_at else '—' }}</td>
+                <td>{{ rec.checked_in_method }}</td>
+            </tr>
+            {% endfor %}
+            {% if not records %}
+            <tr><td colspan="6" class="empty-state">No attendance records found.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

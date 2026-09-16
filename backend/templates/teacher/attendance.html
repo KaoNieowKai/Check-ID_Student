@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Attendance — {{ activity.name }}{% endblock %}
+{% block body_class %}teacher-page attendance-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/teacher.css">
+{% endblock %}
+
+{% block body %}
+<div class="attendance-container">
+    <header class="attendance-header">
+        <div>
+            <h1>{{ activity.name }}</h1>
+            <h2>{{ session.name }} — {{ session.date }}</h2>
+        </div>
+        <div class="header-actions">
+            <a href="/teacher/not-checked-in/{{ session.id }}" class="btn btn-outline-light btn-lg">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/>
+                </svg>
+                Not Checked In
+            </a>
+            <a href="/teacher/dashboard" class="btn btn-outline-light btn-lg">
+                End Attendance
+            </a>
+        </div>
+    </header>
+
+    <div class="attendance-body">
+        <div class="qr-section">
+            <div class="qr-wrapper">
+                <div class="qr-code" id="qrCode">
+                    <div class="qr-loading">Loading QR Code...</div>
+                </div>
+                <div class="qr-timer">
+                    <div class="timer-bar" id="timerBar"></div>
+                </div>
+                <p class="qr-refresh-text">
+                    QR Code refreshes in <span id="countdown">{{ qr_expire_seconds }}</span> seconds
+                </p>
+            </div>
+        </div>
+
+        <div class="stats-section">
+            <div class="stat-big stat-total">
+                <span class="stat-number" id="totalStudents">{{ total_students }}</span>
+                <span class="stat-label">Total Students</span>
+            </div>
+            <div class="stat-big stat-present">
+                <span class="stat-number" id="presentCount">{{ present_count }}</span>
+                <span class="stat-label">Present</span>
+            </div>
+            <div class="stat-big stat-absent">
+                <span class="stat-number" id="notCheckedIn">{{ not_checked_in }}</span>
+                <span class="stat-label">Not Checked In</span>
+            </div>
+            <div class="stat-big stat-percentage">
+                <span class="stat-number" id="percentage">
+                    {% if total_students > 0 %}{{ "%.1f"|format(present_count / total_students * 100) }}%{% else %}0%{% endif %}
+                </span>
+                <span class="stat-label">Attendance</span>
+            </div>
+
+            <div class="last-checkin" id="lastCheckin" style="display:none">
+                <h3>Last Check-in</h3>
+                <div id="lastCheckinInfo"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SESSION_ID = {{ session.id }};
+const QR_EXPIRE = {{ qr_expire_seconds }};
+let countdownValue = QR_EXPIRE;
+let countdownInterval = null;
+let ws = null;
+
+// QR Code rotation
+async function refreshQR() {
+    try {
+        const res = await fetch(`/teacher/api/qr/${SESSION_ID}`);
+        const data = await res.json();
+        const qrDiv = document.getElementById('qrCode');
+        qrDiv.innerHTML = `<img src="${data.qr_image}" alt="QR Code" class="qr-image">`;
+
+        // Reset countdown
+        countdownValue = QR_EXPIRE;
+        document.getElementById('countdown').textContent = countdownValue;
+
+        const timerBar = document.getElementById('timerBar');
+        timerBar.style.transition = 'none';
+        timerBar.style.width = '100%';
+        requestAnimationFrame(() => {
+            timerBar.style.transition = `width ${QR_EXPIRE}s linear`;
+            timerBar.style.width = '0%';
+        });
+    } catch (e) {
+        console.error('Failed to refresh QR:', e);
+    }
+}
+
+function startCountdown() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    countdownInterval = setInterval(() => {
+        countdownValue--;
+        document.getElementById('countdown').textContent = Math.max(0, countdownValue);
+        if (countdownValue <= 0) {
+            refreshQR();
+            countdownValue = QR_EXPIRE;
+        }
+    }, 1000);
+}
+
+// WebSocket for real-time updates
+function connectWS() {
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${protocol}//${location.host}/teacher/ws/attendance/${SESSION_ID}`);
+
+    ws.onmessage = (event) => {
+        if (event.data === 'pong') return;
+        try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'attendance_update') {
+                document.getElementById('totalStudents').textContent = data.total;
+                document.getElementById('presentCount').textContent = data.present;
+                document.getElementById('notCheckedIn').textContent = data.not_checked_in;
+                document.getElementById('percentage').textContent = data.percentage + '%';
+
+                // Animate the stat change
+                document.getElementById('presentCount').classList.add('stat-flash');
+                setTimeout(() => document.getElementById('presentCount').classList.remove('stat-flash'), 600);
+
+                if (data.last_checkin) {
+                    const el = document.getElementById('lastCheckin');
+                    el.style.display = 'block';
+                    document.getElementById('lastCheckinInfo').innerHTML = `
+                        <div class="checkin-name">${data.last_checkin.full_name}</div>
+                        <div class="checkin-details">${data.last_checkin.student_id} · ${data.last_checkin.grade}/${data.last_checkin.room} · ${data.last_checkin.time}</div>
+                    `;
+                }
+            }
+        } catch (e) {}
+    };
+
+    ws.onclose = () => {
+        // Reconnect after 3 seconds
+        setTimeout(connectWS, 3000);
+    };
+
+    ws.onerror = () => ws.close();
+
+    // Ping every 30 seconds to keep alive
+    setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send('ping');
+        }
+    }, 30000);
+}
+
+// Initialize
+refreshQR();
+startCountdown();
+connectWS();
+
+// Also poll stats every 30 seconds as fallback
+setInterval(async () => {
+    try {
+        const res = await fetch(`/teacher/api/stats/${SESSION_ID}`);
+        const data = await res.json();
+        document.getElementById('totalStudents').textContent = data.total;
+        document.getElementById('presentCount').textContent = data.present;
+        document.getElementById('notCheckedIn').textContent = data.not_checked_in;
+        document.getElementById('percentage').textContent = data.percentage + '%';
+    } catch (e) {}
+}, 30000);
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}{% if activity %}Edit Activity{% else %}New Activity{% endif %} — Admin{% endblock %}
+{% block page_title %}{% if activity %}Edit Activity{% else %}Create New Activity{% endif %}{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{% if activity %}/admin/activities/{{ activity.id }}/edit{% else %}/admin/activities/add{% endif %}" class="form-card">
+        <div class="form-group">
+            <label for="name">Activity Name</label>
+            <input type="text" id="name" name="name" value="{{ activity.name if activity else '' }}" required placeholder="e.g. Sports Day 2026">
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="3" placeholder="Brief description of the activity...">{{ activity.description if activity else '' }}</textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="start_date">Start Date</label>
+                <input type="date" id="start_date" name="start_date" value="{{ activity.start_date if activity and activity.start_date else '' }}">
+            </div>
+            <div class="form-group">
+                <label for="end_date">End Date</label>
+                <input type="date" id="end_date" name="end_date" value="{{ activity.end_date if activity and activity.end_date else '' }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="form-select">
+                {% for s in ['draft', 'scheduled', 'active', 'completed', 'cancelled'] %}
+                <option value="{{ s }}" {% if activity and activity.status == s %}selected{% endif %}>{{ s|capitalize }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Eligible Grades (leave unchecked for all grades)</label>
+            <div class="checkbox-group">
+                {% set selected_grades = activity.eligible_grades.split(',') if activity and activity.eligible_grades else [] %}
+                {% for g in grades %}
+                <label class="checkbox-label">
+                    <input type="checkbox" name="eligible_grades" value="{{ g }}" {% if g in selected_grades %}checked{% endif %}>
+                    <span>{{ g }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="form-actions">
+            <a href="/admin/activities" class="btn btn-outline">Cancel</a>
+            <button type="submit" class="btn btn-primary">{% if activity %}Save Changes{% else %}Create Activity{% endif %}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

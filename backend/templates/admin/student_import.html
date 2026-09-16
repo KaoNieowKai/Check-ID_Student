@@ -1,0 +1,157 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Import Students — Admin{% endblock %}
+{% block page_title %}Import Students from Excel{% endblock %}
+
+{% block content %}
+<div class="import-container">
+    {% if summary %}
+    <div class="import-summary">
+        <div class="summary-card summary-success">
+            <h3>Import Complete</h3>
+            <div class="summary-stats">
+                <div class="summary-stat">
+                    <span class="stat-number">{{ summary.imported }}</span>
+                    <span class="stat-label">New Students Imported</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-number">{{ summary.updated }}</span>
+                    <span class="stat-label">Existing Students Updated</span>
+                </div>
+            </div>
+            <a href="/admin/students" class="btn btn-primary">View Students</a>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not preview and not summary %}
+    <div class="import-upload">
+        <div class="upload-info">
+            <h3>Upload Excel File</h3>
+            <p>Upload a <code>.xlsx</code> file containing student data. The system supports:</p>
+            <ul>
+                <li>Single sheet with columns: <code>student_id</code>, <code>full_name</code>, <code>grade</code>, <code>room</code></li>
+                <li>Multiple sheets named by grade (e.g., M.1, M.2, ...) with columns: <code>student_id</code>, <code>full_name</code>, <code>room</code></li>
+            </ul>
+            <a href="/admin/students/template" class="btn btn-outline btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Download Template
+            </a>
+        </div>
+
+        <form method="POST" action="/admin/students/import/preview" enctype="multipart/form-data" class="upload-form">
+            <div class="file-drop-zone" id="dropZone">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p>Drag & drop your Excel file here, or</p>
+                <label for="fileInput" class="btn btn-primary">Choose File</label>
+                <input type="file" id="fileInput" name="file" accept=".xlsx,.xls" hidden>
+                <p class="file-name" id="fileName"></p>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block" id="uploadBtn" disabled>
+                Upload & Preview
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if errors %}
+    <div class="import-errors">
+        <h3>⚠️ Errors & Warnings</h3>
+        <div class="error-list">
+            {% for err in errors %}
+            <div class="error-item">
+                {% if err.row > 0 %}Row {{ err.row }}: {% endif %}{{ err.message }}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if preview %}
+    <div class="import-preview">
+        <div class="preview-header">
+            <h3>Preview — {{ preview|length }} records found</h3>
+            <div class="preview-stats">
+                <span class="badge badge-success">{{ new_count }} new</span>
+                <span class="badge badge-warning">{{ update_count }} existing (will update)</span>
+            </div>
+        </div>
+        <div class="table-container" style="max-height: 400px; overflow-y: auto;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student ID</th>
+                        <th>Full Name</th>
+                        <th>Grade</th>
+                        <th>Room</th>
+                        <th>Sheet</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rec in preview[:100] %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><code>{{ rec.student_id }}</code></td>
+                        <td>{{ rec.full_name }}</td>
+                        <td><span class="badge">{{ rec.grade }}</span></td>
+                        <td>{{ rec.room }}</td>
+                        <td>{{ rec.sheet }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if preview|length > 100 %}
+        <p class="text-muted">Showing first 100 of {{ preview|length }} records.</p>
+        {% endif %}
+
+        <form method="POST" action="/admin/students/import/confirm" class="confirm-form">
+            <input type="hidden" name="import_data" value='{{ import_data }}'>
+            <div class="form-actions">
+                <a href="/admin/students/import" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary btn-lg" onclick="return confirm('Import {{ preview|length }} student records?')">
+                    Confirm Import ({{ preview|length }} records)
+                </button>
+            </div>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const fileName = document.getElementById('fileName');
+const uploadBtn = document.getElementById('uploadBtn');
+
+if (dropZone) {
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            fileName.textContent = e.dataTransfer.files[0].name;
+            uploadBtn.disabled = false;
+        }
+    });
+    fileInput.addEventListener('change', () => {
+        if (fileInput.files.length) {
+            fileName.textContent = fileInput.files[0].name;
+            uploadBtn.disabled = false;
+        }
+    });
+}
+</script>
+{% endblock %}

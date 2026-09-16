@@ -1,0 +1,257 @@
+/* ══════════════════════════════════════════════
+   TEACHER CSS — Simple, large-display styles
+   ══════════════════════════════════════════════ */
+
+.teacher-page {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+    min-height: 100vh;
+    color: white;
+}
+
+/* ─── Teacher Header ──────────────────────────── */
+.teacher-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.teacher-header h1 { font-size: 24px; font-weight: 700; }
+.teacher-header p { color: rgba(255,255,255,0.6); font-size: 14px; }
+
+/* ─── Teacher Dashboard ──────────────────────── */
+.teacher-container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+
+.teacher-content { padding: 32px 0; }
+
+.select-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+}
+.select-card h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: rgba(255,255,255,0.8);
+}
+
+.activity-buttons, .session-buttons {
+    display: grid;
+    gap: 12px;
+}
+
+.activity-btn, .session-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all var(--transition);
+    text-align: left;
+}
+.activity-btn:hover, .session-btn:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.2);
+    transform: translateY(-1px);
+}
+.activity-btn.selected, .session-btn.selected {
+    background: rgba(79, 70, 229, 0.3);
+    border-color: var(--primary);
+}
+
+.activity-name, .session-name { font-size: 18px; font-weight: 600; }
+.activity-status { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.6; }
+.session-date { font-size: 14px; color: rgba(255,255,255,0.5); }
+
+.start-section {
+    display: flex;
+    justify-content: center;
+    padding: 32px 0;
+}
+
+/* ─── Attendance Screen ──────────────────────── */
+.attendance-container { max-width: 100%; }
+
+.attendance-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px 32px;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.attendance-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.attendance-header h2 { font-size: 16px; font-weight: 400; color: rgba(255,255,255,0.6); }
+.header-actions { display: flex; gap: 12px; }
+
+.attendance-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    min-height: calc(100vh - 90px);
+}
+
+/* ─── QR Section ──────────────────────────────── */
+.qr-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background: rgba(0,0,0,0.1);
+}
+
+.qr-wrapper { text-align: center; }
+
+.qr-code {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: inline-block;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.qr-image {
+    display: block;
+    width: 320px;
+    height: 320px;
+}
+.qr-loading {
+    width: 320px;
+    height: 320px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+}
+
+.qr-timer {
+    width: 100%;
+    max-width: 360px;
+    height: 6px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+    margin: 20px auto 12px;
+    overflow: hidden;
+}
+.timer-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success-light), var(--success));
+    border-radius: 3px;
+    width: 100%;
+    transition: width 30s linear;
+}
+
+.qr-refresh-text {
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+}
+
+/* ─── Stats Section ──────────────────────────── */
+.stats-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 24px;
+    padding: 40px;
+}
+
+.stat-big {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    text-align: center;
+    transition: transform var(--transition);
+}
+.stat-big:hover { transform: scale(1.02); }
+
+.stat-big .stat-number {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1;
+    color: white;
+}
+.stat-big .stat-label {
+    font-size: 16px;
+    color: rgba(255,255,255,0.5);
+    margin-top: 4px;
+}
+
+.stat-total .stat-number { color: #93C5FD; }
+.stat-present .stat-number { color: #34D399; }
+.stat-absent .stat-number { color: #FBBF24; }
+.stat-percentage .stat-number { color: #A78BFA; }
+
+.stat-flash {
+    animation: flash 0.6s ease;
+}
+@keyframes flash {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); color: #34D399; }
+    100% { transform: scale(1); }
+}
+
+/* ─── Last Check-in ──────────────────────────── */
+.last-checkin {
+    background: rgba(52, 211, 153, 0.1);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    border-radius: var(--radius);
+    padding: 20px;
+    animation: slideIn 0.3s ease;
+}
+.last-checkin h3 {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+.checkin-name { font-size: 18px; font-weight: 600; }
+.checkin-details { font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Responsive ──────────────────────────────── */
+@media (max-width: 1024px) {
+    .attendance-body {
+        grid-template-columns: 1fr;
+    }
+    .qr-section { padding: 24px; }
+    .qr-image { width: 250px; height: 250px; }
+    .stats-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        padding: 24px;
+    }
+    .last-checkin { grid-column: span 2; }
+}
+
+@media (max-width: 768px) {
+    .teacher-header {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+        padding: 16px;
+    }
+    .attendance-header {
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px;
+    }
+    .header-actions { flex-wrap: wrap; justify-content: center; }
+    .stat-big .stat-number { font-size: 36px; }
+    .stats-section { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .last-checkin { grid-column: span 2; }
+}

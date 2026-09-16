@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard{% endblock %}
+{% block body_class %}teacher-page{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="/static/css/teacher.css">
+{% endblock %}
+
+{% block body %}
+<div class="teacher-container">
+    <header class="teacher-header">
+        <div class="teacher-header-info">
+            <h1>Welcome, {{ user.display_name }}</h1>
+            <p>Select an activity and session to start attendance</p>
+        </div>
+        <a href="/logout" class="btn btn-outline-light">Logout</a>
+    </header>
+
+    <div class="teacher-content">
+        <div class="select-card">
+            <h2>1. Select Activity</h2>
+            <div class="activity-buttons" id="activityList">
+                {% for activity in activities %}
+                <button class="activity-btn" onclick="selectActivity({{ activity.id }}, '{{ activity.name }}')" data-id="{{ activity.id }}">
+                    <span class="activity-name">{{ activity.name }}</span>
+                    <span class="activity-status status-{{ activity.status }}">{{ activity.status }}</span>
+                </button>
+                {% endfor %}
+                {% if not activities %}
+                <p class="empty-state">No active activities available. Please contact admin.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="select-card" id="sessionSection" style="display:none">
+            <h2>2. Select Session</h2>
+            <div class="session-buttons" id="sessionList">
+                <!-- Populated dynamically -->
+            </div>
+        </div>
+
+        <div class="start-section" id="startSection" style="display:none">
+            <a href="#" id="startBtn" class="btn btn-primary btn-xl">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Start Attendance
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedActivity = null;
+let selectedSession = null;
+
+function selectActivity(id, name) {
+    selectedActivity = id;
+    // Highlight selected
+    document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector(`.activity-btn[data-id="${id}"]`).classList.add('selected');
+
+    // Load sessions
+    document.getElementById('sessionSection').style.display = 'block';
+    document.getElementById('startSection').style.display = 'none';
+
+    fetch(`/teacher/api/sessions/${id}`)
+        .then(r => r.json())
+        .then(sessions => {
+            const list = document.getElementById('sessionList');
+            list.innerHTML = '';
+            if (sessions.length === 0) {
+                list.innerHTML = '<p class="empty-state">No sessions available for this activity.</p>';
+                return;
+            }
+            sessions.forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = 'session-btn';
+                btn.dataset.id = s.id;
+                btn.onclick = () => selectSession(s.id);
+                btn.innerHTML = `
+                    <span class="session-name">${s.name}</span>
+                    <span class="session-date">${s.date}${s.start_time ? ' · ' + s.start_time.substring(0,5) : ''}${s.end_time ? '–' + s.end_time.substring(0,5) : ''}</span>
+                `;
+                list.appendChild(btn);
+            });
+        });
+}
+
+function selectSession(id) {
+    selectedSession = id;
+    document.querySelectorAll('.session-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector(`.session-btn[data-id="${id}"]`).classList.add('selected');
+
+    document.getElementById('startSection').style.display = 'flex';
+    document.getElementById('startBtn').href = `/teacher/attendance/${id}`;
+}
+</script>
+{% endblock %}

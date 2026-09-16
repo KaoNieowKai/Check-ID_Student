@@ -1,0 +1,71 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Reports — Admin{% endblock %}
+{% block page_title %}Reports & Export{% endblock %}
+
+{% block content %}
+<div class="reports-container">
+    <div class="form-card">
+        <h3>Export Attendance to Excel</h3>
+        <form action="/admin/reports/export" method="GET" class="export-form" id="exportForm">
+            <div class="form-group">
+                <label>Activity</label>
+                <select name="activity_id" class="form-select" id="reportActivity" onchange="loadReportSessions(this.value)">
+                    <option value="">Select Activity (for full activity report)</option>
+                    {% for act in activities %}
+                    <option value="{{ act.id }}">{{ act.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Session (optional — for single session report)</label>
+                <select name="session_id" class="form-select" id="reportSession">
+                    <option value="">All Sessions</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Grade Filter</label>
+                    <select name="grade" class="form-select">
+                        <option value="">All Grades</option>
+                        {% for g in grades %}
+                        <option value="{{ g }}">{{ g }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Room Filter</label>
+                    <input type="text" name="room" class="form-input" placeholder="e.g. 7">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                Export to Excel
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+function loadReportSessions(activityId) {
+    if (!activityId) return;
+    fetch('/admin/api/sessions/' + activityId)
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('reportSession');
+            sel.innerHTML = '<option value="">All Sessions</option>';
+            data.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name + ' (' + s.date + ')';
+                sel.appendChild(opt);
+            });
+        });
+}
+</script>
+{% endblock %}

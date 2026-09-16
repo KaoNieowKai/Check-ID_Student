@@ -1,0 +1,65 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Audit Logs — Admin{% endblock %}
+{% block page_title %}Audit Logs{% endblock %}
+
+{% block content %}
+<div class="toolbar">
+    <form method="GET" action="/admin/audit-logs" class="filter-form">
+        <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input type="text" name="action" value="{{ action_filter }}" placeholder="Filter by action...">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+    </form>
+    <div class="table-info">{{ total }} total entries</div>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>User</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td class="nowrap">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <td>{{ log.user.display_name if log.user else 'System' }}</td>
+                <td><span class="badge">{{ log.action }}</span></td>
+                <td>
+                    {% if log.target_type %}{{ log.target_type }}{% endif %}
+                    {% if log.target_id %}<code>{{ log.target_id }}</code>{% endif %}
+                </td>
+                <td class="detail-cell">
+                    {% if log.reason %}<em>Reason:</em> {{ log.reason }}<br>{% endif %}
+                    {% if log.previous_value %}<em>Previous:</em> {{ log.previous_value[:80] }}<br>{% endif %}
+                    {% if log.new_value %}<em>New:</em> {{ log.new_value[:80] }}{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            {% if not logs %}
+            <tr><td colspan="5" class="empty-state">No audit logs found.</td></tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+{% if total_pages > 1 %}
+<div class="pagination">
+    {% if page > 1 %}
+    <a href="?page={{ page - 1 }}&action={{ action_filter }}" class="btn btn-sm btn-outline">← Previous</a>
+    {% endif %}
+    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="?page={{ page + 1 }}&action={{ action_filter }}" class="btn btn-sm btn-outline">Next →</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

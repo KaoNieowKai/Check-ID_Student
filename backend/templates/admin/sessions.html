@@ -1,0 +1,106 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Sessions — {{ activity.name }} — Admin{% endblock %}
+{% block page_title %}Sessions — {{ activity.name }}{% endblock %}
+
+{% block content %}
+<div class="breadcrumb">
+    <a href="/admin/activities">Activities</a> &gt; <strong>{{ activity.name }}</strong>
+</div>
+
+<div class="two-column-layout">
+    <div class="column-main">
+        {% if sessions %}
+        <div class="sessions-list">
+            {% for session in sessions %}
+            <div class="session-card">
+                <div class="session-header">
+                    <div>
+                        <h3>{{ session.name }}</h3>
+                        <div class="session-meta">
+                            <span>📅 {{ session.date }}</span>
+                            {% if session.start_time %}
+                            <span>🕐 {{ session.start_time.strftime('%H:%M') }}{% if session.end_time %}–{{ session.end_time.strftime('%H:%M') }}{% endif %}</span>
+                            {% endif %}
+                            <span>👤 {{ session_stats.get(session.id, 0) }} checked in</span>
+                        </div>
+                    </div>
+                    <span class="status-badge status-{{ session.status }}">{{ session.status }}</span>
+                </div>
+                <div class="session-actions">
+                    <button class="btn btn-sm btn-outline" onclick="editSession({{ session.id }}, '{{ session.name }}', '{{ session.date }}', '{{ session.start_time.strftime('%H:%M') if session.start_time else '' }}', '{{ session.end_time.strftime('%H:%M') if session.end_time else '' }}', '{{ session.status }}')">Edit</button>
+                    <form method="POST" action="/admin/sessions/{{ session.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this session?')">
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state-card">
+            <p>No sessions yet. Add one using the form.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="column-side">
+        <div class="form-card" id="sessionForm">
+            <h3 id="formTitle">Add New Session</h3>
+            <form method="POST" id="sessionFormEl" action="/admin/activities/{{ activity.id }}/sessions/add">
+                <div class="form-group">
+                    <label for="name">Session Name</label>
+                    <input type="text" id="sessionName" name="name" required placeholder="e.g. Day 1 Morning">
+                </div>
+                <div class="form-group">
+                    <label for="session_date">Date</label>
+                    <input type="date" id="sessionDate" name="session_date" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="start_time">Start Time</label>
+                        <input type="time" id="startTime" name="start_time">
+                    </div>
+                    <div class="form-group">
+                        <label for="end_time">End Time</label>
+                        <input type="time" id="endTime" name="end_time">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="sessionStatus" name="status" class="form-select">
+                        <option value="draft">Draft</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="active">Active</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block" id="formSubmitBtn">Add Session</button>
+                <button type="button" class="btn btn-outline btn-block" id="cancelEditBtn" style="display:none" onclick="resetForm()">Cancel</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script>
+function editSession(id, name, date, startTime, endTime, status) {
+    document.getElementById('formTitle').textContent = 'Edit Session';
+    document.getElementById('formSubmitBtn').textContent = 'Save Changes';
+    document.getElementById('cancelEditBtn').style.display = 'block';
+    document.getElementById('sessionFormEl').action = '/admin/sessions/' + id + '/edit';
+    document.getElementById('sessionName').value = name;
+    document.getElementById('sessionDate').value = date;
+    document.getElementById('startTime').value = startTime;
+    document.getElementById('endTime').value = endTime;
+    document.getElementById('sessionStatus').value = status;
+    document.getElementById('sessionForm').scrollIntoView({ behavior: 'smooth' });
+}
+function resetForm() {
+    document.getElementById('formTitle').textContent = 'Add New Session';
+    document.getElementById('formSubmitBtn').textContent = 'Add Session';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    document.getElementById('sessionFormEl').action = '/admin/activities/{{ activity.id }}/sessions/add';
+    document.getElementById('sessionFormEl').reset();
+}
+</script>
+{% endblock %}
