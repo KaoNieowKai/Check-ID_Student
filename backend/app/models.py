@@ -128,6 +128,25 @@ class QRToken(Base):
     session = relationship("ActivitySession", back_populates="qr_tokens")
 
 
+class CheckinSession(Base):
+    """Temporary check-in session created after a student scans a valid QR code.
+
+    Decouples the short-lived QR token (30s) from the student's check-in
+    workflow.  A CheckinSession lives for ~3 minutes, giving the student
+    enough time to select their grade, enter their ID, verify, and confirm.
+    """
+    __tablename__ = "checkin_sessions"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    session_id = Column(Integer, ForeignKey("activity_sessions.id", ondelete="CASCADE"), nullable=False)
+    checkin_token = Column(String(100), unique=True, nullable=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+
+    # Relationships
+    activity_session = relationship("ActivitySession")
+
+
 class AuditLog(Base):
     """Audit trail for administrative actions."""
     __tablename__ = "audit_logs"

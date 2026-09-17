@@ -32,7 +32,7 @@
             <line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
         <p>{{ error }}</p>
-        <p class="error-hint">Please scan the QR Code displayed by your teacher.</p>
+        <p class="error-hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
     </div>
     {% elif session_info %}
     <!-- Step 1: Grade Selection -->
@@ -104,6 +104,17 @@
             </div>
         </div>
     </div>
+
+    <!-- Session Expired overlay (shown dynamically via JS) -->
+    <div class="checkin-error" id="sessionExpired" style="display:none">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <p>การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่</p>
+        <p class="error-hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
+    </div>
+
     {% else %}
     <div class="checkin-error">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
@@ -111,7 +122,7 @@
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        <p>Please scan a QR Code to check in.</p>
+        <p>กรุณาสแกน QR Code เพื่อเช็คชื่อ</p>
     </div>
     {% endif %}
 </div>
@@ -120,7 +131,7 @@
 {% block extra_js %}
 {% if session_info %}
 <script>
-const TOKEN = '{{ session_info.token }}';
+const CHECKIN_TOKEN = '{{ session_info.checkin_token }}';
 let selectedGrade = '';
 let verifiedStudent = null;
 
@@ -146,20 +157,31 @@ function backToStep2() {
     document.getElementById('step2').style.display = 'block';
 }
 
+/**
+ * Show the session-expired full-page error and hide all step panels.
+ */
+function showSessionExpired() {
+    ['step1', 'step2', 'step3', 'step4'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+    });
+    document.getElementById('sessionExpired').style.display = 'block';
+}
+
 async function verifyStudent() {
     const studentId = document.getElementById('studentIdInput').value.trim();
     if (!studentId) {
-        showError('Please enter your Student ID.');
+        showError('กรุณากรอกรหัสนักเรียน');
         return;
     }
 
     const btn = document.getElementById('verifyBtn');
     btn.disabled = true;
-    btn.textContent = 'Verifying...';
+    btn.textContent = 'กำลังตรวจสอบ...';
 
     try {
         const formData = new FormData();
-        formData.append('token', TOKEN);
+        formData.append('checkin_token', CHECKIN_TOKEN);
         formData.append('grade', selectedGrade);
         formData.append('student_id', studentId);
 
@@ -175,15 +197,18 @@ async function verifyStudent() {
 
             document.getElementById('step2').style.display = 'none';
             document.getElementById('step3').style.display = 'block';
+        } else if (data.session_expired) {
+            showSessionExpired();
         } else {
             showError(data.message);
         }
     } catch (e) {
-        showError('Connection error. Please try again.');
+        showError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่');
     }
 
     btn.disabled = false;
-    btn.textContent = 'Verify Student';
+    btn.innerHTML = '<span data-i18n="verify_student">Verify Student</span>';
+    if (typeof applyTranslations === 'function') applyTranslations();
 }
 
 async function confirmAttendance() {
@@ -191,11 +216,11 @@ async function confirmAttendance() {
 
     const btn = document.getElementById('confirmBtn');
     btn.disabled = true;
-    btn.textContent = 'Recording...';
+    btn.textContent = 'กำลังบันทึก...';
 
     try {
         const formData = new FormData();
-        formData.append('token', TOKEN);
+        formData.append('checkin_token', CHECKIN_TOKEN);
         formData.append('student_db_id', verifiedStudent.student.db_id);
 
         const res = await fetch('/api/checkin/confirm', { method: 'POST', body: formData });
@@ -203,20 +228,23 @@ async function confirmAttendance() {
 
         if (data.success) {
             document.getElementById('successName').textContent = data.student.full_name;
-            document.getElementById('successTime').textContent = 'Check-in time: ' + data.checked_in_at;
+            document.getElementById('successTime').textContent = 'เวลาเช็คชื่อ: ' + data.checked_in_at;
             document.getElementById('step3').style.display = 'none';
             document.getElementById('step4').style.display = 'block';
+        } else if (data.session_expired) {
+            showSessionExpired();
         } else {
             showError(data.message);
             document.getElementById('step3').style.display = 'none';
             document.getElementById('step2').style.display = 'block';
         }
     } catch (e) {
-        showError('Connection error. Please try again.');
+        showError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่');
     }
 
     btn.disabled = false;
-    btn.textContent = '✓ Confirm Attendance';
+    btn.innerHTML = '<span data-i18n="confirm_checkin">✓ Confirm Attendance</span>';
+    if (typeof applyTranslations === 'function') applyTranslations();
 }
 
 function showError(msg) {

@@ -84,7 +84,7 @@ async def attendance_screen(
 
 
 @router.get("/api/qr/{session_id}")
-async def generate_qr(session_id: int, db: Session = Depends(get_db), user: User = Depends(require_teacher)):
+async def generate_qr(session_id: int, request: Request, db: Session = Depends(get_db), user: User = Depends(require_teacher)):
     """Generate a new QR token and return QR code as base64 image."""
     session = db.query(ActivitySession).filter(ActivitySession.id == session_id).first()
     if not session:
@@ -104,9 +104,9 @@ async def generate_qr(session_id: int, db: Session = Depends(get_db), user: User
     db.add(qr_token)
     db.commit()
 
-    # Build the check-in URL
-    host = str(user)  # We'll use request host in the template JS
-    checkin_url = f"/checkin?token={token}"
+    # Build an absolute check-in URL so QR scanners open the browser directly
+    base = str(request.base_url).rstrip("/")
+    checkin_url = f"{base}/checkin?token={token}"
 
     # Generate QR code image
     qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_M, box_size=10, border=4)

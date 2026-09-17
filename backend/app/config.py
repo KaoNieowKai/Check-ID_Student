@@ -13,6 +13,7 @@ class Settings:
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "480"))
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./attendance.db")
     QR_TOKEN_EXPIRE_SECONDS: int = int(os.getenv("QR_TOKEN_EXPIRE_SECONDS", "30"))
+    CHECKIN_SESSION_EXPIRE_SECONDS: int = int(os.getenv("CHECKIN_SESSION_EXPIRE_SECONDS", "180"))
     ADMIN_USERNAME: str = os.getenv("ADMIN_USERNAME", "admin")
     ADMIN_PASSWORD: str = os.getenv("ADMIN_PASSWORD", "admin123")
 
