@@ -14,8 +14,8 @@
             <h2>{{ session.name }} — {{ session.date|to_bangkok_date }}</h2>
         </div>
         <div class="header-actions" style="display: flex; align-items: center; gap: 10px;">
-            <div data-lang-switcher data-lang-class="lang-switcher-dark"></div>
-            <a href="/teacher/not-checked-in/{{ session.id }}" class="btn btn-outline-light btn-lg">
+            <div data-lang-switcher></div>
+            <a href="/teacher/not-checked-in/{{ session.id }}" class="btn btn-outline btn-lg">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                     <circle cx="9" cy="7" r="4"/>
@@ -23,7 +23,7 @@
                 </svg>
                 <span data-i18n="not_checked_in">รายชื่อที่ยังไม่เช็คชื่อ</span>
             </a>
-            <a href="/teacher/dashboard" class="btn btn-outline-light btn-lg" data-i18n="end_attendance">
+            <a href="/teacher/dashboard" class="btn btn-outline btn-lg" data-i18n="end_attendance">
                 สิ้นสุดการเช็คชื่อ
             </a>
         </div>
