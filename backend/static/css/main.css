@@ -4,11 +4,16 @@
 
 /* ─── CSS Variables ───────────────────────────── */
 :root {
-    /* Colors */
-    --primary: #4F46E5;
-    --primary-light: #818CF8;
-    --primary-dark: #3730A3;
-    --primary-bg: #EEF2FF;
+    /* Colors — Blue + Pink Theme */
+    --primary: #2563EB;
+    --primary-light: #60A5FA;
+    --primary-dark: #1D4ED8;
+    --primary-bg: #EFF6FF;
+
+    --accent: #EC4899;
+    --accent-light: #F472B6;
+    --accent-dark: #DB2777;
+    --accent-bg: #FDF2F8;
 
     --success: #059669;
     --success-light: #34D399;
@@ -192,7 +197,7 @@ select,
 input:focus, textarea:focus, select:focus,
 .form-select:focus, .form-input:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .form-select-lg, .form-input-lg {
@@ -319,7 +324,7 @@ label {
 .status-draft { background: #F1F5F9; color: #475569; }
 .status-scheduled { background: #DBEAFE; color: #1D4ED8; }
 .status-active { background: var(--success-bg); color: var(--success); }
-.status-completed { background: #E0E7FF; color: #3730A3; }
+.status-completed { background: #DBEAFE; color: #1D4ED8; }
 .status-cancelled { background: var(--danger-bg); color: var(--danger); }
 .status-present { background: var(--success-bg); color: var(--success); }
 
@@ -674,7 +679,7 @@ code {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #312E81 100%);
+    background: linear-gradient(135deg, #0F172A 0%, #1E3A5F 40%, #1D4ED8 80%, #DB2777 100%);
     overflow: hidden;
     position: relative;
 }
@@ -763,7 +768,7 @@ code {
 }
 .bg-shape-3 {
     width: 300px; height: 300px;
-    background: #818CF8;
+    background: var(--accent);
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     animation: float 18s ease-in-out infinite 5s;
@@ -938,5 +943,60 @@ code {
     background: rgba(255, 255, 255, 0.25);
     color: white;
     box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+
+/* ─── Accent Button (Pink) ──────────────────── */
+.btn-accent {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+.btn-accent:hover {
+    background: var(--accent-dark);
+    border-color: var(--accent-dark);
+    color: white;
+}
+
+/* ─── Password Toggle ──────────────────────── */
+.password-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    transition: color var(--transition);
+    flex-shrink: 0;
+}
+.password-toggle:hover {
+    color: var(--primary);
+}
+
+/* ─── Delete Confirmation Modal ──────────── */
+.modal-card .modal-warning {
+    color: var(--danger);
+    font-size: 14px;
+    margin-bottom: 16px;
+    padding: 12px;
+    background: var(--danger-bg);
+    border-radius: var(--radius-sm);
+    border: 1px solid #FCA5A5;
+}
+.modal-card .modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+.btn-danger-solid {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+}
+.btn-danger-solid:hover {
+    background: #B91C1C;
+    border-color: #B91C1C;
+    color: white;
 }
 

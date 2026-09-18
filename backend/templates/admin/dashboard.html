@@ -1,6 +1,6 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Dashboard — Admin{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
+{% block title %}แดชบอร์ด — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_dashboard">แดชบอร์ด</span>{% endblock %}
 
 {% block content %}
 <div class="dashboard-grid">
@@ -14,10 +14,10 @@
         </div>
         <div class="stat-info">
             <span class="stat-number">{{ total_students }}</span>
-            <span class="stat-label">Total Students</span>
+            <span class="stat-label" data-i18n="total_students">นักเรียนทั้งหมด</span>
         </div>
     </div>
-    <div class="stat-card stat-card-green">
+    <div class="stat-card stat-card-pink">
         <div class="stat-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -26,7 +26,7 @@
         </div>
         <div class="stat-info">
             <span class="stat-number">{{ total_teachers }}</span>
-            <span class="stat-label">Teachers</span>
+            <span class="stat-label" data-i18n="total_teachers">ครูทั้งหมด</span>
         </div>
     </div>
     <div class="stat-card stat-card-purple">
@@ -39,10 +39,10 @@
         </div>
         <div class="stat-info">
             <span class="stat-number">{{ total_activities }}</span>
-            <span class="stat-label">Activities</span>
+            <span class="stat-label" data-i18n="total_activities">กิจกรรมทั้งหมด</span>
         </div>
     </div>
-    <div class="stat-card stat-card-orange">
+    <div class="stat-card stat-card-green">
         <div class="stat-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32">
                 <polyline points="9 11 12 14 22 4"/>
@@ -51,7 +51,7 @@
         </div>
         <div class="stat-info">
             <span class="stat-number">{{ active_sessions }}</span>
-            <span class="stat-label">Active Sessions</span>
+            <span class="stat-label" data-i18n="active_sessions">เซสชันที่ใช้งาน</span>
         </div>
     </div>
 </div>
@@ -59,43 +59,43 @@
 <div class="dashboard-sections">
     <div class="dashboard-section">
         <div class="section-header">
-            <h3>Recent Activities</h3>
-            <a href="/admin/activities" class="btn btn-sm btn-outline">View All</a>
+            <h3 data-i18n="recent_activities">กิจกรรมล่าสุด</h3>
+            <a href="/admin/activities" class="btn btn-sm btn-outline" data-i18n="view_all">ดูทั้งหมด</a>
         </div>
         <div class="section-body">
             {% if recent_activities %}
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>Name</th>
-                        <th>Status</th>
-                        <th>Dates</th>
-                        <th>Actions</th>
+                        <th data-i18n="th_activity_name">ชื่อกิจกรรม</th>
+                        <th data-i18n="th_status">สถานะ</th>
+                        <th data-i18n="th_date">วันที่</th>
+                        <th data-i18n="th_actions">การดำเนินการ</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for activity in recent_activities %}
                     <tr>
                         <td><strong>{{ activity.name }}</strong></td>
-                        <td><span class="status-badge status-{{ activity.status }}">{{ activity.status }}</span></td>
-                        <td>{{ activity.start_date or '—' }}</td>
+                        <td><span class="status-badge status-{{ activity.status }}" data-i18n="status_{{ activity.status }}">{% if activity.status == 'draft' %}แบบร่าง{% elif activity.status == 'active' %}กำลังใช้งาน{% elif activity.status == 'scheduled' %}กำหนดการแล้ว{% elif activity.status == 'completed' %}เสร็จสิ้น{% elif activity.status == 'cancelled' %}ยกเลิก{% else %}{{ activity.status }}{% endif %}</span></td>
+                        <td>{{ activity.start_date|to_bangkok_date if activity.start_date else '—' }}</td>
                         <td>
-                            <a href="/admin/activities/{{ activity.id }}/sessions" class="btn btn-sm btn-outline">Sessions</a>
+                            <a href="/admin/activities/{{ activity.id }}/sessions" class="btn btn-sm btn-outline" data-i18n="btn_view_sessions">ดูรอบ</a>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
             {% else %}
-            <p class="empty-state">No activities yet. <a href="/admin/activities/add">Create one</a></p>
+            <p class="empty-state"><span data-i18n="no_activities_yet">ยังไม่มีกิจกรรม</span> <a href="/admin/activities/add" data-i18n="create_one">สร้างกิจกรรมใหม่</a></p>
             {% endif %}
         </div>
     </div>
 
     <div class="dashboard-section">
         <div class="section-header">
-            <h3>Recent Audit Logs</h3>
-            <a href="/admin/audit-logs" class="btn btn-sm btn-outline">View All</a>
+            <h3 data-i18n="recent_audit_logs">บันทึกระบบล่าสุด</h3>
+            <a href="/admin/audit-logs" class="btn btn-sm btn-outline" data-i18n="view_all">ดูทั้งหมด</a>
         </div>
         <div class="section-body">
             {% if recent_logs %}
@@ -104,14 +104,14 @@
                 <div class="audit-item">
                     <div class="audit-action">{{ log.action }}</div>
                     <div class="audit-meta">
-                        <span>{{ log.user.display_name if log.user else 'System' }}</span>
-                        <span>{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                        <span>{{ log.user.display_name if log.user else 'ระบบ' }}</span>
+                        <span>{{ log.created_at|to_bangkok }}</span>
                     </div>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <p class="empty-state">No audit logs yet.</p>
+            <p class="empty-state" data-i18n="no_audit_logs_yet">ยังไม่มีบันทึกระบบ</p>
             {% endif %}
         </div>
     </div>

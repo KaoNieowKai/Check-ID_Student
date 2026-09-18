@@ -1,6 +1,6 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}{% if student %}Edit Student{% else %}Add Student{% endif %} — Admin{% endblock %}
-{% block page_title %}{% if student %}Edit Student{% else %}Add New Student{% endif %}{% endblock %}
+{% block title %}{% if student %}แก้ไขข้อมูลนักเรียน{% else %}เพิ่มนักเรียนใหม่{% endif %} — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}{% if student %}<span data-i18n="title_student_edit">แก้ไขข้อมูลนักเรียน</span>{% else %}<span data-i18n="title_student_new">เพิ่มนักเรียนใหม่</span>{% endif %}{% endblock %}
 
 {% block content %}
 <div class="form-container">
@@ -10,31 +10,33 @@
 
     <form method="POST" action="{% if student %}/admin/students/{{ student.id }}/edit{% else %}/admin/students/add{% endif %}" class="form-card">
         <div class="form-group">
-            <label for="student_id">Student ID</label>
-            <input type="text" id="student_id" name="student_id" value="{{ student.student_id if student else '' }}" required placeholder="e.g. 69001">
+            <label for="student_id"><span data-i18n="lbl_student_id">รหัสนักเรียน</span> <span style="color: var(--danger);">*</span></label>
+            <input type="text" id="student_id" name="student_id" value="{{ student.student_id if student else '' }}" required placeholder="เช่น 69001" data-i18n-placeholder="ph_student_id">
         </div>
         <div class="form-group">
-            <label for="full_name">Full Name</label>
-            <input type="text" id="full_name" name="full_name" value="{{ student.full_name if student else '' }}" required placeholder="e.g. นายธนกฤต พุ่มเจริญ">
+            <label for="full_name"><span data-i18n="lbl_fullname">ชื่อ-นามสกุล</span> <span style="color: var(--danger);">*</span></label>
+            <input type="text" id="full_name" name="full_name" value="{{ student.full_name if student else '' }}" required placeholder="เช่น นายธนกฤต พุ่มเจริญ" data-i18n-placeholder="ph_fullname">
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label for="grade">Grade</label>
+                <label for="grade"><span data-i18n="lbl_grade">ระดับชั้น</span> <span style="color: var(--danger);">*</span></label>
                 <select id="grade" name="grade" class="form-select" required>
-                    <option value="">Select Grade</option>
+                    <option value="" data-i18n="opt_select_grade">เลือกระดับชั้น</option>
                     {% for g in grades %}
                     <option value="{{ g }}" {% if student and student.grade == g %}selected{% endif %}>{{ g }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group">
-                <label for="room">Room</label>
-                <input type="text" id="room" name="room" value="{{ student.room if student else '' }}" required placeholder="e.g. 7">
+                <label for="room"><span data-i18n="lbl_room">ห้อง</span> <span style="color: var(--danger);">*</span></label>
+                <input type="text" id="room" name="room" value="{{ student.room if student else '' }}" required placeholder="เช่น 7" data-i18n-placeholder="ph_room">
             </div>
         </div>
         <div class="form-actions">
-            <a href="/admin/students" class="btn btn-outline">Cancel</a>
-            <button type="submit" class="btn btn-primary">{% if student %}Save Changes{% else %}Add Student{% endif %}</button>
+            <a href="/admin/students" class="btn btn-outline" data-i18n="btn_cancel">ยกเลิก</a>
+            <button type="submit" class="btn btn-primary">
+                <span data-i18n="{% if student %}btn_save_changes{% else %}btn_add_student{% endif %}">{% if student %}บันทึกการเปลี่ยนแปลง{% else %}เพิ่มนักเรียน{% endif %}</span>
+            </button>
         </div>
     </form>
 </div>

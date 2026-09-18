@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Attendance — {{ activity.name }}{% endblock %}
+{% block title %}ระบบเช็คชื่อ — {{ activity.name }}{% endblock %}
 {% block body_class %}teacher-page attendance-page{% endblock %}
 
 {% block extra_css %}
@@ -11,7 +11,7 @@
     <header class="attendance-header">
         <div>
             <h1>{{ activity.name }}</h1>
-            <h2>{{ session.name }} — {{ session.date }}</h2>
+            <h2>{{ session.name }} — {{ session.date|to_bangkok_date }}</h2>
         </div>
         <div class="header-actions" style="display: flex; align-items: center; gap: 10px;">
             <div data-lang-switcher data-lang-class="lang-switcher-dark"></div>
@@ -21,10 +21,10 @@
                     <circle cx="9" cy="7" r="4"/>
                     <line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/>
                 </svg>
-                <span data-i18n="not_checked_in">Not Checked In</span>
+                <span data-i18n="not_checked_in">รายชื่อที่ยังไม่เช็คชื่อ</span>
             </a>
             <a href="/teacher/dashboard" class="btn btn-outline-light btn-lg" data-i18n="end_attendance">
-                End Attendance
+                สิ้นสุดการเช็คชื่อ
             </a>
         </div>
     </header>
@@ -33,13 +33,13 @@
         <div class="qr-section">
             <div class="qr-wrapper">
                 <div class="qr-code" id="qrCode">
-                    <div class="qr-loading">Loading QR Code...</div>
+                    <div class="qr-loading" data-i18n="qr_loading">กำลังโหลด QR Code...</div>
                 </div>
                 <div class="qr-timer">
                     <div class="timer-bar" id="timerBar"></div>
                 </div>
                 <p class="qr-refresh-text">
-                    <span data-i18n="qr_refresh_prefix">QR Code refreshes in</span> <span id="countdown">{{ qr_expire_seconds }}</span> <span data-i18n="seconds">seconds</span>
+                    <span data-i18n="qr_refresh_prefix">QR Code จะเปลี่ยนใหม่ในอีก</span> <span id="countdown">{{ qr_expire_seconds }}</span> <span data-i18n="seconds">วินาที</span>
                 </p>
             </div>
         </div>
@@ -47,25 +47,25 @@
         <div class="stats-section">
             <div class="stat-big stat-total">
                 <span class="stat-number" id="totalStudents">{{ total_students }}</span>
-                <span class="stat-label" data-i18n="total_students_count">Total Students</span>
+                <span class="stat-label" data-i18n="total_students_count">นักเรียนทั้งหมด</span>
             </div>
             <div class="stat-big stat-present">
                 <span class="stat-number" id="presentCount">{{ present_count }}</span>
-                <span class="stat-label" data-i18n="present_count">Present</span>
+                <span class="stat-label" data-i18n="present_count">มาเช็คชื่อแล้ว</span>
             </div>
             <div class="stat-big stat-absent">
                 <span class="stat-number" id="notCheckedIn">{{ not_checked_in }}</span>
-                <span class="stat-label" data-i18n="not_checked_in">Not Checked In</span>
+                <span class="stat-label" data-i18n="not_checked_in">ยังไม่เช็คชื่อ</span>
             </div>
             <div class="stat-big stat-percentage">
                 <span class="stat-number" id="percentage">
                     {% if total_students > 0 %}{{ "%.1f"|format(present_count / total_students * 100) }}%{% else %}0%{% endif %}
                 </span>
-                <span class="stat-label" data-i18n="attendance">Attendance</span>
+                <span class="stat-label" data-i18n="attendance_rate">อัตราการเข้าร่วม</span>
             </div>
 
             <div class="last-checkin" id="lastCheckin" style="display:none">
-                <h3>Last Check-in</h3>
+                <h3 data-i18n="recent_checkin_title">นักเรียนที่เช็คชื่อล่าสุด</h3>
                 <div id="lastCheckinInfo"></div>
             </div>
         </div>
@@ -81,7 +81,6 @@ let countdownValue = QR_EXPIRE;
 let countdownInterval = null;
 let ws = null;
 
-// QR Code rotation
 async function refreshQR() {
     try {
         const res = await fetch(`/teacher/api/qr/${SESSION_ID}`);
@@ -89,7 +88,6 @@ async function refreshQR() {
         const qrDiv = document.getElementById('qrCode');
         qrDiv.innerHTML = `<img src="${data.qr_image}" alt="QR Code" class="qr-image">`;
 
-        // Reset countdown
         countdownValue = QR_EXPIRE;
         document.getElementById('countdown').textContent = countdownValue;
 
@@ -117,7 +115,6 @@ function startCountdown() {
     }, 1000);
 }
 
-// WebSocket for real-time updates
 function connectWS() {
     const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
     ws = new WebSocket(`${protocol}//${location.host}/teacher/ws/attendance/${SESSION_ID}`);
@@ -132,7 +129,6 @@ function connectWS() {
                 document.getElementById('notCheckedIn').textContent = data.not_checked_in;
                 document.getElementById('percentage').textContent = data.percentage + '%';
 
-                // Animate the stat change
                 document.getElementById('presentCount').classList.add('stat-flash');
                 setTimeout(() => document.getElementById('presentCount').classList.remove('stat-flash'), 600);
 
@@ -149,13 +145,11 @@ function connectWS() {
     };
 
     ws.onclose = () => {
-        // Reconnect after 3 seconds
         setTimeout(connectWS, 3000);
     };
 
     ws.onerror = () => ws.close();
 
-    // Ping every 30 seconds to keep alive
     setInterval(() => {
         if (ws.readyState === WebSocket.OPEN) {
             ws.send('ping');
@@ -163,12 +157,10 @@ function connectWS() {
     }, 30000);
 }
 
-// Initialize
 refreshQR();
 startCountdown();
 connectWS();
 
-// Also poll stats every 30 seconds as fallback
 setInterval(async () => {
     try {
         const res = await fetch(`/teacher/api/stats/${SESSION_ID}`);

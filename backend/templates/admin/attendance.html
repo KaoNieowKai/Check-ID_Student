@@ -1,51 +1,51 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Attendance — Admin{% endblock %}
-{% block page_title %}Attendance Management{% endblock %}
+{% block title %}จัดการการเช็คชื่อ — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_attendance">จัดการการเช็คชื่อ</span>{% endblock %}
 
 {% block content %}
 <div class="toolbar">
     <form method="GET" action="/admin/attendance" class="filter-form" id="attendanceFilter">
         <select name="activity_id" class="form-select" id="activitySelect" onchange="loadSessions(this.value)">
-            <option value="">Select Activity</option>
+            <option value="" data-i18n="opt_select_activity">เลือกกิจกรรม</option>
             {% for act in activities %}
             <option value="{{ act.id }}" {% if activity_id == act.id %}selected{% endif %}>{{ act.name }}</option>
             {% endfor %}
         </select>
         <select name="session_id" class="form-select" id="sessionSelect">
-            <option value="">Select Session</option>
+            <option value="" data-i18n="opt_select_session">เลือกรอบกิจกรรม</option>
             {% for s in sessions %}
-            <option value="{{ s.id }}" {% if session_id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.date }})</option>
+            <option value="{{ s.id }}" {% if session_id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.date|to_bangkok_date }})</option>
             {% endfor %}
         </select>
         <select name="grade" class="form-select">
-            <option value="">All Grades</option>
+            <option value="" data-i18n="opt_all_grades">ทุกระดับชั้น</option>
             {% for g in grades %}
             <option value="{{ g }}" {% if grade == g %}selected{% endif %}>{{ g }}</option>
             {% endfor %}
         </select>
-        <input type="text" name="search" value="{{ search }}" placeholder="Search..." class="form-input-sm">
-        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <input type="text" name="search" value="{{ search }}" placeholder="ค้นหา..." class="form-input-sm" data-i18n-placeholder="btn_search">
+        <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_filter">กรองข้อมูล</button>
     </form>
 </div>
 
 {% if selected_session %}
-<div class="section-header">
-    <h3>{{ selected_session.name }} — {{ selected_session.date }}</h3>
-    <span class="badge">{{ records|length }} records</span>
+<div class="section-header" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+    <h3>{{ selected_session.name }} — {{ selected_session.date|to_bangkok_date }}</h3>
+    <span class="badge" style="font-size: 14px; padding: 6px 14px;"><span data-i18n="found_records">พบข้อมูล</span> {{ records|length }} <span data-i18n="records_unit">รายการ</span></span>
 </div>
 
 <div class="table-container">
     <table class="data-table">
         <thead>
             <tr>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Grade</th>
-                <th>Room</th>
-                <th>Status</th>
-                <th>Check-in Time</th>
-                <th>Method</th>
-                <th>Actions</th>
+                <th data-i18n="th_student_id">รหัสนักเรียน</th>
+                <th data-i18n="th_fullname">ชื่อ-นามสกุล</th>
+                <th data-i18n="th_grade">ระดับชั้น</th>
+                <th data-i18n="th_room">ห้อง</th>
+                <th data-i18n="th_status">สถานะ</th>
+                <th data-i18n="th_checkin_time">เวลาเช็คชื่อ</th>
+                <th data-i18n="th_checkin_method">วิธีการเช็คชื่อ</th>
+                <th data-i18n="th_actions">จัดการ</th>
             </tr>
         </thead>
         <tbody>
@@ -55,58 +55,56 @@
                 <td>{{ rec.student.full_name }}</td>
                 <td><span class="badge">{{ rec.student.grade }}</span></td>
                 <td>{{ rec.student.room }}</td>
-                <td><span class="status-badge status-active">{{ rec.status }}</span></td>
-                <td>{{ rec.checked_in_at.strftime('%H:%M:%S') if rec.checked_in_at else '—' }}</td>
-                <td>{{ rec.checked_in_method }}</td>
+                <td><span class="status-badge status-active" data-i18n="status_{{ rec.status }}">{{ rec.status|thai_status }}</span></td>
+                <td>{{ rec.checked_in_at|to_bangkok }}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline" onclick="correctAttendance({{ rec.id }}, '{{ rec.status }}')">Correct</button>
+                    {% if rec.checked_in_method == 'qr' %}
+                    <span class="badge" style="background: var(--primary-bg); color: var(--primary);" data-i18n="method_qr">สแกน QR</span>
+                    {% elif rec.checked_in_method == 'manual' %}
+                    <span class="badge" style="background: var(--surface); color: var(--text-muted);" data-i18n="method_manual">โดยครูผู้สอน</span>
+                    {% else %}
+                    {{ rec.checked_in_method }}
+                    {% endif %}
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline" onclick="correctAttendance({{ rec.id }}, '{{ rec.status }}')" data-i18n="btn_correct_status">แก้ไขสถานะ</button>
                 </td>
             </tr>
             {% endfor %}
             {% if not records %}
-            <tr><td colspan="8" class="empty-state">No attendance records found.</td></tr>
+            <tr><td colspan="8" class="empty-state" style="text-align: center; padding: 30px;" data-i18n="empty_attendance">ไม่พบรายการเช็คชื่อ</td></tr>
             {% endif %}
         </tbody>
     </table>
-</div>
-
-<!-- Manual Add Section -->
-<div class="manual-add-section">
-    <h3>Manually Add Attendance</h3>
-    <p class="text-muted">For students who attended but couldn't check in via QR.</p>
-    <form method="GET" action="/admin/attendance" class="inline-form" id="searchStudentForm">
-        <input type="hidden" name="session_id" value="{{ session_id }}">
-        <input type="hidden" name="activity_id" value="{{ activity_id }}">
-    </form>
 </div>
 {% endif %}
 
 <!-- Correct Attendance Modal -->
 <div class="modal-overlay" id="correctModal" style="display:none">
     <div class="modal-card">
-        <h3>Correct Attendance</h3>
+        <h3 data-i18n="modal_correct_title">แก้ไขสถานะการเช็คชื่อ</h3>
         <form method="POST" id="correctForm">
             <div class="form-group">
-                <label>New Status</label>
+                <label data-i18n="lbl_new_status">สถานะใหม่</label>
                 <select name="status" class="form-select" id="correctStatus">
-                    <option value="present">Present</option>
-                    <option value="manual">Manual</option>
+                    <option value="present" data-i18n="opt_status_present">มา (Present)</option>
+                    <option value="manual" data-i18n="opt_status_manual">ปรับแก้โดยครู (Manual)</option>
                 </select>
             </div>
             <div class="form-group">
-                <label>Reason (required)</label>
-                <textarea name="reason" required rows="3" placeholder="e.g. Student attended but QR check-in failed."></textarea>
+                <label><span data-i18n="lbl_reason_required">เหตุผลในการแก้ไข</span> <span style="color: var(--danger);">*</span></label>
+                <textarea name="reason" required rows="3" placeholder="เช่น นักเรียนเข้าร่วมกิจกรรมแต่สแกน QR ไม่สำเร็จ" data-i18n-placeholder="ph_correction_reason"></textarea>
             </div>
             <div class="form-actions">
-                <button type="button" class="btn btn-outline" onclick="document.getElementById('correctModal').style.display='none'">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Correction</button>
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('correctModal').style.display='none'" data-i18n="btn_cancel">ยกเลิก</button>
+                <button type="submit" class="btn btn-primary" data-i18n="btn_save_correction">บันทึกการแก้ไข</button>
             </div>
         </form>
     </div>
 </div>
 {% endblock %}
 
-{% block page_js %}
+{% block extra_js %}
 <script>
 function loadSessions(activityId) {
     if (!activityId) return;
@@ -114,13 +112,14 @@ function loadSessions(activityId) {
         .then(r => r.json())
         .then(data => {
             const sel = document.getElementById('sessionSelect');
-            sel.innerHTML = '<option value="">Select Session</option>';
+            sel.innerHTML = '<option value="" data-i18n="opt_select_session">' + t('opt_select_session', 'เลือกรอบกิจกรรม') + '</option>';
             data.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.id;
                 opt.textContent = s.name + ' (' + s.date + ')';
                 sel.appendChild(opt);
             });
+            if (typeof applyTranslations === 'function') applyTranslations();
         });
 }
 function correctAttendance(id, currentStatus) {

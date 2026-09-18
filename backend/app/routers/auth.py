@@ -2,14 +2,13 @@
 
 from fastapi import APIRouter, Depends, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User
 from app.auth import verify_password, create_access_token, get_current_user_from_cookie
+from app.templating import templates
 
 router = APIRouter(tags=["auth"])
-templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/login", response_class=HTMLResponse)
@@ -35,12 +34,12 @@ async def login_submit(
     if not user or not verify_password(password, user.password_hash):
         return templates.TemplateResponse("login.html", {
             "request": request,
-            "error": "Invalid username or password."
+            "error": "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง"
         })
     if not user.is_active:
         return templates.TemplateResponse("login.html", {
             "request": request,
-            "error": "This account has been disabled. Please contact admin."
+            "error": "บัญชีนี้ถูกปิดใช้งาน กรุณาติดต่อผู้ดูแลระบบ"
         })
 
     token = create_access_token(data={"sub": user.username, "role": user.role})

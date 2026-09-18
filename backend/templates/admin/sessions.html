@@ -1,10 +1,10 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Sessions — {{ activity.name }} — Admin{% endblock %}
-{% block page_title %}Sessions — {{ activity.name }}{% endblock %}
+{% block title %}รอบกิจกรรม — {{ activity.name }} — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_sessions">รอบกิจกรรม</span> — {{ activity.name }}{% endblock %}
 
 {% block content %}
-<div class="breadcrumb">
-    <a href="/admin/activities">Activities</a> &gt; <strong>{{ activity.name }}</strong>
+<div class="breadcrumb" style="margin-bottom: 16px;">
+    <a href="/admin/activities" data-i18n="breadcrumb_activities">รายการกิจกรรม</a> &gt; <strong>{{ activity.name }}</strong>
 </div>
 
 <div class="two-column-layout">
@@ -17,19 +17,19 @@
                     <div>
                         <h3>{{ session.name }}</h3>
                         <div class="session-meta">
-                            <span>📅 {{ session.date }}</span>
+                            <span>📅 {{ session.date|to_bangkok_date }}</span>
                             {% if session.start_time %}
                             <span>🕐 {{ session.start_time.strftime('%H:%M') }}{% if session.end_time %}–{{ session.end_time.strftime('%H:%M') }}{% endif %}</span>
                             {% endif %}
-                            <span>👤 {{ session_stats.get(session.id, 0) }} checked in</span>
+                            <span>👤 <span data-i18n="checked_in_prefix">เช็คชื่อแล้ว</span> {{ session_stats.get(session.id, 0) }} <span data-i18n="person_unit">คน</span></span>
                         </div>
                     </div>
-                    <span class="status-badge status-{{ session.status }}">{{ session.status }}</span>
+                    <span class="status-badge status-{{ session.status }}" data-i18n="status_{{ session.status }}">{{ session.status|thai_status }}</span>
                 </div>
                 <div class="session-actions">
-                    <button class="btn btn-sm btn-outline" onclick="editSession({{ session.id }}, '{{ session.name }}', '{{ session.date }}', '{{ session.start_time.strftime('%H:%M') if session.start_time else '' }}', '{{ session.end_time.strftime('%H:%M') if session.end_time else '' }}', '{{ session.status }}')">Edit</button>
-                    <form method="POST" action="/admin/sessions/{{ session.id }}/delete" style="display:inline" onsubmit="return confirm('Delete this session?')">
-                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    <button class="btn btn-sm btn-outline" onclick="editSession({{ session.id }}, '{{ session.name|escape }}', '{{ session.date }}', '{{ session.start_time.strftime('%H:%M') if session.start_time else '' }}', '{{ session.end_time.strftime('%H:%M') if session.end_time else '' }}', '{{ session.status }}')" data-i18n="btn_edit">แก้ไข</button>
+                    <form method="POST" action="/admin/sessions/{{ session.id }}/delete" style="display:inline" onsubmit="return confirm(t('modal_delete_session_confirm', 'คุณแน่ใจหรือไม่ว่าต้องการลบรอบกิจกรรมนี้?'))">
+                        <button type="submit" class="btn btn-sm btn-danger" data-i18n="btn_delete">ลบ</button>
                     </form>
                 </div>
             </div>
@@ -37,55 +37,57 @@
         </div>
         {% else %}
         <div class="empty-state-card">
-            <p>No sessions yet. Add one using the form.</p>
+            <p data-i18n="empty_sessions">ยังไม่มีรอบกิจกรรมสำหรับกิจกรรมนี้ กรุณาเพิ่มรอบกิจกรรมจากแบบฟอร์มด้านขวา</p>
         </div>
         {% endif %}
     </div>
 
     <div class="column-side">
         <div class="form-card" id="sessionForm">
-            <h3 id="formTitle">Add New Session</h3>
+            <h3 id="formTitle" data-i18n="add_new_session_title">เพิ่มรอบกิจกรรมใหม่</h3>
             <form method="POST" id="sessionFormEl" action="/admin/activities/{{ activity.id }}/sessions/add">
                 <div class="form-group">
-                    <label for="name">Session Name</label>
-                    <input type="text" id="sessionName" name="name" required placeholder="e.g. Day 1 Morning">
+                    <label for="name"><span data-i18n="lbl_session_name">ชื่อรอบกิจกรรม</span> <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="sessionName" name="name" required placeholder="เช่น ช่วงเช้า วันที่ 1" data-i18n-placeholder="ph_session_name">
                 </div>
                 <div class="form-group">
-                    <label for="session_date">Date</label>
+                    <label for="session_date"><span data-i18n="lbl_session_date">วันที่</span> <span style="color: var(--danger);">*</span></label>
                     <input type="date" id="sessionDate" name="session_date" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="start_time">Start Time</label>
+                        <label for="start_time" data-i18n="lbl_start_time">เวลาเริ่มต้น</label>
                         <input type="time" id="startTime" name="start_time">
                     </div>
                     <div class="form-group">
-                        <label for="end_time">End Time</label>
+                        <label for="end_time" data-i18n="lbl_end_time">เวลาสิ้นสุด</label>
                         <input type="time" id="endTime" name="end_time">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="status">Status</label>
+                    <label for="status" data-i18n="lbl_status">สถานะ</label>
                     <select id="sessionStatus" name="status" class="form-select">
-                        <option value="draft">Draft</option>
-                        <option value="scheduled">Scheduled</option>
-                        <option value="active">Active</option>
-                        <option value="completed">Completed</option>
+                        <option value="draft" data-i18n="status_draft">แบบร่าง</option>
+                        <option value="scheduled" data-i18n="status_scheduled">กำหนดการแล้ว</option>
+                        <option value="active" selected data-i18n="status_active">กำลังใช้งาน</option>
+                        <option value="completed" data-i18n="status_completed">เสร็จสิ้น</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block" id="formSubmitBtn">Add Session</button>
-                <button type="button" class="btn btn-outline btn-block" id="cancelEditBtn" style="display:none" onclick="resetForm()">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-block" id="formSubmitBtn" data-i18n="add_new_session_title">เพิ่มรอบกิจกรรมใหม่</button>
+                <button type="button" class="btn btn-outline btn-block" id="cancelEditBtn" style="display:none; margin-top: 8px;" onclick="resetForm()" data-i18n="btn_cancel_edit">ยกเลิกการแก้ไข</button>
             </form>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block page_js %}
+{% block extra_js %}
 <script>
 function editSession(id, name, date, startTime, endTime, status) {
-    document.getElementById('formTitle').textContent = 'Edit Session';
-    document.getElementById('formSubmitBtn').textContent = 'Save Changes';
+    document.getElementById('formTitle').setAttribute('data-i18n', 'edit_session_title');
+    document.getElementById('formTitle').textContent = t('edit_session_title', 'แก้ไขรอบกิจกรรม');
+    document.getElementById('formSubmitBtn').setAttribute('data-i18n', 'btn_save_changes');
+    document.getElementById('formSubmitBtn').textContent = t('btn_save_changes', 'บันทึกการเปลี่ยนแปลง');
     document.getElementById('cancelEditBtn').style.display = 'block';
     document.getElementById('sessionFormEl').action = '/admin/sessions/' + id + '/edit';
     document.getElementById('sessionName').value = name;
@@ -96,8 +98,10 @@ function editSession(id, name, date, startTime, endTime, status) {
     document.getElementById('sessionForm').scrollIntoView({ behavior: 'smooth' });
 }
 function resetForm() {
-    document.getElementById('formTitle').textContent = 'Add New Session';
-    document.getElementById('formSubmitBtn').textContent = 'Add Session';
+    document.getElementById('formTitle').setAttribute('data-i18n', 'add_new_session_title');
+    document.getElementById('formTitle').textContent = t('add_new_session_title', 'เพิ่มรอบกิจกรรมใหม่');
+    document.getElementById('formSubmitBtn').setAttribute('data-i18n', 'add_new_session_title');
+    document.getElementById('formSubmitBtn').textContent = t('add_new_session_title', 'เพิ่มรอบกิจกรรมใหม่');
     document.getElementById('cancelEditBtn').style.display = 'none';
     document.getElementById('sessionFormEl').action = '/admin/activities/{{ activity.id }}/sessions/add';
     document.getElementById('sessionFormEl').reset();

@@ -1,10 +1,10 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Teachers — Admin{% endblock %}
-{% block page_title %}Teacher Management{% endblock %}
+{% block title %}จัดการข้อมูลครู — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_teachers">จัดการข้อมูลครู</span>{% endblock %}
 
 {% block content %}
 {% if error %}
-<div class="alert alert-error">{{ error }}</div>
+<div class="alert alert-error" style="margin-bottom: 20px;">{{ error }}</div>
 {% endif %}
 
 <div class="two-column-layout">
@@ -13,11 +13,11 @@
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th data-i18n="th_username">Username</th>
-                        <th data-i18n="th_display_name">Display Name</th>
-                        <th data-i18n="th_status">Status</th>
-                        <th data-i18n="th_created">Created</th>
-                        <th data-i18n="th_actions">Actions</th>
+                        <th data-i18n="th_username">ชื่อผู้ใช้</th>
+                        <th data-i18n="th_display_name">ชื่อที่แสดง</th>
+                        <th data-i18n="th_status">สถานะ</th>
+                        <th data-i18n="th_created_date">วันที่สร้าง</th>
+                        <th data-i18n="th_actions">จัดการ</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -27,25 +27,25 @@
                         <td>{{ teacher.display_name }}</td>
                         <td>
                             {% if teacher.is_active %}
-                            <span class="status-badge status-active" data-i18n="status_active">Active</span>
+                            <span class="status-badge status-active" data-i18n="status_active">กำลังใช้งาน</span>
                             {% else %}
-                            <span class="status-badge status-cancelled" data-i18n="status_disabled">Disabled</span>
+                            <span class="status-badge status-cancelled" data-i18n="status_disabled">ปิดใช้งาน</span>
                             {% endif %}
                         </td>
-                        <td>{{ teacher.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td>{{ teacher.created_at|to_bangkok_date }}</td>
                         <td class="actions-cell">
                             <form method="POST" action="/admin/teachers/{{ teacher.id }}/toggle" style="display:inline">
                                 <button type="submit" class="btn btn-sm {% if teacher.is_active %}btn-outline{% else %}btn-primary{% endif %}">
-                                    {% if teacher.is_active %}<span data-i18n="disable">Disable</span>{% else %}<span data-i18n="enable">Enable</span>{% endif %}
+                                    <span data-i18n="{% if teacher.is_active %}btn_disable{% else %}btn_enable{% endif %}">{% if teacher.is_active %}ปิดใช้งาน{% else %}เปิดใช้งาน{% endif %}</span>
                                 </button>
                             </form>
-                            <button class="btn btn-sm btn-outline" onclick="showResetModal({{ teacher.id }}, '{{ teacher.username }}')" data-i18n="reset_password">Reset Password</button>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="showResetModal({{ teacher.id }}, '{{ teacher.username }}')" data-i18n="btn_reset_password">รีเซ็ตรหัสผ่าน</button>
                         </td>
                     </tr>
                     {% endfor %}
                     {% if not teachers %}
                     <tr>
-                        <td colspan="5" class="empty-state" data-i18n="no_teachers_yet">No teachers yet.</td>
+                        <td colspan="5" class="empty-state" style="text-align: center; padding: 30px;" data-i18n="empty_teachers">ยังไม่มีข้อมูลครูในระบบ</td>
                     </tr>
                     {% endif %}
                 </tbody>
@@ -55,21 +55,21 @@
 
     <div class="column-side">
         <div class="form-card">
-            <h3 data-i18n="add_new_teacher">Add New Teacher</h3>
+            <h3 data-i18n="add_new_teacher_title">เพิ่มครูใหม่</h3>
             <form method="POST" action="/admin/teachers/add">
                 <div class="form-group">
-                    <label for="username" data-i18n="username">Username</label>
-                    <input type="text" id="username" name="username" required placeholder="e.g. teacher01">
+                    <label for="username"><span data-i18n="lbl_teacher_username">ชื่อผู้ใช้</span> <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="username" name="username" required placeholder="เช่น teacher01" data-i18n-placeholder="ph_teacher_username">
                 </div>
                 <div class="form-group">
-                    <label for="display_name" data-i18n="display_name">Display Name</label>
-                    <input type="text" id="display_name" name="display_name" required placeholder="e.g. Mr. Smith">
+                    <label for="display_name"><span data-i18n="lbl_teacher_display_name">ชื่อที่แสดง</span> <span style="color: var(--danger);">*</span></label>
+                    <input type="text" id="display_name" name="display_name" required placeholder="เช่น ครูสมชาย ใจดี" data-i18n-placeholder="ph_teacher_display_name">
                 </div>
                 <div class="form-group">
-                    <label for="password" data-i18n="password">Password</label>
-                    <input type="password" id="password" name="password" required minlength="6" placeholder="Min 6 characters">
+                    <label for="password"><span data-i18n="lbl_teacher_password">รหัสผ่าน</span> <span style="color: var(--danger);">*</span></label>
+                    <input type="password" id="password" name="password" required minlength="6" placeholder="อย่างน้อย 6 ตัวอักษร" data-i18n-placeholder="ph_teacher_password">
                 </div>
-                <button type="submit" class="btn btn-primary btn-block" data-i18n="add_teacher">Add Teacher</button>
+                <button type="submit" class="btn btn-primary btn-block" data-i18n="btn_add_teacher">เพิ่มครู</button>
             </form>
         </div>
     </div>
@@ -78,23 +78,23 @@
 <!-- Reset Password Modal -->
 <div class="modal-overlay" id="resetModal" style="display:none">
     <div class="modal-card">
-        <h3 data-i18n="reset_password">Reset Password</h3>
-        <p><span data-i18n="reset_password_for">Reset password for:</span> <strong id="resetUsername"></strong></p>
+        <h3 data-i18n="modal_reset_pwd_title">รีเซ็ตรหัสผ่าน</h3>
+        <p><span data-i18n="modal_reset_pwd_for">รีเซ็ตรหัสผ่านสำหรับ:</span> <strong id="resetUsername"></strong></p>
         <form method="POST" id="resetForm">
             <div class="form-group">
-                <label for="new_password" data-i18n="new_password">New Password</label>
-                <input type="password" id="new_password" name="new_password" required minlength="6">
+                <label for="new_password" data-i18n="lbl_new_password">รหัสผ่านใหม่</label>
+                <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="อย่างน้อย 6 ตัวอักษร" data-i18n-placeholder="ph_teacher_password">
             </div>
             <div class="form-actions">
-                <button type="button" class="btn btn-outline" onclick="document.getElementById('resetModal').style.display='none'" data-i18n="cancel">Cancel</button>
-                <button type="submit" class="btn btn-primary" data-i18n="reset_password">Reset Password</button>
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('resetModal').style.display='none'" data-i18n="btn_cancel">ยกเลิก</button>
+                <button type="submit" class="btn btn-primary" data-i18n="btn_save_password">บันทึกรหัสผ่านใหม่</button>
             </div>
         </form>
     </div>
 </div>
 {% endblock %}
 
-{% block page_js %}
+{% block extra_js %}
 <script>
 function showResetModal(id, username) {
     document.getElementById('resetModal').style.display = 'flex';

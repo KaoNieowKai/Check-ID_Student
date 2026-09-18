@@ -1,6 +1,6 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}{% if activity %}Edit Activity{% else %}New Activity{% endif %} — Admin{% endblock %}
-{% block page_title %}{% if activity %}Edit Activity{% else %}Create New Activity{% endif %}{% endblock %}
+{% block title %}{% if activity %}แก้ไขกิจกรรม{% else %}สร้างกิจกรรมใหม่{% endif %} — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}{% if activity %}<span data-i18n="title_activity_edit">แก้ไขกิจกรรม</span>{% else %}<span data-i18n="title_activity_new">สร้างกิจกรรมใหม่</span>{% endif %}{% endblock %}
 
 {% block content %}
 <div class="form-container">
@@ -10,33 +10,35 @@
 
     <form method="POST" action="{% if activity %}/admin/activities/{{ activity.id }}/edit{% else %}/admin/activities/add{% endif %}" class="form-card">
         <div class="form-group">
-            <label for="name">Activity Name</label>
-            <input type="text" id="name" name="name" value="{{ activity.name if activity else '' }}" required placeholder="e.g. Sports Day 2026">
+            <label for="name"><span data-i18n="lbl_activity_name">ชื่อกิจกรรม</span> <span style="color: var(--danger);">*</span></label>
+            <input type="text" id="name" name="name" value="{{ activity.name if activity else '' }}" required placeholder="เช่น วันกีฬาสี ประจำปี 2026" data-i18n-placeholder="ph_activity_name">
         </div>
         <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" name="description" rows="3" placeholder="Brief description of the activity...">{{ activity.description if activity else '' }}</textarea>
+            <label for="description" data-i18n="lbl_activity_desc">รายละเอียดกิจกรรม</label>
+            <textarea id="description" name="description" rows="3" placeholder="กรอกรายละเอียดสั้นๆ เกี่ยวกับกิจกรรม..." data-i18n-placeholder="ph_activity_desc">{{ activity.description if activity else '' }}</textarea>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label for="start_date">Start Date</label>
+                <label for="start_date" data-i18n="lbl_start_date">วันที่เริ่มต้น</label>
                 <input type="date" id="start_date" name="start_date" value="{{ activity.start_date if activity and activity.start_date else '' }}">
             </div>
             <div class="form-group">
-                <label for="end_date">End Date</label>
+                <label for="end_date" data-i18n="lbl_end_date">วันที่สิ้นสุด</label>
                 <input type="date" id="end_date" name="end_date" value="{{ activity.end_date if activity and activity.end_date else '' }}">
             </div>
         </div>
         <div class="form-group">
-            <label for="status">Status</label>
+            <label for="status" data-i18n="lbl_status">สถานะ</label>
             <select id="status" name="status" class="form-select">
-                {% for s in ['draft', 'scheduled', 'active', 'completed', 'cancelled'] %}
-                <option value="{{ s }}" {% if activity and activity.status == s %}selected{% endif %}>{{ s|capitalize }}</option>
-                {% endfor %}
+                <option value="draft" {% if activity and activity.status == 'draft' %}selected{% endif %} data-i18n="status_draft">แบบร่าง</option>
+                <option value="scheduled" {% if activity and activity.status == 'scheduled' %}selected{% endif %} data-i18n="status_scheduled">กำหนดการแล้ว</option>
+                <option value="active" {% if (activity and activity.status == 'active') or (not activity) %}selected{% endif %} data-i18n="status_active">กำลังใช้งาน</option>
+                <option value="completed" {% if activity and activity.status == 'completed' %}selected{% endif %} data-i18n="status_completed">เสร็จสิ้น</option>
+                <option value="cancelled" {% if activity and activity.status == 'cancelled' %}selected{% endif %} data-i18n="status_cancelled">ยกเลิก</option>
             </select>
         </div>
         <div class="form-group">
-            <label>Eligible Grades (leave unchecked for all grades)</label>
+            <label data-i18n="lbl_eligible_grades">ระดับชั้นที่เข้าร่วม (เว้นว่างไว้หากเข้าร่วมได้ทุกระดับชั้น)</label>
             <div class="checkbox-group">
                 {% set selected_grades = activity.eligible_grades.split(',') if activity and activity.eligible_grades else [] %}
                 {% for g in grades %}
@@ -48,8 +50,10 @@
             </div>
         </div>
         <div class="form-actions">
-            <a href="/admin/activities" class="btn btn-outline">Cancel</a>
-            <button type="submit" class="btn btn-primary">{% if activity %}Save Changes{% else %}Create Activity{% endif %}</button>
+            <a href="/admin/activities" class="btn btn-outline" data-i18n="btn_cancel">ยกเลิก</a>
+            <button type="submit" class="btn btn-primary">
+                <span data-i18n="{% if activity %}btn_save_changes{% else %}btn_create{% endif %}">{% if activity %}บันทึกการเปลี่ยนแปลง{% else %}สร้างกิจกรรม{% endif %}</span>
+            </button>
         </div>
     </form>
 </div>

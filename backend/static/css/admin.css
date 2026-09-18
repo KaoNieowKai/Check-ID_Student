@@ -1,5 +1,6 @@
 /* ══════════════════════════════════════════════
    ADMIN CSS — Layout & Admin-specific styles
+   Blue + Pink Theme
    ══════════════════════════════════════════════ */
 
 /* ─── Admin Layout ────────────────────────────── */
@@ -40,20 +41,36 @@
     font-weight: 700;
     color: white;
 }
-.sidebar-logo svg { color: var(--primary-light); }
+.sidebar-logo svg { color: var(--accent-light); }
 
 .sidebar-nav {
     flex: 1;
-    padding: 12px 8px;
+    padding: 8px 8px;
     overflow-y: auto;
+}
+
+/* ─── Nav Section Titles ─────────────────────── */
+.nav-section-title {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: rgba(255,255,255,0.35);
+    padding: 16px 16px 6px;
+    margin-top: 4px;
+}
+.nav-section-title:first-child {
+    margin-top: 0;
+    padding-top: 8px;
 }
 
 .nav-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 10px 16px;
-    margin-bottom: 2px;
+    padding: 9px 16px;
+    margin-bottom: 1px;
     border-radius: var(--radius-sm);
     color: rgba(255,255,255,0.6);
     font-size: 14px;
@@ -153,8 +170,9 @@
 }
 
 .stat-card-blue .stat-icon { background: #DBEAFE; color: #2563EB; }
+.stat-card-pink .stat-icon { background: #FCE7F3; color: #DB2777; }
 .stat-card-green .stat-icon { background: #D1FAE5; color: #059669; }
-.stat-card-purple .stat-icon { background: #E0E7FF; color: #4F46E5; }
+.stat-card-purple .stat-icon { background: #EDE9FE; color: #7C3AED; }
 .stat-card-orange .stat-icon { background: #FED7AA; color: #EA580C; }
 
 .stat-info {

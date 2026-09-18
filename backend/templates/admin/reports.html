@@ -1,56 +1,59 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Reports — Admin{% endblock %}
-{% block page_title %}Reports & Export{% endblock %}
+{% block title %}รายงานและส่งออกข้อมูล — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_reports">รายงานและส่งออกข้อมูล</span>{% endblock %}
 
 {% block content %}
-<div class="reports-container">
+<div class="reports-container" style="max-width: 650px;">
     <div class="form-card">
-        <h3>Export Attendance to Excel</h3>
+        <h3 data-i18n="export_excel_heading">ส่งออกข้อมูลการเช็คชื่อเป็นไฟล์ Excel</h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;" data-i18n="export_excel_desc">
+            เลือกกิจกรรมหรือรอบกิจกรรมที่ต้องการดาวน์โหลดรายงานสรุปการเข้าร่วมของนักเรียน
+        </p>
         <form action="/admin/reports/export" method="GET" class="export-form" id="exportForm">
             <div class="form-group">
-                <label>Activity</label>
-                <select name="activity_id" class="form-select" id="reportActivity" onchange="loadReportSessions(this.value)">
-                    <option value="">Select Activity (for full activity report)</option>
+                <label><span data-i18n="lbl_activity_required">กิจกรรม</span> <span style="color: var(--danger);">*</span></label>
+                <select name="activity_id" class="form-select" id="reportActivity" onchange="loadReportSessions(this.value)" required>
+                    <option value="" data-i18n="opt_select_activity_report">เลือกกิจกรรม (สำหรับรายงานทั้งกิจกรรม)</option>
                     {% for act in activities %}
                     <option value="{{ act.id }}">{{ act.name }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="form-group">
-                <label>Session (optional — for single session report)</label>
+                <label data-i18n="lbl_session_optional">รอบกิจกรรม (ไม่บังคับ — เลือกเมื่อต้องการเฉพาะรอบ)</label>
                 <select name="session_id" class="form-select" id="reportSession">
-                    <option value="">All Sessions</option>
+                    <option value="" data-i18n="opt_all_sessions">ทุกรอบกิจกรรม</option>
                 </select>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Grade Filter</label>
+                    <label data-i18n="lbl_filter_grade">กรองระดับชั้น</label>
                     <select name="grade" class="form-select">
-                        <option value="">All Grades</option>
+                        <option value="" data-i18n="opt_all_grades">ทุกระดับชั้น</option>
                         {% for g in grades %}
                         <option value="{{ g }}">{{ g }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Room Filter</label>
-                    <input type="text" name="room" class="form-input" placeholder="e.g. 7">
+                    <label data-i18n="lbl_filter_room">กรองห้อง</label>
+                    <input type="text" name="room" class="form-input" placeholder="เช่น 7" data-i18n-placeholder="ph_room_filter">
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary btn-lg btn-block">
+            <button type="submit" class="btn btn-primary btn-lg btn-block" style="margin-top: 10px;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                     <polyline points="7 10 12 15 17 10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
-                Export to Excel
+                <span data-i18n="btn_export_excel">ส่งออกเป็นไฟล์ Excel</span>
             </button>
         </form>
     </div>
 </div>
 {% endblock %}
 
-{% block page_js %}
+{% block extra_js %}
 <script>
 function loadReportSessions(activityId) {
     if (!activityId) return;
@@ -58,13 +61,14 @@ function loadReportSessions(activityId) {
         .then(r => r.json())
         .then(data => {
             const sel = document.getElementById('reportSession');
-            sel.innerHTML = '<option value="">All Sessions</option>';
+            sel.innerHTML = '<option value="" data-i18n="opt_all_sessions">' + t('opt_all_sessions', 'ทุกรอบกิจกรรม') + '</option>';
             data.forEach(s => {
                 const opt = document.createElement('option');
                 opt.value = s.id;
                 opt.textContent = s.name + ' (' + s.date + ')';
                 sel.appendChild(opt);
             });
+            if (typeof applyTranslations === 'function') applyTranslations();
         });
 }
 </script>

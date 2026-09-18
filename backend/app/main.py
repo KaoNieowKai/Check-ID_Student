@@ -2,8 +2,8 @@
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from fastapi.responses import RedirectResponse
+from app.templating import templates
 from app.config import settings
 from app.database import init_db
 from app.routers import auth, admin, teacher, student
@@ -18,8 +18,6 @@ app.include_router(auth.router)
 app.include_router(admin.router)
 app.include_router(teacher.router)
 app.include_router(student.router)
-
-templates = Jinja2Templates(directory="templates")
 
 
 @app.on_event("startup")
@@ -38,7 +36,7 @@ async def root():
 async def forbidden_handler(request: Request, exc):
     return templates.TemplateResponse("error.html", {
         "request": request, "status_code": 403,
-        "message": "You do not have permission to access this page."
+        "message": "คุณไม่มีสิทธิ์เข้าถึงหน้านี้"
     }, status_code=403)
 
 
@@ -46,5 +44,6 @@ async def forbidden_handler(request: Request, exc):
 async def not_found_handler(request: Request, exc):
     return templates.TemplateResponse("error.html", {
         "request": request, "status_code": 404,
-        "message": "The page you are looking for does not exist."
+        "message": "ไม่พบหน้าที่คุณต้องการ"
     }, status_code=404)
+

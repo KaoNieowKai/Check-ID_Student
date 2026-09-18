@@ -2,21 +2,21 @@
 
 import io
 import json
+import re
 import secrets
 from datetime import datetime, date, time, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, UploadFile, File, Query, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, or_, and_, desc
+from sqlalchemy import func, or_, and_, desc, cast, Integer
 from openpyxl import Workbook, load_workbook
 from app.database import get_db
 from app.models import User, Student, Activity, ActivitySession, AttendanceRecord, AuditLog
 from app.auth import require_admin, hash_password
+from app.templating import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-templates = Jinja2Templates(directory="templates")
 
 VALID_GRADES = ["M.1", "M.2", "M.3", "M.4", "M.5", "M.6"]
 
@@ -82,12 +82,13 @@ async def students_list(
         query = query.filter(Student.room == room)
 
     total = query.count()
-    students = query.order_by(Student.grade, Student.room, Student.student_id).offset(
+    students = query.order_by(Student.grade, cast(Student.room, Integer), Student.student_id).offset(
         (page - 1) * per_page
     ).limit(per_page).all()
 
-    # Get distinct rooms for filter
-    rooms = [r[0] for r in db.query(Student.room).distinct().order_by(Student.room).all()]
+    # Get distinct rooms for filter sorted numerically
+    raw_rooms = [r[0] for r in db.query(Student.room).filter(Student.room != None).distinct().all()]
+    rooms = sorted(raw_rooms, key=lambda x: int(x) if str(x).isdigit() else 99999)
 
     return templates.TemplateResponse("admin/students.html", {
         "request": request, "user": user,
@@ -523,6 +524,7 @@ async def teacher_reset_password(
 async def activities_list(
     request: Request,
     status_filter: str = Query("", alias="status"),
+    error: str = Query(None),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
@@ -530,9 +532,15 @@ async def activities_list(
     if status_filter:
         query = query.filter(Activity.status == status_filter)
     activities = query.all()
+    error_msg = None
+    if error == "cannot_delete_active":
+        error_msg = "ไม่สามารถลบกิจกรรมที่มีรอบกำลังเปิดใช้งานอยู่ได้"
+    elif error:
+        error_msg = error
+
     return templates.TemplateResponse("admin/activities.html", {
         "request": request, "user": user, "activities": activities,
-        "status_filter": status_filter,
+        "status_filter": status_filter, "error": error_msg,
     })
 
 
@@ -610,6 +618,33 @@ async def activity_edit_submit(
     db.commit()
     create_audit_log(db, user.id, "activity_edited", "activity", str(id),
                      previous_value=prev, new_value=json.dumps({"name": name, "status": status}))
+    return RedirectResponse(url="/admin/activities", status_code=303)
+
+
+@router.post("/activities/{id}/delete")
+async def activity_delete(
+    id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    activity = db.query(Activity).filter(Activity.id == id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Check for active sessions
+    active = db.query(ActivitySession).filter(
+        ActivitySession.activity_id == id,
+        ActivitySession.status == "active"
+    ).first()
+    if active:
+        return RedirectResponse(url="/admin/activities?error=cannot_delete_active", status_code=303)
+
+    act_name = activity.name
+    db.delete(activity)
+    db.commit()
+    create_audit_log(db, user.id, "activity_deleted", "activity", str(id),
+                     previous_value=json.dumps({"name": act_name}))
     return RedirectResponse(url="/admin/activities", status_code=303)
 
 
@@ -873,7 +908,8 @@ async def export_attendance(
         if not session:
             raise HTTPException(status_code=404)
 
-        ws.title = session.name[:31]  # Excel sheet name limit
+        safe_session_title = re.sub(r'[\\/*?:\[\]]', '_', session.name).strip()[:31] or "Session"
+        ws.title = safe_session_title
 
         # Get all eligible students
         student_query = db.query(Student).filter(Student.is_active == True)
@@ -937,7 +973,8 @@ async def export_attendance(
             ActivitySession.activity_id == activity_id
         ).order_by(ActivitySession.date).all()
 
-        ws.title = activity.name[:31]
+        safe_activity_title = re.sub(r'[\\/*?:\[\]]', '_', activity.name).strip()[:31] or "Activity"
+        ws.title = safe_activity_title
         ws.append([f"Activity: {activity.name}"])
         ws.append([])
 

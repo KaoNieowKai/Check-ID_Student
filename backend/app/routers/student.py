@@ -4,16 +4,15 @@ import secrets
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, Request, Form, Query, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from app.database import get_db
 from app.models import Student, ActivitySession, AttendanceRecord, QRToken, CheckinSession, Activity
 from app.config import settings
 from app.websocket import manager
+from app.templating import templates
 
 router = APIRouter(tags=["student"])
-templates = Jinja2Templates(directory="templates")
 
 VALID_GRADES = ["M.1", "M.2", "M.3", "M.4", "M.5", "M.6"]
 

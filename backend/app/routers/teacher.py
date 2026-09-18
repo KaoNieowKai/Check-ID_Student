@@ -6,18 +6,17 @@ import secrets
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect, Query, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, cast, Integer
 from app.database import get_db, SessionLocal
 from app.models import User, Student, Activity, ActivitySession, AttendanceRecord, QRToken
 from app.auth import require_teacher
 from app.config import settings
 from app.websocket import manager
+from app.templating import templates
 import qrcode
 
 router = APIRouter(prefix="/teacher", tags=["teacher"])
-templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
@@ -197,10 +196,11 @@ async def not_checked_in(
             Student.full_name.contains(search)
         ))
 
-    students = query.order_by(Student.grade, Student.room, Student.student_id).all()
+    students = query.order_by(Student.grade, cast(Student.room, Integer), Student.student_id).all()
 
     grades = ["M.1", "M.2", "M.3", "M.4", "M.5", "M.6"]
-    rooms = [r[0] for r in db.query(Student.room).distinct().order_by(Student.room).all()]
+    raw_rooms = [r[0] for r in db.query(Student.room).filter(Student.room != None).distinct().all()]
+    rooms = sorted(raw_rooms, key=lambda x: int(x) if str(x).isdigit() else 99999)
 
     return templates.TemplateResponse("teacher/not_checked_in.html", {
         "request": request, "user": user,

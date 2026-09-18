@@ -32,7 +32,7 @@
             <line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
         <p>{{ error }}</p>
-        <p class="error-hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
+        <p class="error-hint" data-i18n="scan_qr_hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
     </div>
     {% elif session_info %}
     <!-- Step 1: Grade Selection -->
@@ -111,8 +111,8 @@
             <circle cx="12" cy="12" r="10"/>
             <polyline points="12 6 12 12 16 14"/>
         </svg>
-        <p>การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่</p>
-        <p class="error-hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
+        <p data-i18n="session_expired_title">การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่</p>
+        <p class="error-hint" data-i18n="scan_qr_hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
     </div>
 
     {% else %}
@@ -122,7 +122,7 @@
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        <p>กรุณาสแกน QR Code เพื่อเช็คชื่อ</p>
+        <p data-i18n="scan_qr_prompt">กรุณาสแกน QR Code เพื่อเช็คชื่อ</p>
     </div>
     {% endif %}
 </div>
@@ -157,9 +157,6 @@ function backToStep2() {
     document.getElementById('step2').style.display = 'block';
 }
 
-/**
- * Show the session-expired full-page error and hide all step panels.
- */
 function showSessionExpired() {
     ['step1', 'step2', 'step3', 'step4'].forEach(id => {
         const el = document.getElementById(id);
@@ -171,13 +168,13 @@ function showSessionExpired() {
 async function verifyStudent() {
     const studentId = document.getElementById('studentIdInput').value.trim();
     if (!studentId) {
-        showError('กรุณากรอกรหัสนักเรียน');
+        showError(t('err_enter_id', 'กรุณากรอกรหัสนักเรียน'));
         return;
     }
 
     const btn = document.getElementById('verifyBtn');
     btn.disabled = true;
-    btn.textContent = 'กำลังตรวจสอบ...';
+    btn.textContent = t('verifying', 'กำลังตรวจสอบ...');
 
     try {
         const formData = new FormData();
@@ -203,11 +200,11 @@ async function verifyStudent() {
             showError(data.message);
         }
     } catch (e) {
-        showError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่');
+        showError(t('err_conn', 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่'));
     }
 
     btn.disabled = false;
-    btn.innerHTML = '<span data-i18n="verify_student">Verify Student</span>';
+    btn.innerHTML = '<span data-i18n="verify_student">' + t('verify_student', 'Verify Student') + '</span>';
     if (typeof applyTranslations === 'function') applyTranslations();
 }
 
@@ -216,7 +213,7 @@ async function confirmAttendance() {
 
     const btn = document.getElementById('confirmBtn');
     btn.disabled = true;
-    btn.textContent = 'กำลังบันทึก...';
+    btn.textContent = t('saving', 'กำลังบันทึก...');
 
     try {
         const formData = new FormData();
@@ -228,7 +225,7 @@ async function confirmAttendance() {
 
         if (data.success) {
             document.getElementById('successName').textContent = data.student.full_name;
-            document.getElementById('successTime').textContent = 'เวลาเช็คชื่อ: ' + data.checked_in_at;
+            document.getElementById('successTime').textContent = t('checkin_time_label', 'เวลาเช็คชื่อ: ') + data.checked_in_at;
             document.getElementById('step3').style.display = 'none';
             document.getElementById('step4').style.display = 'block';
         } else if (data.session_expired) {
@@ -239,11 +236,11 @@ async function confirmAttendance() {
             document.getElementById('step2').style.display = 'block';
         }
     } catch (e) {
-        showError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่');
+        showError(t('err_conn', 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่'));
     }
 
     btn.disabled = false;
-    btn.innerHTML = '<span data-i18n="confirm_checkin">✓ Confirm Attendance</span>';
+    btn.innerHTML = '<span data-i18n="confirm_checkin">' + t('confirm_checkin', '✓ Confirm Attendance') + '</span>';
     if (typeof applyTranslations === 'function') applyTranslations();
 }
 
@@ -254,7 +251,6 @@ function showError(msg) {
     setTimeout(() => el.style.display = 'none', 5000);
 }
 
-// Allow Enter key on student ID input
 document.getElementById('studentIdInput')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') verifyStudent();
 });
