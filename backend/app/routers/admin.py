@@ -1021,7 +1021,7 @@ async def export_attendance(
                 status_text = "Present"
                 checkin_time = rec.checked_in_at.strftime("%H:%M:%S") if rec.checked_in_at else "-"
                 method = rec.checked_in_method
-                if method == "admin_manual":
+                if method in ("admin_manual", "qr"):
                     method = "QR Scan" if request.cookies.get("app_language", "th") == "en" else "สแกน QR"
                 present_count += 1
             else:
