@@ -207,6 +207,7 @@ const I18N_DICTIONARY = {
         'lbl_history_room': 'ห้อง:',
         'method_qr': 'สแกน QR',
         'method_manual': 'โดยครูผู้สอน',
+        'method_admin_manual': 'สแกน QR',
         'empty_history': 'ไม่พบประวัติการเข้าร่วมกิจกรรม',
 
         // Teacher Management
@@ -240,6 +241,7 @@ const I18N_DICTIONARY = {
         'found_records': 'พบข้อมูล',
         'records_unit': 'รายการ',
         'empty_attendance': 'ไม่พบรายการเช็คชื่อ',
+        'btn_add_student': 'เพิ่มรายชื่อนักเรียน',
         'modal_correct_title': 'แก้ไขสถานะการเช็คชื่อ',
         'lbl_new_status': 'สถานะใหม่',
         'lbl_reason_required': 'เหตุผลในการแก้ไข',
@@ -523,6 +525,7 @@ const I18N_DICTIONARY = {
         'lbl_history_room': 'Room:',
         'method_qr': 'QR Scan',
         'method_manual': 'Manual',
+        'method_admin_manual': 'QR Scan',
         'empty_history': 'No attendance records found',
 
         // Teacher Management
@@ -556,6 +559,7 @@ const I18N_DICTIONARY = {
         'found_records': 'Found',
         'records_unit': 'records',
         'empty_attendance': 'No attendance records found',
+        'btn_add_student': 'Add Student',
         'modal_correct_title': 'Correct Attendance Status',
         'lbl_new_status': 'New Status',
         'lbl_reason_required': 'Reason (required)',

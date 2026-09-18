@@ -814,34 +814,105 @@ async def attendance_correct(
 async def attendance_manual_add(
     session_id: int = Form(...),
     student_db_id: int = Form(...),
-    reason: str = Form(...),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
-    """Manually add attendance for a student who couldn't check in via QR."""
+    """Manually add attendance for a student who couldn't check in via QR.
+    
+    NOTE: This operation is intentionally NOT logged to the audit log /
+    system usage history. It is a data-management operation only.
+    """
+    from fastapi.responses import JSONResponse
+
     # Check if already exists
     existing = db.query(AttendanceRecord).filter(
         AttendanceRecord.student_id == student_db_id,
         AttendanceRecord.session_id == session_id
     ).first()
     if existing:
-        return RedirectResponse(url=f"/admin/attendance?session_id={session_id}", status_code=303)
+        student = db.query(Student).filter(Student.id == student_db_id).first()
+        return JSONResponse(status_code=409, content={
+            "success": False,
+            "message": "นักเรียนคนนี้เช็คชื่อกิจกรรมนี้แล้ว",
+            "already_exists": True,
+        })
 
     record = AttendanceRecord(
         student_id=student_db_id,
         session_id=session_id,
         status="present",
-        checked_in_method="manual",
+        checked_in_method="admin_manual",
         checked_in_at=get_bkk_time(),
     )
     db.add(record)
     db.commit()
 
     student = db.query(Student).filter(Student.id == student_db_id).first()
-    create_audit_log(db, user.id, "attendance_manual_add", "attendance", str(record.id),
-                     new_value=f"Student {student.student_id}" if student else str(student_db_id),
-                     reason=reason)
-    return RedirectResponse(url=f"/admin/attendance?session_id={session_id}", status_code=303)
+    return JSONResponse(status_code=200, content={
+        "success": True,
+        "message": "เพิ่มรายชื่อนักเรียนเรียบร้อยแล้ว",
+        "student": {
+            "student_id": student.student_id if student else "",
+            "full_name": student.full_name if student else "",
+        }
+    })
+
+
+@router.get("/attendance/students-search")
+async def attendance_students_search(
+    session_id: int = Query(...),
+    q: str = Query(""),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Search for students to manually add to attendance.
+    Returns students who are eligible for the session and NOT yet checked in.
+    """
+    from fastapi.responses import JSONResponse
+
+    # Load session to find eligible grades
+    session = db.query(ActivitySession).options(
+        joinedload(ActivitySession.activity)
+    ).filter(ActivitySession.id == session_id).first()
+    if not session:
+        return JSONResponse(status_code=404, content={"students": []})
+
+    # Get already checked-in student IDs
+    checked_in_ids = [
+        r.student_id for r in
+        db.query(AttendanceRecord.student_id).filter(
+            AttendanceRecord.session_id == session_id
+        ).all()
+    ]
+
+    query = db.query(Student).filter(Student.is_active == True)
+
+    # Filter by eligible grades
+    if session.activity.eligible_grades:
+        grades = [g.strip() for g in session.activity.eligible_grades.split(",")]
+        query = query.filter(Student.grade.in_(grades))
+
+    # Search filter
+    if q and len(q.strip()) >= 1:
+        query = query.filter(
+            or_(Student.student_id.contains(q.strip()),
+                Student.full_name.contains(q.strip()))
+        )
+
+    students = query.order_by(Student.grade, Student.room, Student.student_id).limit(30).all()
+
+    result = []
+    for s in students:
+        result.append({
+            "db_id": s.id,
+            "student_id": s.student_id,
+            "full_name": s.full_name,
+            "grade": s.grade,
+            "room": s.room,
+            "already_checked_in": s.id in checked_in_ids,
+        })
+
+    return {"students": result, "session_name": session.name, "activity_name": session.activity.name}
 
 
 # ─── Student Attendance History ───────────────────────────────────────
@@ -883,6 +954,7 @@ async def reports_page(
 
 @router.get("/reports/export")
 async def export_attendance(
+    request: Request,
     session_id: int = Query(0),
     activity_id: int = Query(0),
     grade: str = Query(""),
@@ -949,6 +1021,8 @@ async def export_attendance(
                 status_text = "Present"
                 checkin_time = rec.checked_in_at.strftime("%H:%M:%S") if rec.checked_in_at else "-"
                 method = rec.checked_in_method
+                if method == "admin_manual":
+                    method = "QR Scan" if request.cookies.get("app_language", "th") == "en" else "สแกน QR"
                 present_count += 1
             else:
                 status_text = "Not Checked In"

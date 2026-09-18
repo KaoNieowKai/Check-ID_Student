@@ -29,9 +29,20 @@
 </div>
 
 {% if selected_session %}
-<div class="section-header" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;">
+<div class="section-header" style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
     <h3>{{ selected_session.name }} — {{ selected_session.date|to_bangkok_date }}</h3>
-    <span class="badge" style="font-size: 14px; padding: 6px 14px;"><span data-i18n="found_records">พบข้อมูล</span> {{ records|length }} <span data-i18n="records_unit">รายการ</span></span>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="badge" style="font-size: 14px; padding: 6px 14px;"><span data-i18n="found_records">พบข้อมูล</span> {{ records|length }} <span data-i18n="records_unit">รายการ</span></span>
+        <button class="btn btn-primary btn-sm" onclick="openAddStudentModal({{ selected_session.id }}, '{{ selected_session.name }}', '{{ selected_session.activity.name }}')" id="addStudentBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="margin-right:4px;vertical-align:middle">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="8.5" cy="7" r="4"/>
+                <line x1="20" y1="8" x2="20" y2="14"/>
+                <line x1="23" y1="11" x2="17" y2="11"/>
+            </svg>
+            <span data-i18n="btn_add_student">เพิ่มรายชื่อนักเรียน</span>
+        </button>
+    </div>
 </div>
 
 <div class="table-container">
@@ -60,6 +71,8 @@
                 <td>
                     {% if rec.checked_in_method == 'qr' %}
                     <span class="badge" style="background: var(--primary-bg); color: var(--primary);" data-i18n="method_qr">สแกน QR</span>
+                    {% elif rec.checked_in_method == 'admin_manual' %}
+                    <span class="badge" style="background: var(--primary-bg); color: var(--primary);" data-i18n="method_admin_manual">QR</span>
                     {% elif rec.checked_in_method == 'manual' %}
                     <span class="badge" style="background: var(--surface); color: var(--text-muted);" data-i18n="method_manual">โดยครูผู้สอน</span>
                     {% else %}
@@ -79,7 +92,7 @@
 </div>
 {% endif %}
 
-<!-- Correct Attendance Modal -->
+<!-- ── Correct Attendance Modal ───────────────────── -->
 <div class="modal-overlay" id="correctModal" style="display:none">
     <div class="modal-card">
         <h3 data-i18n="modal_correct_title">แก้ไขสถานะการเช็คชื่อ</h3>
@@ -102,10 +115,87 @@
         </form>
     </div>
 </div>
+
+<!-- ── Add Student Modal (Step 1: Search) ────────── -->
+<div class="modal-overlay" id="addStudentModal" style="display:none">
+    <div class="modal-card" style="max-width: 560px; width: 95%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0;">เพิ่มรายชื่อนักเรียน</h3>
+            <button type="button" onclick="closeAddStudentModal()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-muted);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+        <p id="addModalSessionLabel" style="color:var(--text-muted);font-size:13px;margin-bottom:16px;"></p>
+
+        <!-- Search box -->
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+            <input type="text" id="studentSearchInput" class="form-input-sm" placeholder="ค้นหารหัสนักเรียน หรือชื่อ-นามสกุล..." style="flex:1;font-size:14px;"
+                   oninput="debounceSearch()" autocomplete="off">
+            <button class="btn btn-primary btn-sm" onclick="searchStudents()">ค้นหา</button>
+        </div>
+
+        <!-- Results -->
+        <div id="searchResultsArea" style="max-height:320px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-sm);">
+            <div id="searchPlaceholder" style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="32" height="32" style="margin-bottom:8px;display:block;margin-left:auto;margin-right:auto;opacity:0.4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                พิมพ์รหัสนักเรียน หรือชื่อ เพื่อค้นหา
+            </div>
+            <div id="searchResults" style="display:none;"></div>
+            <div id="searchLoading" style="display:none;text-align:center;padding:24px;color:var(--text-muted);">กำลังค้นหา...</div>
+            <div id="searchEmpty" style="display:none;text-align:center;padding:24px;color:var(--text-muted);">ไม่พบนักเรียนที่ตรงกัน</div>
+        </div>
+
+        <div class="form-actions" style="margin-top:16px;">
+            <button type="button" class="btn btn-outline" onclick="closeAddStudentModal()">ยกเลิก</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Add Student Modal (Step 2: Confirm) ────────── -->
+<div class="modal-overlay" id="confirmAddModal" style="display:none">
+    <div class="modal-card" style="max-width:460px;width:95%;">
+        <h3 style="margin-bottom:20px;">ยืนยันการเพิ่มรายชื่อ</h3>
+        <div style="background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:20px;border:1px solid var(--border);">
+            <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:10px;">
+                <span style="font-size:13px;color:var(--text-muted);min-width:80px;">นักเรียน:</span>
+                <span id="confirmStudentName" style="font-weight:600;"></span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:10px;">
+                <span style="font-size:13px;color:var(--text-muted);min-width:80px;">รหัส:</span>
+                <span id="confirmStudentId"></span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:10px;">
+                <span style="font-size:13px;color:var(--text-muted);min-width:80px;">ระดับชั้น:</span>
+                <span id="confirmStudentGrade"></span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:baseline;">
+                <span style="font-size:13px;color:var(--text-muted);min-width:80px;">กิจกรรม:</span>
+                <span id="confirmActivityName" style="font-weight:600;color:var(--primary);"></span>
+            </div>
+        </div>
+        <p style="font-size:14px;color:var(--text-muted);margin-bottom:20px;">ต้องการเพิ่มนักเรียนคนนี้เป็นผู้เข้าร่วมกิจกรรมหรือไม่?</p>
+        <div id="confirmErrorMsg" style="display:none;color:var(--danger);background:#fef2f2;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:12px;font-size:13px;"></div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-outline" onclick="backToSearch()" id="confirmCancelBtn">ยกเลิก</button>
+            <button type="button" class="btn btn-primary" onclick="submitManualAdd()" id="confirmSubmitBtn">ยืนยัน</button>
+        </div>
+    </div>
+</div>
+
+<!-- ── Success Toast ──────────────────────────────── -->
+<div id="successToast" style="
+    display:none;position:fixed;bottom:28px;right:28px;z-index:9999;
+    background:linear-gradient(135deg,#10b981,#059669);color:white;
+    padding:14px 22px;border-radius:12px;font-weight:600;font-size:14px;
+    box-shadow:0 8px 24px rgba(16,185,129,0.35);
+    animation:slideUp .3s ease;">
+    ✓ <span id="successToastMsg">เพิ่มรายชื่อนักเรียนเรียบร้อยแล้ว</span>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+/* ─── Correct Attendance ─────────────────────────── */
 function loadSessions(activityId) {
     if (!activityId) return;
     fetch('/admin/api/sessions/' + activityId)
@@ -122,10 +212,189 @@ function loadSessions(activityId) {
             if (typeof applyTranslations === 'function') applyTranslations();
         });
 }
+
 function correctAttendance(id, currentStatus) {
     document.getElementById('correctModal').style.display = 'flex';
     document.getElementById('correctForm').action = '/admin/attendance/' + id + '/correct';
     document.getElementById('correctStatus').value = currentStatus;
 }
+
+/* ─── Add Student Modal ──────────────────────────── */
+let _currentSessionId = null;
+let _currentSessionName = '';
+let _currentActivityName = '';
+let _selectedStudent = null;
+let _searchDebounce = null;
+
+function openAddStudentModal(sessionId, sessionName, activityName) {
+    _currentSessionId = sessionId;
+    _currentSessionName = sessionName;
+    _currentActivityName = activityName;
+    _selectedStudent = null;
+    document.getElementById('studentSearchInput').value = '';
+    document.getElementById('searchResults').innerHTML = '';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('searchPlaceholder').style.display = 'block';
+    document.getElementById('searchEmpty').style.display = 'none';
+    document.getElementById('searchLoading').style.display = 'none';
+    document.getElementById('addModalSessionLabel').textContent = activityName + ' — ' + sessionName;
+    document.getElementById('addStudentModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('studentSearchInput').focus(), 100);
+}
+
+function closeAddStudentModal() {
+    document.getElementById('addStudentModal').style.display = 'none';
+}
+
+function debounceSearch() {
+    clearTimeout(_searchDebounce);
+    const q = document.getElementById('studentSearchInput').value.trim();
+    if (q.length < 1) {
+        document.getElementById('searchResults').style.display = 'none';
+        document.getElementById('searchPlaceholder').style.display = 'block';
+        document.getElementById('searchEmpty').style.display = 'none';
+        return;
+    }
+    _searchDebounce = setTimeout(() => searchStudents(), 350);
+}
+
+async function searchStudents() {
+    const q = document.getElementById('studentSearchInput').value.trim();
+    if (!_currentSessionId) return;
+
+    document.getElementById('searchPlaceholder').style.display = 'none';
+    document.getElementById('searchEmpty').style.display = 'none';
+    document.getElementById('searchResults').style.display = 'none';
+    document.getElementById('searchLoading').style.display = 'block';
+
+    try {
+        const res = await fetch(`/admin/attendance/students-search?session_id=${_currentSessionId}&q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        document.getElementById('searchLoading').style.display = 'none';
+
+        if (!data.students || data.students.length === 0) {
+            document.getElementById('searchEmpty').style.display = 'block';
+            return;
+        }
+
+        const container = document.getElementById('searchResults');
+        container.innerHTML = '';
+        data.students.forEach(s => {
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);gap:10px;';
+            if (s.already_checked_in) {
+                row.style.background = '#f9fafb';
+            }
+            row.innerHTML = `
+                <div>
+                    <div style="font-weight:600;font-size:14px;">${s.full_name}</div>
+                    <div style="font-size:12px;color:var(--text-muted);">รหัส: ${s.student_id} &nbsp;|&nbsp; ${s.grade}/${s.room}</div>
+                </div>
+                <div>
+                ${s.already_checked_in
+                    ? `<span class="badge" style="background:#d1fae5;color:#065f46;font-size:11px;">เช็คชื่อแล้ว</span>`
+                    : `<button class="btn btn-primary btn-sm" onclick="selectStudent(${s.db_id},'${escHtml(s.full_name)}','${s.student_id}','${s.grade}','${s.room}')">เลือก</button>`
+                }
+                </div>`;
+            container.appendChild(row);
+        });
+        container.style.display = 'block';
+    } catch(e) {
+        document.getElementById('searchLoading').style.display = 'none';
+        document.getElementById('searchEmpty').style.display = 'block';
+        document.getElementById('searchEmpty').textContent = 'เกิดข้อผิดพลาดในการค้นหา';
+    }
+}
+
+function escHtml(str) {
+    return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+function selectStudent(dbId, fullName, studentId, grade, room) {
+    _selectedStudent = { db_id: dbId, full_name: fullName, student_id: studentId, grade, room };
+    document.getElementById('addStudentModal').style.display = 'none';
+    document.getElementById('confirmStudentName').textContent = fullName;
+    document.getElementById('confirmStudentId').textContent = studentId;
+    document.getElementById('confirmStudentGrade').textContent = grade + '/' + room;
+    document.getElementById('confirmActivityName').textContent = _currentActivityName + ' — ' + _currentSessionName;
+    document.getElementById('confirmErrorMsg').style.display = 'none';
+    document.getElementById('confirmSubmitBtn').disabled = false;
+    document.getElementById('confirmSubmitBtn').textContent = 'ยืนยัน';
+    document.getElementById('confirmAddModal').style.display = 'flex';
+}
+
+function backToSearch() {
+    document.getElementById('confirmAddModal').style.display = 'none';
+    document.getElementById('addStudentModal').style.display = 'flex';
+}
+
+async function submitManualAdd() {
+    if (!_selectedStudent || !_currentSessionId) return;
+
+    const btn = document.getElementById('confirmSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'กำลังบันทึก...';
+
+    const formData = new FormData();
+    formData.append('session_id', _currentSessionId);
+    formData.append('student_db_id', _selectedStudent.db_id);
+
+    try {
+        const res = await fetch('/admin/attendance/manual-add', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+            document.getElementById('confirmAddModal').style.display = 'none';
+            showSuccessToast(data.message || 'เพิ่มรายชื่อนักเรียนเรียบร้อยแล้ว');
+            // Reload page after brief delay to show updated list
+            setTimeout(() => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('session_id', _currentSessionId);
+                window.location.href = url.toString();
+            }, 1200);
+        } else {
+            const errEl = document.getElementById('confirmErrorMsg');
+            errEl.textContent = data.message || 'เกิดข้อผิดพลาด';
+            errEl.style.display = 'block';
+            btn.disabled = false;
+            btn.textContent = 'ยืนยัน';
+        }
+    } catch(e) {
+        const errEl = document.getElementById('confirmErrorMsg');
+        errEl.textContent = 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'ยืนยัน';
+    }
+}
+
+function showSuccessToast(msg) {
+    const toast = document.getElementById('successToast');
+    document.getElementById('successToastMsg').textContent = msg;
+    toast.style.display = 'block';
+    setTimeout(() => toast.style.display = 'none', 3500);
+}
+
+/* Close modals on overlay click */
+document.getElementById('correctModal')?.addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+});
+document.getElementById('addStudentModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeAddStudentModal();
+});
+document.getElementById('confirmAddModal')?.addEventListener('click', function(e) {
+    if (e.target === this) document.getElementById('confirmAddModal').style.display = 'none';
+});
+
+/* Enter key in search box */
+document.getElementById('studentSearchInput')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); searchStudents(); }
+});
 </script>
+<style>
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+</style>
 {% endblock %}
