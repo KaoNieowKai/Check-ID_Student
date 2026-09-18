@@ -2,8 +2,13 @@
 
 import os
 from dotenv import load_dotenv
+from zoneinfo import ZoneInfo
+from datetime import datetime
 
 load_dotenv()
+
+def get_bkk_time():
+    return datetime.now(ZoneInfo("Asia/Bangkok")).replace(tzinfo=None)
 
 
 class Settings:

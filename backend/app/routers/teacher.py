@@ -11,7 +11,7 @@ from sqlalchemy import func, or_, cast, Integer
 from app.database import get_db, SessionLocal
 from app.models import User, Student, Activity, ActivitySession, AttendanceRecord, QRToken
 from app.auth import require_teacher
-from app.config import settings
+from app.config import settings, get_bkk_time
 from app.websocket import manager
 from app.templating import templates
 import qrcode
@@ -91,7 +91,7 @@ async def generate_qr(session_id: int, request: Request, db: Session = Depends(g
 
     # Generate cryptographically random token
     token = secrets.token_urlsafe(32)
-    now = datetime.utcnow()
+    now = get_bkk_time()
     expires = now + timedelta(seconds=settings.QR_TOKEN_EXPIRE_SECONDS)
 
     qr_token = QRToken(

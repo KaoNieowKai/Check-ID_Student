@@ -14,6 +14,7 @@ from openpyxl import Workbook, load_workbook
 from app.database import get_db
 from app.models import User, Student, Activity, ActivitySession, AttendanceRecord, AuditLog
 from app.auth import require_admin, hash_password
+from app.config import get_bkk_time
 from app.templating import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -831,7 +832,7 @@ async def attendance_manual_add(
         session_id=session_id,
         status="present",
         checked_in_method="manual",
-        checked_in_at=datetime.utcnow(),
+        checked_in_at=get_bkk_time(),
     )
     db.add(record)
     db.commit()
@@ -1016,7 +1017,7 @@ async def export_attendance(
     wb.save(output)
     output.seek(0)
 
-    filename = f"attendance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    filename = f"attendance_report_{get_bkk_time().strftime('%Y%m%d_%H%M%S')}.xlsx"
     return StreamingResponse(
         output,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
