@@ -3,7 +3,7 @@
    ══════════════════════════════════════════════ */
 
 .student-page {
-    background: linear-gradient(135deg, #0F172A 0%, #1E293B 50%, #312E81 100%);
+    background: linear-gradient(135deg, var(--primary-bg) 0%, var(--accent-bg) 50%, var(--primary-bg) 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -22,24 +22,18 @@
     margin-bottom: 32px;
 }
 .checkin-logo {
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    border-radius: 20px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 16px;
-    color: white;
-    box-shadow: 0 8px 32px rgba(79, 70, 229, 0.4);
 }
 .checkin-header h1 {
     font-size: 24px;
     font-weight: 800;
-    color: white;
+    color: var(--text);
 }
 .session-label {
-    color: rgba(255,255,255,0.5);
+    color: var(--text-secondary);
     font-size: 14px;
     margin-top: 4px;
 }
@@ -95,8 +89,8 @@
     transform: scale(0.97);
 }
 .grade-btn.selected {
-    border-color: var(--primary);
-    background: var(--primary);
+    border-color: var(--accent);
+    background: var(--accent);
     color: white;
 }
 

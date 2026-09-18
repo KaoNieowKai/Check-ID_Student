@@ -41,7 +41,6 @@
     font-weight: 700;
     color: white;
 }
-.sidebar-logo svg { color: var(--accent-light); }
 
 .sidebar-nav {
     flex: 1;
