@@ -28,7 +28,7 @@ ROLE_THAI = {
 
 
 def _ensure_bangkok_dt(val):
-    """Convert naive UTC datetime or ISO string to Asia/Bangkok datetime."""
+    """Convert aware datetime or ISO string to Asia/Bangkok datetime. Naive datetimes are assumed to be already in BKK time."""
     if not val:
         return None
     if isinstance(val, str):
@@ -37,10 +37,9 @@ def _ensure_bangkok_dt(val):
         except Exception:
             return None
     if isinstance(val, datetime):
-        if val.tzinfo is None:
-            # Naive datetimes stored in SQLite are UTC
-            val = val.replace(tzinfo=UTC_TZ)
-        return val.astimezone(BANGKOK_TZ)
+        if val.tzinfo is not None:
+            val = val.astimezone(BANGKOK_TZ)
+        return val
     return None
 
 
