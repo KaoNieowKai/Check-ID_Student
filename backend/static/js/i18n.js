@@ -771,10 +771,24 @@ function translateDynamicPatterns(text) {
     return text;
 }
 
+// Guard flag to prevent re-entrant translation calls (fixes infinite loop with MutationObserver)
+let _isTranslating = false;
+// Reference to the MutationObserver so we can disconnect/reconnect around DOM mutations
+let _domObserver = null;
+
 /**
  * Apply translations to DOM
+ * Disconnects the MutationObserver before making changes, then reconnects after,
+ * preventing the observer from triggering itself in an infinite loop.
  */
 function applyTranslations() {
+    if (_isTranslating) return;  // re-entrancy guard
+    _isTranslating = true;
+
+    // Pause the observer so our DOM writes don't retrigger it
+    if (_domObserver) _domObserver.disconnect();
+
+    try {
     // 1. Elements with explicit data-i18n
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.getAttribute('data-i18n');
@@ -898,6 +912,13 @@ function applyTranslations() {
             .replace('Attendance System', 'ระบบเช็คชื่อ')
             .replace('Not Checked In', 'รายชื่อที่ยังไม่เช็คชื่อ');
     }
+    } finally {
+        // Always restore observer and clear guard — even if translation threw
+        _isTranslating = false;
+        if (_domObserver) {
+            _domObserver.observe(document.body, { childList: true, subtree: true });
+        }
+    }
 }
 
 /**
@@ -935,24 +956,37 @@ function initI18n() {
     });
     setLanguage(currentLang);
 
+    // Debounce timer for observer — batches rapid DOM mutations into one translation pass
+    let _observerTimer = null;
+
     // Watch for dynamic DOM changes (e.g. AJAX loaded sessions or checkin steps)
-    const observer = new MutationObserver((mutations) => {
-        let shouldTranslate = false;
+    // IMPORTANT: applyTranslations() disconnects this observer before writing to the DOM
+    // and reconnects it afterwards, preventing the infinite loop that caused the freeze.
+    _domObserver = new MutationObserver((mutations) => {
+        // If we are currently inside applyTranslations(), ignore — the observer is
+        // already disconnected there, but as a safety belt skip anyway.
+        if (_isTranslating) return;
+
+        let hasNewNodes = false;
         for (const m of mutations) {
-            if (m.addedNodes.length > 0) {
-                const isSwitcher = Array.from(m.addedNodes).some(n => n.classList && n.classList.contains('lang-switcher'));
-                if (!isSwitcher) {
-                    shouldTranslate = true;
-                    break;
-                }
+            for (const node of m.addedNodes) {
+                // Ignore text-only nodes and lang-switcher injections
+                if (node.nodeType !== Node.ELEMENT_NODE) continue;
+                if (node.classList && node.classList.contains('lang-switcher')) continue;
+                hasNewNodes = true;
+                break;
             }
+            if (hasNewNodes) break;
         }
-        if (shouldTranslate && currentLang === 'en') {
-            applyTranslations();
+
+        if (hasNewNodes && currentLang === 'en') {
+            // Debounce: wait 50 ms before translating to batch multiple simultaneous DOM insertions
+            clearTimeout(_observerTimer);
+            _observerTimer = setTimeout(() => { applyTranslations(); }, 50);
         }
     });
 
-    observer.observe(document.body, { childList: true, subtree: true });
+    _domObserver.observe(document.body, { childList: true, subtree: true });
 }
 
 if (document.readyState === 'loading') {
