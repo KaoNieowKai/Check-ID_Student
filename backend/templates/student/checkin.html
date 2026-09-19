@@ -49,8 +49,8 @@
             <button class="btn-link" onclick="backToStep1()" data-i18n="change">Change</button>
         </p>
         <div class="id-input-group">
-            <input type="text" id="studentIdInput" inputmode="numeric" pattern="[0-9]*"
-                   data-i18n-placeholder="enter_student_id" placeholder="Enter your Student ID" maxlength="10" autofocus>
+            <input type="text" id="studentIdInput" inputmode="numeric" pattern="[0-9]{5}"
+                   data-i18n-placeholder="enter_student_id" placeholder="Enter your Student ID" maxlength="5" autofocus>
         </div>
         <button class="btn btn-primary btn-xl btn-block" onclick="verifyStudent()" id="verifyBtn">
             <span data-i18n="verify_student">Verify Student</span>
@@ -101,7 +101,7 @@
             </div>
             <div class="success-actions" style="margin-top: 20px;">
                 <button class="btn btn-primary btn-xl btn-block" onclick="downloadEvidence()" id="downloadEvidenceBtn">
-                    <span data-i18n="save_evidence">บันทึกภาพหลักฐาน</span>
+                    <span data-i18n="save_evidence">บันทึกภาพการเช็คชื่อ</span>
                 </button>
                 <button class="btn btn-outline btn-block" onclick="finishCheckin()" style="margin-top: 10px;">
                     <span data-i18n="finish">เสร็จสิ้น</span>
@@ -145,6 +145,17 @@
             </svg>
             เช็กชื่อสำเร็จ
         </div>
+    </div>
+
+    <!-- iOS Fallback Modal -->
+    <div id="iosImageModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; padding: 20px;">
+        <p style="color: white; text-align: center; margin-bottom: 20px; font-size: 16px; font-family: 'Prompt', sans-serif;">
+            กดค้างที่รูปภาพแล้วเลือก <strong>"บันทึกรูปภาพ"</strong> เพื่อเก็บภาพการเช็คชื่อ
+        </p>
+        <img id="iosImagePreview" style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" />
+        <button class="btn btn-primary" style="margin-top: 30px;" onclick="document.getElementById('iosImageModal').style.display = 'none'">
+            ปิดหน้าต่าง
+        </button>
     </div>
 
     {% else %}
@@ -201,6 +212,11 @@ async function verifyStudent() {
     const studentId = document.getElementById('studentIdInput').value.trim();
     if (!studentId) {
         showError(t('err_enter_id', 'กรุณากรอกรหัสนักเรียน'));
+        return;
+    }
+
+    if (studentId.length !== 5) {
+        showError(t('err_invalid_id', 'กรุณากรอกรหัสนักเรียน 5 หลัก'));
         return;
     }
 
@@ -300,7 +316,7 @@ async function downloadEvidence() {
     const btn = document.getElementById('downloadEvidenceBtn');
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<span data-i18n="saving_evidence">' + t('saving_evidence', 'กำลังสร้างหลักฐาน...') + '</span>';
+    btn.innerHTML = '<span data-i18n="saving_evidence">' + t('saving_evidence', 'กำลังเตรียมภาพ...') + '</span>';
 
     try {
         if (typeof html2canvas === 'undefined') {
@@ -328,31 +344,71 @@ async function downloadEvidence() {
             logging: false
         });
         
-        const imageStr = canvas.toDataURL('image/png');
-        
-        const a = document.createElement('a');
-        a.href = imageStr;
-        a.download = `Attendance_${verifiedStudent.student.student_id}.png`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        
-        btn.innerHTML = '<span data-i18n="evidence_saved">' + t('evidence_saved', 'บันทึกภาพหลักฐานแล้ว') + '</span>';
-        
-        setTimeout(() => {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-                if (typeof applyTranslations === 'function') applyTranslations();
+        canvas.toBlob(async function(blob) {
+            const filename = `Attendance_${verifiedStudent.student.student_id}.png`;
+            const imageStr = canvas.toDataURL('image/png');
+            let shared = false;
+            
+            // Try Web Share API with File
+            if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: 'image/png' })] })) {
+                try {
+                    await navigator.share({
+                        files: [new File([blob], filename, { type: 'image/png' })],
+                        title: 'บันทึกภาพการเช็คชื่อ',
+                    });
+                    shared = true;
+                } catch (e) {
+                    if (e.name !== 'AbortError') {
+                        console.error('Share failed', e);
+                    } else {
+                        // User cancelled sharing
+                        resetBtn(btn, originalText);
+                        return;
+                    }
+                }
             }
-        }, 3000);
+            
+            if (!shared) {
+                // Fallback
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                if (isIOS) {
+                    // Show modal with the image for manual save
+                    const modal = document.getElementById('iosImageModal');
+                    const imgPreview = document.getElementById('iosImagePreview');
+                    imgPreview.src = imageStr;
+                    modal.style.display = 'flex';
+                } else {
+                    // Normal download for Android/Desktop
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    setTimeout(() => URL.revokeObjectURL(url), 100);
+                }
+            }
+            
+            btn.innerHTML = '<span data-i18n="evidence_saved">' + t('evidence_saved', 'บันทึกภาพการเช็คชื่อแล้ว') + '</span>';
+            resetBtn(btn, originalText);
+        }, 'image/png');
+        
     } catch (err) {
         console.error("Error generating evidence", err);
-        alert(t('err_gen_evidence', 'เกิดข้อผิดพลาดในการสร้างภาพหลักฐาน'));
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        if (typeof applyTranslations === 'function') applyTranslations();
+        alert(t('err_gen_evidence', 'เกิดข้อผิดพลาดในการสร้างภาพการเช็คชื่อ'));
+        resetBtn(btn, originalText);
     }
+}
+
+function resetBtn(btn, originalText) {
+    setTimeout(() => {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            if (typeof applyTranslations === 'function') applyTranslations();
+        }
+    }, 3000);
 }
 
 function finishCheckin() {
