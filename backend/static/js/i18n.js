@@ -305,6 +305,7 @@ const I18N_DICTIONARY = {
         'ph_search_not_checked': 'ค้นหาด้วยชื่อหรือรหัสนักเรียน...',
         'remaining_prefix': 'เหลืออีก',
         'not_checked_in_unit': 'คนที่ยังไม่เช็คชื่อ',
+        'attendance_list': 'รายชื่อผู้เข้าร่วม',
 
         // Student Interface
         'checkin_title': 'ระบบเช็คชื่อเข้าร่วมกิจกรรม',
@@ -623,6 +624,7 @@ const I18N_DICTIONARY = {
         'ph_search_not_checked': 'Search by name or student ID...',
         'remaining_prefix': 'Remaining',
         'not_checked_in_unit': 'students not checked in',
+        'attendance_list': 'Attendance List',
 
         // Student Interface
         'checkin_title': 'Attendance Check-In',
