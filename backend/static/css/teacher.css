@@ -195,7 +195,7 @@
 
 .stat-total .stat-number { color: var(--primary); }
 .stat-present .stat-number { color: var(--success); }
-.stat-absent .stat-number { color: var(--warning); }
+.stat-absent .stat-number { color: var(--danger); }
 .stat-percentage .stat-number { color: var(--accent); }
 
 .stat-flash {
