@@ -260,6 +260,7 @@ async def confirm_attendance(
         "success": True,
         "message": "บันทึกการเข้าร่วมเรียบร้อยแล้ว!",
         "checked_in_at": now.strftime("%H:%M:%S"),
+        "checked_in_date": now.strftime("%d/%m/%Y"),
         "student": {
             "student_id": student.student_id,
             "full_name": student.full_name,
