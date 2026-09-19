@@ -13,10 +13,7 @@
     </div>
     <div class="checkin-header">
         <div class="checkin-logo">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="36" height="36">
-                <polyline points="9 11 12 14 22 4"/>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-            </svg>
+            <img src="/static/images/logo_NP.png" alt="Logo" class="logo-img" width="48" height="48" style="object-fit: contain;">
         </div>
         <h1 data-i18n="checkin_title">Attendance Check-In</h1>
         {% if session_info %}
@@ -32,7 +29,7 @@
             <line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
         <p>{{ error }}</p>
-        <p class="error-hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
+        <p class="error-hint" data-i18n="scan_qr_hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
     </div>
     {% elif session_info %}
     <!-- Step 1: Grade Selection -->
@@ -102,6 +99,14 @@
                 <p id="successName"></p>
                 <p id="successTime"></p>
             </div>
+            <div class="success-actions" style="margin-top: 20px;">
+                <button class="btn btn-primary btn-xl btn-block" onclick="downloadEvidence()" id="downloadEvidenceBtn">
+                    <span data-i18n="save_evidence">บันทึกภาพหลักฐาน</span>
+                </button>
+                <button class="btn btn-outline btn-block" onclick="finishCheckin()" style="margin-top: 10px;">
+                    <span data-i18n="finish">เสร็จสิ้น</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -111,8 +116,35 @@
             <circle cx="12" cy="12" r="10"/>
             <polyline points="12 6 12 12 16 14"/>
         </svg>
-        <p>การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่</p>
-        <p class="error-hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
+        <p data-i18n="session_expired_title">การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่</p>
+        <p class="error-hint" data-i18n="scan_qr_hint">กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู</p>
+    </div>
+
+    <!-- Evidence Card (Hidden, used for generating image) -->
+    <div id="evidenceCard" style="position: absolute; left: -9999px; top: -9999px; background: white; padding: 30px; width: 400px; border-radius: 12px; font-family: 'Prompt', sans-serif; color: #333;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="/static/images/logo_NP.png" alt="Logo" style="width: 80px; height: 80px; object-fit: contain; margin-bottom: 10px;" crossorigin="anonymous">
+            <h2 style="margin: 0; color: #2c3e50; font-size: 24px;">บันทึกการเช็คชื่อ</h2>
+        </div>
+        <div style="margin-bottom: 20px; border-top: 2px dashed #eee; padding-top: 20px;">
+            <p style="margin: 5px 0;"><strong>กิจกรรม:</strong> <span id="evActivity">{% if session_info %}{{ session_info.activity_name }}{% endif %}</span></p>
+            <p style="margin: 5px 0;"><strong>รอบกิจกรรม:</strong> <span id="evSession">{% if session_info %}{{ session_info.session_name }}{% endif %}</span></p>
+            <p style="margin: 5px 0;"><strong>ชื่อ:</strong> <span id="evName"></span></p>
+            <p style="margin: 5px 0;"><strong>รหัสนักเรียน:</strong> <span id="evStudentId"></span></p>
+            <p style="margin: 5px 0;"><strong>ชั้น/ห้อง:</strong> <span id="evGradeRoom"></span></p>
+        </div>
+        <div style="margin-bottom: 20px; border-top: 2px dashed #eee; padding-top: 20px;">
+            <p style="margin: 5px 0;"><strong>วันที่:</strong> <span id="evDate"></span></p>
+            <p style="margin: 5px 0;"><strong>เวลา:</strong> <span id="evTime"></span></p>
+            <p style="margin: 5px 0;"><strong>วิธีการ:</strong> สแกน QR</p>
+        </div>
+        <div style="text-align: center; color: #27ae60; font-weight: bold; font-size: 20px; border-top: 2px dashed #eee; padding-top: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" width="28" height="28">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            เช็กชื่อสำเร็จ
+        </div>
     </div>
 
     {% else %}
@@ -122,7 +154,7 @@
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
         </svg>
-        <p>กรุณาสแกน QR Code เพื่อเช็คชื่อ</p>
+        <p data-i18n="scan_qr_prompt">กรุณาสแกน QR Code เพื่อเช็คชื่อ</p>
     </div>
     {% endif %}
 </div>
@@ -157,9 +189,6 @@ function backToStep2() {
     document.getElementById('step2').style.display = 'block';
 }
 
-/**
- * Show the session-expired full-page error and hide all step panels.
- */
 function showSessionExpired() {
     ['step1', 'step2', 'step3', 'step4'].forEach(id => {
         const el = document.getElementById(id);
@@ -171,13 +200,13 @@ function showSessionExpired() {
 async function verifyStudent() {
     const studentId = document.getElementById('studentIdInput').value.trim();
     if (!studentId) {
-        showError('กรุณากรอกรหัสนักเรียน');
+        showError(t('err_enter_id', 'กรุณากรอกรหัสนักเรียน'));
         return;
     }
 
     const btn = document.getElementById('verifyBtn');
     btn.disabled = true;
-    btn.textContent = 'กำลังตรวจสอบ...';
+    btn.textContent = t('verifying', 'กำลังตรวจสอบ...');
 
     try {
         const formData = new FormData();
@@ -203,11 +232,11 @@ async function verifyStudent() {
             showError(data.message);
         }
     } catch (e) {
-        showError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่');
+        showError(t('err_conn', 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่'));
     }
 
     btn.disabled = false;
-    btn.innerHTML = '<span data-i18n="verify_student">Verify Student</span>';
+    btn.innerHTML = '<span data-i18n="verify_student">' + t('verify_student', 'Verify Student') + '</span>';
     if (typeof applyTranslations === 'function') applyTranslations();
 }
 
@@ -216,7 +245,7 @@ async function confirmAttendance() {
 
     const btn = document.getElementById('confirmBtn');
     btn.disabled = true;
-    btn.textContent = 'กำลังบันทึก...';
+    btn.textContent = t('saving', 'กำลังบันทึก...');
 
     try {
         const formData = new FormData();
@@ -228,7 +257,16 @@ async function confirmAttendance() {
 
         if (data.success) {
             document.getElementById('successName').textContent = data.student.full_name;
-            document.getElementById('successTime').textContent = 'เวลาเช็คชื่อ: ' + data.checked_in_at;
+            document.getElementById('successTime').textContent = t('checkin_time_label', 'เวลาเช็คชื่อ: ') + data.checked_in_at;
+            
+            // Populate Evidence Card
+            document.getElementById('evName').textContent = data.student.full_name;
+            document.getElementById('evStudentId').textContent = data.student.student_id;
+            document.getElementById('evGradeRoom').textContent = `${data.student.grade}/${data.student.room}`;
+            
+            document.getElementById('evDate').textContent = data.checked_in_date || new Date().toLocaleDateString('th-TH');
+            document.getElementById('evTime').textContent = data.checked_in_at;
+
             document.getElementById('step3').style.display = 'none';
             document.getElementById('step4').style.display = 'block';
         } else if (data.session_expired) {
@@ -239,11 +277,11 @@ async function confirmAttendance() {
             document.getElementById('step2').style.display = 'block';
         }
     } catch (e) {
-        showError('เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่');
+        showError(t('err_conn', 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่'));
     }
 
     btn.disabled = false;
-    btn.innerHTML = '<span data-i18n="confirm_checkin">✓ Confirm Attendance</span>';
+    btn.innerHTML = '<span data-i18n="confirm_checkin">' + t('confirm_checkin', '✓ Confirm Attendance') + '</span>';
     if (typeof applyTranslations === 'function') applyTranslations();
 }
 
@@ -254,10 +292,72 @@ function showError(msg) {
     setTimeout(() => el.style.display = 'none', 5000);
 }
 
-// Allow Enter key on student ID input
 document.getElementById('studentIdInput')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') verifyStudent();
 });
+
+async function downloadEvidence() {
+    const btn = document.getElementById('downloadEvidenceBtn');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span data-i18n="saving_evidence">' + t('saving_evidence', 'กำลังสร้างหลักฐาน...') + '</span>';
+
+    try {
+        if (typeof html2canvas === 'undefined') {
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        const card = document.getElementById('evidenceCard');
+        
+        // Wait for image to load to prevent blank logo
+        const logoImg = card.querySelector('img');
+        if (!logoImg.complete) {
+            await new Promise((resolve) => { logoImg.onload = resolve; logoImg.onerror = resolve; });
+        }
+        
+        const canvas = await html2canvas(card, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            logging: false
+        });
+        
+        const imageStr = canvas.toDataURL('image/png');
+        
+        const a = document.createElement('a');
+        a.href = imageStr;
+        a.download = `Attendance_${verifiedStudent.student.student_id}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        
+        btn.innerHTML = '<span data-i18n="evidence_saved">' + t('evidence_saved', 'บันทึกภาพหลักฐานแล้ว') + '</span>';
+        
+        setTimeout(() => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                if (typeof applyTranslations === 'function') applyTranslations();
+            }
+        }, 3000);
+    } catch (err) {
+        console.error("Error generating evidence", err);
+        alert(t('err_gen_evidence', 'เกิดข้อผิดพลาดในการสร้างภาพหลักฐาน'));
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        if (typeof applyTranslations === 'function') applyTranslations();
+    }
+}
+
+function finishCheckin() {
+    window.location.reload();
+}
 </script>
 {% endif %}
 {% endblock %}

@@ -2,21 +2,22 @@
 
 import io
 import json
+import re
 import secrets
 from datetime import datetime, date, time, timedelta
 from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, UploadFile, File, Query, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, or_, and_, desc
+from sqlalchemy import func, or_, and_, desc, cast, Integer
 from openpyxl import Workbook, load_workbook
 from app.database import get_db
 from app.models import User, Student, Activity, ActivitySession, AttendanceRecord, AuditLog
 from app.auth import require_admin, hash_password
+from app.config import get_bkk_time
+from app.templating import templates
 
 router = APIRouter(prefix="/admin", tags=["admin"])
-templates = Jinja2Templates(directory="templates")
 
 VALID_GRADES = ["M.1", "M.2", "M.3", "M.4", "M.5", "M.6"]
 
@@ -82,12 +83,13 @@ async def students_list(
         query = query.filter(Student.room == room)
 
     total = query.count()
-    students = query.order_by(Student.grade, Student.room, Student.student_id).offset(
+    students = query.order_by(Student.grade, cast(Student.room, Integer), Student.student_id).offset(
         (page - 1) * per_page
     ).limit(per_page).all()
 
-    # Get distinct rooms for filter
-    rooms = [r[0] for r in db.query(Student.room).distinct().order_by(Student.room).all()]
+    # Get distinct rooms for filter sorted numerically
+    raw_rooms = [r[0] for r in db.query(Student.room).filter(Student.room != None).distinct().all()]
+    rooms = sorted(raw_rooms, key=lambda x: int(x) if str(x).isdigit() else 99999)
 
     return templates.TemplateResponse("admin/students.html", {
         "request": request, "user": user,
@@ -523,6 +525,7 @@ async def teacher_reset_password(
 async def activities_list(
     request: Request,
     status_filter: str = Query("", alias="status"),
+    error: str = Query(None),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
@@ -530,9 +533,15 @@ async def activities_list(
     if status_filter:
         query = query.filter(Activity.status == status_filter)
     activities = query.all()
+    error_msg = None
+    if error == "cannot_delete_active":
+        error_msg = "ไม่สามารถลบกิจกรรมที่มีรอบกำลังเปิดใช้งานอยู่ได้"
+    elif error:
+        error_msg = error
+
     return templates.TemplateResponse("admin/activities.html", {
         "request": request, "user": user, "activities": activities,
-        "status_filter": status_filter,
+        "status_filter": status_filter, "error": error_msg,
     })
 
 
@@ -610,6 +619,33 @@ async def activity_edit_submit(
     db.commit()
     create_audit_log(db, user.id, "activity_edited", "activity", str(id),
                      previous_value=prev, new_value=json.dumps({"name": name, "status": status}))
+    return RedirectResponse(url="/admin/activities", status_code=303)
+
+
+@router.post("/activities/{id}/delete")
+async def activity_delete(
+    id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    activity = db.query(Activity).filter(Activity.id == id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    # Check for active sessions
+    active = db.query(ActivitySession).filter(
+        ActivitySession.activity_id == id,
+        ActivitySession.status == "active"
+    ).first()
+    if active:
+        return RedirectResponse(url="/admin/activities?error=cannot_delete_active", status_code=303)
+
+    act_name = activity.name
+    db.delete(activity)
+    db.commit()
+    create_audit_log(db, user.id, "activity_deleted", "activity", str(id),
+                     previous_value=json.dumps({"name": act_name}))
     return RedirectResponse(url="/admin/activities", status_code=303)
 
 
@@ -778,34 +814,105 @@ async def attendance_correct(
 async def attendance_manual_add(
     session_id: int = Form(...),
     student_db_id: int = Form(...),
-    reason: str = Form(...),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
-    """Manually add attendance for a student who couldn't check in via QR."""
+    """Manually add attendance for a student who couldn't check in via QR.
+    
+    NOTE: This operation is intentionally NOT logged to the audit log /
+    system usage history. It is a data-management operation only.
+    """
+    from fastapi.responses import JSONResponse
+
     # Check if already exists
     existing = db.query(AttendanceRecord).filter(
         AttendanceRecord.student_id == student_db_id,
         AttendanceRecord.session_id == session_id
     ).first()
     if existing:
-        return RedirectResponse(url=f"/admin/attendance?session_id={session_id}", status_code=303)
+        student = db.query(Student).filter(Student.id == student_db_id).first()
+        return JSONResponse(status_code=409, content={
+            "success": False,
+            "message": "นักเรียนคนนี้เช็คชื่อกิจกรรมนี้แล้ว",
+            "already_exists": True,
+        })
 
     record = AttendanceRecord(
         student_id=student_db_id,
         session_id=session_id,
         status="present",
-        checked_in_method="manual",
-        checked_in_at=datetime.utcnow(),
+        checked_in_method="admin_manual",
+        checked_in_at=get_bkk_time(),
     )
     db.add(record)
     db.commit()
 
     student = db.query(Student).filter(Student.id == student_db_id).first()
-    create_audit_log(db, user.id, "attendance_manual_add", "attendance", str(record.id),
-                     new_value=f"Student {student.student_id}" if student else str(student_db_id),
-                     reason=reason)
-    return RedirectResponse(url=f"/admin/attendance?session_id={session_id}", status_code=303)
+    return JSONResponse(status_code=200, content={
+        "success": True,
+        "message": "เพิ่มรายชื่อนักเรียนเรียบร้อยแล้ว",
+        "student": {
+            "student_id": student.student_id if student else "",
+            "full_name": student.full_name if student else "",
+        }
+    })
+
+
+@router.get("/attendance/students-search")
+async def attendance_students_search(
+    session_id: int = Query(...),
+    q: str = Query(""),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Search for students to manually add to attendance.
+    Returns students who are eligible for the session and NOT yet checked in.
+    """
+    from fastapi.responses import JSONResponse
+
+    # Load session to find eligible grades
+    session = db.query(ActivitySession).options(
+        joinedload(ActivitySession.activity)
+    ).filter(ActivitySession.id == session_id).first()
+    if not session:
+        return JSONResponse(status_code=404, content={"students": []})
+
+    # Get already checked-in student IDs
+    checked_in_ids = [
+        r.student_id for r in
+        db.query(AttendanceRecord.student_id).filter(
+            AttendanceRecord.session_id == session_id
+        ).all()
+    ]
+
+    query = db.query(Student).filter(Student.is_active == True)
+
+    # Filter by eligible grades
+    if session.activity.eligible_grades:
+        grades = [g.strip() for g in session.activity.eligible_grades.split(",")]
+        query = query.filter(Student.grade.in_(grades))
+
+    # Search filter
+    if q and len(q.strip()) >= 1:
+        query = query.filter(
+            or_(Student.student_id.contains(q.strip()),
+                Student.full_name.contains(q.strip()))
+        )
+
+    students = query.order_by(Student.grade, Student.room, Student.student_id).limit(30).all()
+
+    result = []
+    for s in students:
+        result.append({
+            "db_id": s.id,
+            "student_id": s.student_id,
+            "full_name": s.full_name,
+            "grade": s.grade,
+            "room": s.room,
+            "already_checked_in": s.id in checked_in_ids,
+        })
+
+    return {"students": result, "session_name": session.name, "activity_name": session.activity.name}
 
 
 # ─── Student Attendance History ───────────────────────────────────────
@@ -847,6 +954,7 @@ async def reports_page(
 
 @router.get("/reports/export")
 async def export_attendance(
+    request: Request,
     session_id: int = Query(0),
     activity_id: int = Query(0),
     grade: str = Query(""),
@@ -873,7 +981,8 @@ async def export_attendance(
         if not session:
             raise HTTPException(status_code=404)
 
-        ws.title = session.name[:31]  # Excel sheet name limit
+        safe_session_title = re.sub(r'[\\/*?:\[\]]', '_', session.name).strip()[:31] or "Session"
+        ws.title = safe_session_title
 
         # Get all eligible students
         student_query = db.query(Student).filter(Student.is_active == True)
@@ -912,6 +1021,8 @@ async def export_attendance(
                 status_text = "Present"
                 checkin_time = rec.checked_in_at.strftime("%H:%M:%S") if rec.checked_in_at else "-"
                 method = rec.checked_in_method
+                if method in ("admin_manual", "qr"):
+                    method = "QR Scan" if request.cookies.get("app_language", "th") == "en" else "สแกน QR"
                 present_count += 1
             else:
                 status_text = "Not Checked In"
@@ -937,7 +1048,8 @@ async def export_attendance(
             ActivitySession.activity_id == activity_id
         ).order_by(ActivitySession.date).all()
 
-        ws.title = activity.name[:31]
+        safe_activity_title = re.sub(r'[\\/*?:\[\]]', '_', activity.name).strip()[:31] or "Activity"
+        ws.title = safe_activity_title
         ws.append([f"Activity: {activity.name}"])
         ws.append([])
 
@@ -979,7 +1091,7 @@ async def export_attendance(
     wb.save(output)
     output.seek(0)
 
-    filename = f"attendance_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    filename = f"attendance_report_{get_bkk_time().strftime('%Y%m%d_%H%M%S')}.xlsx"
     return StreamingResponse(
         output,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

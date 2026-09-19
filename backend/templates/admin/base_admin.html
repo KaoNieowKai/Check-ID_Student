@@ -11,12 +11,8 @@
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <div class="sidebar-logo">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5"/>
-                    <path d="M2 12l10 5 10-5"/>
-                </svg>
-                <span>Attendance</span>
+                <img src="/static/images/logo_NP.png" alt="Logo" class="logo-img" width="32" height="32" style="object-fit: contain;">
+                <span data-i18n="brand_logo">ระบบเช็คชื่อ</span>
             </div>
         </div>
         <nav class="sidebar-nav">
@@ -25,16 +21,18 @@
                     <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
                     <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
                 </svg>
-                <span data-i18n="nav_dashboard">Dashboard</span>
+                <span data-i18n="nav_dashboard">แดชบอร์ด</span>
             </a>
-            <a href="/admin/students" class="nav-item {% if '/admin/students' in request.url.path and 'import' not in request.url.path %}active{% endif %}">
+
+            <span class="nav-section-title" data-i18n="sec_students">จัดการนักเรียน</span>
+            <a href="/admin/students" class="nav-item {% if request.url.path == '/admin/students' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                     <circle cx="9" cy="7" r="4"/>
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-                <span data-i18n="nav_students">Students</span>
+                <span data-i18n="nav_students">รายชื่อนักเรียน</span>
             </a>
             <a href="/admin/students/import" class="nav-item {% if 'import' in request.url.path %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
@@ -42,15 +40,19 @@
                     <polyline points="17 8 12 3 7 8"/>
                     <line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
-                <span data-i18n="nav_import">Import Excel</span>
+                <span data-i18n="nav_import">นำเข้า Excel</span>
             </a>
+
+            <span class="nav-section-title" data-i18n="sec_teachers">จัดการครู</span>
             <a href="/admin/teachers" class="nav-item {% if '/admin/teachers' in request.url.path %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                     <circle cx="12" cy="7" r="4"/>
                 </svg>
-                <span data-i18n="nav_teachers">Teachers</span>
+                <span data-i18n="nav_teachers">รายชื่อครู</span>
             </a>
+
+            <span class="nav-section-title" data-i18n="sec_activities">จัดการกิจกรรม</span>
             <a href="/admin/activities" class="nav-item {% if '/admin/activities' in request.url.path and '/sessions' not in request.url.path %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -58,15 +60,19 @@
                     <line x1="8" y1="2" x2="8" y2="6"/>
                     <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
-                <span data-i18n="nav_activities">Activities</span>
+                <span data-i18n="nav_activities">รายการกิจกรรม</span>
             </a>
+
+            <span class="nav-section-title" data-i18n="sec_attendance">การเข้าร่วม</span>
             <a href="/admin/attendance" class="nav-item {% if request.url.path == '/admin/attendance' %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <polyline points="9 11 12 14 22 4"/>
                     <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
                 </svg>
-                <span data-i18n="nav_attendance">Attendance</span>
+                <span data-i18n="nav_attendance">จัดการการเข้าร่วม</span>
             </a>
+
+            <span class="nav-section-title" data-i18n="sec_reports">รายงาน</span>
             <a href="/admin/reports" class="nav-item {% if '/admin/reports' in request.url.path %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -74,19 +80,21 @@
                     <line x1="16" y1="13" x2="8" y2="13"/>
                     <line x1="16" y1="17" x2="8" y2="17"/>
                 </svg>
-                <span data-i18n="nav_reports">Reports</span>
+                <span data-i18n="nav_reports">ส่งออก Excel</span>
             </a>
+
+            <span class="nav-section-title" data-i18n="sec_system">ระบบ</span>
             <a href="/admin/audit-logs" class="nav-item {% if '/admin/audit' in request.url.path %}active{% endif %}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                     <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
                 </svg>
-                <span data-i18n="nav_audit_logs">Audit Logs</span>
+                <span data-i18n="nav_audit_logs">บันทึกการใช้งาน</span>
             </a>
         </nav>
         <div class="sidebar-footer">
             <div class="user-info">
                 <span class="user-name">{{ user.display_name }}</span>
-                <span class="user-role">{{ user.role | upper }}</span>
+                <span class="user-role" data-i18n="role_{{ user.role }}">{% if user.role == 'admin' %}ผู้ดูแลระบบ{% else %}ครู{% endif %}</span>
             </div>
             <a href="/logout" class="nav-item logout-link">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
@@ -94,7 +102,7 @@
                     <polyline points="16 17 21 12 16 7"/>
                     <line x1="21" y1="12" x2="9" y2="12"/>
                 </svg>
-                <span data-i18n="nav_logout">Logout</span>
+                <span data-i18n="nav_logout">ออกจากระบบ</span>
             </a>
         </div>
     </aside>

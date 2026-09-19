@@ -1,24 +1,24 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Import Students — Admin{% endblock %}
-{% block page_title %}Import Students from Excel{% endblock %}
+{% block title %}นำเข้าข้อมูลนักเรียน — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_student_import">นำเข้าข้อมูลนักเรียนจากไฟล์ Excel</span>{% endblock %}
 
 {% block content %}
 <div class="import-container">
     {% if summary %}
     <div class="import-summary">
         <div class="summary-card summary-success">
-            <h3>Import Complete</h3>
+            <h3 data-i18n="import_complete_title">นำเข้าข้อมูลสำเร็จ</h3>
             <div class="summary-stats">
                 <div class="summary-stat">
                     <span class="stat-number">{{ summary.imported }}</span>
-                    <span class="stat-label">New Students Imported</span>
+                    <span class="stat-label" data-i18n="stat_imported">เพิ่มนักเรียนใหม่</span>
                 </div>
                 <div class="summary-stat">
                     <span class="stat-number">{{ summary.updated }}</span>
-                    <span class="stat-label">Existing Students Updated</span>
+                    <span class="stat-label" data-i18n="stat_updated">อัปเดตข้อมูลนักเรียนเดิม</span>
                 </div>
             </div>
-            <a href="/admin/students" class="btn btn-primary">View Students</a>
+            <a href="/admin/students" class="btn btn-primary" data-i18n="btn_view_students">ดูรายชื่อนักเรียน</a>
         </div>
     </div>
     {% endif %}
@@ -26,11 +26,11 @@
     {% if not preview and not summary %}
     <div class="import-upload">
         <div class="upload-info">
-            <h3>Upload Excel File</h3>
-            <p>Upload a <code>.xlsx</code> file containing student data. The system supports:</p>
+            <h3 data-i18n="upload_excel_title">อัปโหลดไฟล์ Excel</h3>
+            <p data-i18n="upload_excel_desc">อัปโหลดไฟล์ <code>.xlsx</code> ที่มีข้อมูลนักเรียน โดยระบบรองรับโครงสร้างดังนี้:</p>
             <ul>
-                <li>Single sheet with columns: <code>student_id</code>, <code>full_name</code>, <code>grade</code>, <code>room</code></li>
-                <li>Multiple sheets named by grade (e.g., M.1, M.2, ...) with columns: <code>student_id</code>, <code>full_name</code>, <code>room</code></li>
+                <li data-i18n="upload_single_sheet">แผ่นงานเดียว: ประกอบด้วยคอลัมน์ student_id, full_name, grade, room</li>
+                <li data-i18n="upload_multi_sheet">หลายแผ่นงาน (แยกตามระดับชั้น): ตั้งชื่อแผ่นงานตามระดับชั้น (เช่น M.1, M.2, ...) ประกอบด้วยคอลัมน์ student_id, full_name, room</li>
             </ul>
             <a href="/admin/students/template" class="btn btn-outline btn-sm">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
@@ -38,7 +38,7 @@
                     <polyline points="7 10 12 15 17 10"/>
                     <line x1="12" y1="15" x2="12" y2="3"/>
                 </svg>
-                Download Template
+                <span data-i18n="btn_download_template">ดาวน์โหลดไฟล์ตัวอย่าง</span>
             </a>
         </div>
 
@@ -49,13 +49,13 @@
                     <polyline points="17 8 12 3 7 8"/>
                     <line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
-                <p>Drag & drop your Excel file here, or</p>
-                <label for="fileInput" class="btn btn-primary">Choose File</label>
+                <p data-i18n="drag_drop_text">ลากและวางไฟล์ Excel ของคุณที่นี่ หรือ</p>
+                <label for="fileInput" class="btn btn-primary" data-i18n="btn_choose_file">เลือกไฟล์</label>
                 <input type="file" id="fileInput" name="file" accept=".xlsx,.xls" hidden>
                 <p class="file-name" id="fileName"></p>
             </div>
-            <button type="submit" class="btn btn-primary btn-block" id="uploadBtn" disabled>
-                Upload & Preview
+            <button type="submit" class="btn btn-primary btn-block" id="uploadBtn" disabled data-i18n="btn_upload_preview">
+                อัปโหลดและตรวจสอบข้อมูล
             </button>
         </form>
     </div>
@@ -63,11 +63,11 @@
 
     {% if errors %}
     <div class="import-errors">
-        <h3>⚠️ Errors & Warnings</h3>
+        <h3 data-i18n="errors_warnings">⚠️ ข้อผิดพลาดและคำเตือน</h3>
         <div class="error-list">
             {% for err in errors %}
             <div class="error-item">
-                {% if err.row > 0 %}Row {{ err.row }}: {% endif %}{{ err.message }}
+                {% if err.row > 0 %}<span data-i18n="row_prefix">แถวที่</span> {{ err.row }}: {% endif %}{{ err.message }}
             </div>
             {% endfor %}
         </div>
@@ -77,22 +77,22 @@
     {% if preview %}
     <div class="import-preview">
         <div class="preview-header">
-            <h3>Preview — {{ preview|length }} records found</h3>
+            <h3><span data-i18n="preview_header">ตรวจสอบข้อมูลก่อนนำเข้า</span> — <span data-i18n="found_records">พบ</span> {{ preview|length }} <span data-i18n="records_unit">รายการ</span></h3>
             <div class="preview-stats">
-                <span class="badge badge-success">{{ new_count }} new</span>
-                <span class="badge badge-warning">{{ update_count }} existing (will update)</span>
+                <span class="badge badge-success"><span data-i18n="badge_new">ใหม่</span> {{ new_count }} <span data-i18n="person_unit">คน</span></span>
+                <span class="badge badge-warning"><span data-i18n="badge_existing">อัปเดตข้อมูลเดิม</span> {{ update_count }} <span data-i18n="person_unit">คน</span></span>
             </div>
         </div>
         <div class="table-container" style="max-height: 400px; overflow-y: auto;">
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th>#</th>
-                        <th>Student ID</th>
-                        <th>Full Name</th>
-                        <th>Grade</th>
-                        <th>Room</th>
-                        <th>Sheet</th>
+                        <th data-i18n="th_index">ลำดับ</th>
+                        <th data-i18n="th_student_id">รหัสนักเรียน</th>
+                        <th data-i18n="th_fullname">ชื่อ-นามสกุล</th>
+                        <th data-i18n="th_grade">ระดับชั้น</th>
+                        <th data-i18n="th_room">ห้อง</th>
+                        <th data-i18n="th_sheet">แผ่นงาน</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -110,15 +110,15 @@
             </table>
         </div>
         {% if preview|length > 100 %}
-        <p class="text-muted">Showing first 100 of {{ preview|length }} records.</p>
+        <p class="text-muted" style="margin-top: 8px;"><span data-i18n="showing_first_100">แสดง 100 รายการแรก จากทั้งหมด</span> {{ preview|length }} <span data-i18n="records_unit">รายการ</span></p>
         {% endif %}
 
         <form method="POST" action="/admin/students/import/confirm" class="confirm-form">
             <input type="hidden" name="import_data" value='{{ import_data }}'>
             <div class="form-actions">
-                <a href="/admin/students/import" class="btn btn-outline">Cancel</a>
-                <button type="submit" class="btn btn-primary btn-lg" onclick="return confirm('Import {{ preview|length }} student records?')">
-                    Confirm Import ({{ preview|length }} records)
+                <a href="/admin/students/import" class="btn btn-outline" data-i18n="btn_cancel">ยกเลิก</a>
+                <button type="submit" class="btn btn-primary btn-lg" onclick="return confirm(t('confirm_import_prompt', 'ยืนยันการนำเข้าข้อมูลนักเรียน {{ preview|length }} รายการ?'))">
+                    <span data-i18n="btn_confirm_import">ยืนยันการนำเข้าข้อมูล</span> ({{ preview|length }} <span data-i18n="records_unit">รายการ</span>)
                 </button>
             </div>
         </form>
@@ -127,7 +127,7 @@
 </div>
 {% endblock %}
 
-{% block page_js %}
+{% block extra_js %}
 <script>
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
@@ -140,18 +140,24 @@ if (dropZone) {
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('drag-over');
-        if (e.dataTransfer.files.length) {
+        if (e.dataTransfer.files.length > 0) {
             fileInput.files = e.dataTransfer.files;
-            fileName.textContent = e.dataTransfer.files[0].name;
-            uploadBtn.disabled = false;
+            handleFileSelect(e.dataTransfer.files[0]);
         }
     });
-    fileInput.addEventListener('change', () => {
-        if (fileInput.files.length) {
-            fileName.textContent = fileInput.files[0].name;
-            uploadBtn.disabled = false;
+}
+if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleFileSelect(e.target.files[0]);
         }
     });
+}
+function handleFileSelect(file) {
+    if (file) {
+        fileName.textContent = file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+        uploadBtn.disabled = false;
+    }
 }
 </script>
 {% endblock %}

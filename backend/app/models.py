@@ -7,6 +7,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 from app.database import Base
+from app.config import get_bkk_time
 
 
 class User(Base):
@@ -19,8 +20,8 @@ class User(Base):
     display_name = Column(String(100), nullable=False)
     role = Column(String(20), nullable=False, default="teacher")  # admin | teacher
     is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=get_bkk_time, nullable=False)
+    updated_at = Column(DateTime, default=get_bkk_time, onupdate=get_bkk_time, nullable=False)
 
     # Relationships
     audit_logs = relationship("AuditLog", back_populates="user")
@@ -36,8 +37,8 @@ class Student(Base):
     grade = Column(String(10), nullable=False, index=True)
     room = Column(String(10), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=get_bkk_time, nullable=False)
+    updated_at = Column(DateTime, default=get_bkk_time, onupdate=get_bkk_time, nullable=False)
 
     # Relationships
     attendance_records = relationship("AttendanceRecord", back_populates="student")
@@ -59,8 +60,8 @@ class Activity(Base):
     status = Column(String(20), nullable=False, default="draft")
     # draft | scheduled | active | completed | cancelled
     eligible_grades = Column(String(100), nullable=True)  # comma-separated: "M.1,M.2,M.3"
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=get_bkk_time, nullable=False)
+    updated_at = Column(DateTime, default=get_bkk_time, onupdate=get_bkk_time, nullable=False)
 
     # Relationships
     sessions = relationship("ActivitySession", back_populates="activity", cascade="all, delete-orphan")
@@ -78,8 +79,8 @@ class ActivitySession(Base):
     end_time = Column(Time, nullable=True)
     status = Column(String(20), nullable=False, default="draft")
     # draft | scheduled | active | completed | cancelled
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=get_bkk_time, nullable=False)
+    updated_at = Column(DateTime, default=get_bkk_time, onupdate=get_bkk_time, nullable=False)
 
     # Relationships
     activity = relationship("Activity", back_populates="sessions")
@@ -99,9 +100,9 @@ class AttendanceRecord(Base):
     student_id = Column(Integer, ForeignKey("students.id", ondelete="CASCADE"), nullable=False)
     session_id = Column(Integer, ForeignKey("activity_sessions.id", ondelete="CASCADE"), nullable=False)
     status = Column(String(20), nullable=False, default="present")  # present | manual
-    checked_in_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    checked_in_at = Column(DateTime, nullable=False, default=get_bkk_time)
     checked_in_method = Column(String(20), nullable=False, default="qr")  # qr | manual
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=get_bkk_time, nullable=False)
 
     # Relationships
     student = relationship("Student", back_populates="attendance_records")
@@ -121,7 +122,7 @@ class QRToken(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     session_id = Column(Integer, ForeignKey("activity_sessions.id", ondelete="CASCADE"), nullable=False)
     token = Column(String(100), unique=True, nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=get_bkk_time, nullable=False)
     expires_at = Column(DateTime, nullable=False)
 
     # Relationships
@@ -140,7 +141,7 @@ class CheckinSession(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     session_id = Column(Integer, ForeignKey("activity_sessions.id", ondelete="CASCADE"), nullable=False)
     checkin_token = Column(String(100), unique=True, nullable=False, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=get_bkk_time, nullable=False)
     expires_at = Column(DateTime, nullable=False)
 
     # Relationships
@@ -159,7 +160,7 @@ class AuditLog(Base):
     previous_value = Column(Text, nullable=True)
     new_value = Column(Text, nullable=True)
     reason = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=get_bkk_time, nullable=False)
 
     # Relationships
     user = relationship("User", back_populates="audit_logs")

@@ -1,21 +1,32 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Activities — Admin{% endblock %}
-{% block page_title %}Activity Management{% endblock %}
+{% block title %}จัดการกิจกรรม — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_activities">จัดการกิจกรรม</span>{% endblock %}
 
 {% block content %}
+{% if error %}
+<div class="alert alert-error" style="margin-bottom: 20px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="15" y1="9" x2="9" y2="15"/>
+        <line x1="9" y1="9" x2="15" y2="15"/>
+    </svg>
+    {{ error }}
+</div>
+{% endif %}
+
 <div class="toolbar">
     <div class="filter-form">
-        <a href="/admin/activities" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline{% endif %}">All</a>
-        <a href="/admin/activities?status=draft" class="btn btn-sm {% if status_filter == 'draft' %}btn-primary{% else %}btn-outline{% endif %}">Draft</a>
-        <a href="/admin/activities?status=active" class="btn btn-sm {% if status_filter == 'active' %}btn-primary{% else %}btn-outline{% endif %}">Active</a>
-        <a href="/admin/activities?status=scheduled" class="btn btn-sm {% if status_filter == 'scheduled' %}btn-primary{% else %}btn-outline{% endif %}">Scheduled</a>
-        <a href="/admin/activities?status=completed" class="btn btn-sm {% if status_filter == 'completed' %}btn-primary{% else %}btn-outline{% endif %}">Completed</a>
+        <a href="/admin/activities" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_all">ทั้งหมด</a>
+        <a href="/admin/activities?status=draft" class="btn btn-sm {% if status_filter == 'draft' %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_draft">แบบร่าง</a>
+        <a href="/admin/activities?status=active" class="btn btn-sm {% if status_filter == 'active' %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_active">กำลังใช้งาน</a>
+        <a href="/admin/activities?status=scheduled" class="btn btn-sm {% if status_filter == 'scheduled' %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_scheduled">กำหนดการแล้ว</a>
+        <a href="/admin/activities?status=completed" class="btn btn-sm {% if status_filter == 'completed' %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_completed">เสร็จสิ้น</a>
     </div>
     <a href="/admin/activities/add" class="btn btn-primary">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
-        New Activity
+        <span data-i18n="btn_create_activity">สร้างกิจกรรมใหม่</span>
     </a>
 </div>
 
@@ -24,32 +35,76 @@
     <div class="activity-card">
         <div class="activity-card-header">
             <h3>{{ activity.name }}</h3>
-            <span class="status-badge status-{{ activity.status }}">{{ activity.status }}</span>
+            <span class="status-badge status-{{ activity.status }}" data-i18n="status_{{ activity.status }}">{{ activity.status|thai_status }}</span>
         </div>
         {% if activity.description %}
         <p class="activity-desc">{{ activity.description[:120] }}{% if activity.description|length > 120 %}...{% endif %}</p>
         {% endif %}
         <div class="activity-meta">
             {% if activity.start_date %}
-            <span>📅 {{ activity.start_date }}{% if activity.end_date %} — {{ activity.end_date }}{% endif %}</span>
+            <span>📅 {{ activity.start_date|to_bangkok_date }}{% if activity.end_date %} — {{ activity.end_date|to_bangkok_date }}{% endif %}</span>
             {% endif %}
             {% if activity.eligible_grades %}
             <span>🎓 {{ activity.eligible_grades }}</span>
             {% else %}
-            <span>🎓 All Grades</span>
+            <span>🎓 <span data-i18n="all_grades">ทุกระดับชั้น</span></span>
             {% endif %}
         </div>
         <div class="activity-actions">
-            <a href="/admin/activities/{{ activity.id }}/sessions" class="btn btn-sm btn-primary">Sessions</a>
-            <a href="/admin/activities/{{ activity.id }}/edit" class="btn btn-sm btn-outline">Edit</a>
+            <a href="/admin/activities/{{ activity.id }}/sessions" class="btn btn-sm btn-primary" data-i18n="btn_sessions">รอบกิจกรรม</a>
+            <a href="/admin/activities/{{ activity.id }}/edit" class="btn btn-sm btn-outline" data-i18n="btn_edit">แก้ไข</a>
+            <button type="button" class="btn btn-sm btn-danger-outline" onclick="openDeleteModal({{ activity.id }}, '{{ activity.name|escape }}')" data-i18n="btn_delete">ลบ</button>
         </div>
     </div>
     {% endfor %}
     {% if not activities %}
     <div class="empty-state-card">
-        <p>No activities yet.</p>
-        <a href="/admin/activities/add" class="btn btn-primary">Create First Activity</a>
+        <p data-i18n="empty_activities">ยังไม่มีกิจกรรมในระบบ</p>
+        <a href="/admin/activities/add" class="btn btn-primary" data-i18n="btn_create_first_activity">สร้างกิจกรรมแรก</a>
     </div>
     {% endif %}
 </div>
+
+<!-- Modal ยืนยันการลบกิจกรรม -->
+<div id="deleteModal" class="modal" style="display: none;">
+    <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
+    <div class="modal-card">
+        <div class="modal-header">
+            <h3 data-i18n="modal_delete_activity_title">ยืนยันการลบกิจกรรม</h3>
+            <button type="button" class="modal-close" onclick="closeDeleteModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="modal-warning">
+                <span data-i18n="modal_delete_activity_prefix">⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรม</span> <strong id="deleteActivityName"></strong>?
+            </p>
+            <p style="color: var(--text-muted); font-size: 14px; margin-top: 8px;" data-i18n="modal_delete_activity_warning">
+                การดำเนินการนี้จะลบข้อมูลรอบกิจกรรม ประวัติการเช็คชื่อ และ QR Code ทั้งหมดที่เกี่ยวข้องกับกิจกรรมนี้อย่างถาวร
+            </p>
+        </div>
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button type="button" class="btn btn-outline" onclick="closeDeleteModal()" data-i18n="btn_cancel">ยกเลิก</button>
+            <form id="deleteActivityForm" method="POST" style="margin: 0;">
+                <button type="submit" class="btn btn-danger" data-i18n="btn_confirm_delete">ยืนยันการลบ</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openDeleteModal(activityId, activityName) {
+    document.getElementById('deleteActivityName').textContent = activityName;
+    document.getElementById('deleteActivityForm').action = '/admin/activities/' + activityId + '/delete';
+    document.getElementById('deleteModal').style.display = 'flex';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').style.display = 'none';
+}
+
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDeleteModal();
+});
+</script>
 {% endblock %}

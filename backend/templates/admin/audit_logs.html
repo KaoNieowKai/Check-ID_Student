@@ -1,6 +1,6 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Audit Logs — Admin{% endblock %}
-{% block page_title %}Audit Logs{% endblock %}
+{% block title %}บันทึกประวัติระบบ — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_audit_logs">บันทึกประวัติการใช้งานระบบ</span>{% endblock %}
 
 {% block content %}
 <div class="toolbar">
@@ -9,43 +9,43 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input type="text" name="action" value="{{ action_filter }}" placeholder="Filter by action...">
+            <input type="text" name="action" value="{{ action_filter }}" placeholder="กรองตามการดำเนินการ..." data-i18n-placeholder="ph_filter_action">
         </div>
-        <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+        <button type="submit" class="btn btn-primary btn-sm" data-i18n="btn_filter">กรองข้อมูล</button>
     </form>
-    <div class="table-info">{{ total }} total entries</div>
+    <div class="table-info"><span data-i18n="total_entries_label">ทั้งหมด</span> {{ total }} <span data-i18n="records_unit">รายการ</span></div>
 </div>
 
 <div class="table-container">
     <table class="data-table">
         <thead>
             <tr>
-                <th>Timestamp</th>
-                <th>User</th>
-                <th>Action</th>
-                <th>Target</th>
-                <th>Details</th>
+                <th data-i18n="th_timestamp">วันที่และเวลา</th>
+                <th data-i18n="th_user">ผู้ใช้งาน</th>
+                <th data-i18n="th_operation">การดำเนินการ</th>
+                <th data-i18n="th_target">เป้าหมาย</th>
+                <th data-i18n="th_details">รายละเอียด</th>
             </tr>
         </thead>
         <tbody>
             {% for log in logs %}
             <tr>
-                <td class="nowrap">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
-                <td>{{ log.user.display_name if log.user else 'System' }}</td>
+                <td class="nowrap">{{ log.created_at|to_bangkok }}</td>
+                <td>{{ log.user.display_name if log.user else 'ระบบ' }}</td>
                 <td><span class="badge">{{ log.action }}</span></td>
                 <td>
                     {% if log.target_type %}{{ log.target_type }}{% endif %}
                     {% if log.target_id %}<code>{{ log.target_id }}</code>{% endif %}
                 </td>
                 <td class="detail-cell">
-                    {% if log.reason %}<em>Reason:</em> {{ log.reason }}<br>{% endif %}
-                    {% if log.previous_value %}<em>Previous:</em> {{ log.previous_value[:80] }}<br>{% endif %}
-                    {% if log.new_value %}<em>New:</em> {{ log.new_value[:80] }}{% endif %}
+                    {% if log.reason %}<em data-i18n="lbl_reason">เหตุผล:</em> {{ log.reason }}<br>{% endif %}
+                    {% if log.previous_value %}<em data-i18n="lbl_prev">ค่าเดิม:</em> {{ log.previous_value[:80] }}<br>{% endif %}
+                    {% if log.new_value %}<em data-i18n="lbl_new">ค่าใหม่:</em> {{ log.new_value[:80] }}{% endif %}
                 </td>
             </tr>
             {% endfor %}
             {% if not logs %}
-            <tr><td colspan="5" class="empty-state">No audit logs found.</td></tr>
+            <tr><td colspan="5" class="empty-state" style="text-align: center; padding: 30px;" data-i18n="empty_audit">ไม่พบข้อมูลบันทึกประวัติระบบ</td></tr>
             {% endif %}
         </tbody>
     </table>
@@ -54,11 +54,11 @@
 {% if total_pages > 1 %}
 <div class="pagination">
     {% if page > 1 %}
-    <a href="?page={{ page - 1 }}&action={{ action_filter }}" class="btn btn-sm btn-outline">← Previous</a>
+    <a href="?page={{ page - 1 }}&action={{ action_filter }}" class="btn btn-sm btn-outline" data-i18n="btn_prev">← ก่อนหน้า</a>
     {% endif %}
-    <span class="page-info">Page {{ page }} of {{ total_pages }}</span>
+    <span class="page-info"><span data-i18n="page_label">หน้า</span> {{ page }} <span data-i18n="of_page_label">จาก</span> {{ total_pages }}</span>
     {% if page < total_pages %}
-    <a href="?page={{ page + 1 }}&action={{ action_filter }}" class="btn btn-sm btn-outline">Next →</a>
+    <a href="?page={{ page + 1 }}&action={{ action_filter }}" class="btn btn-sm btn-outline" data-i18n="btn_next">ถัดไป →</a>
     {% endif %}
 </div>
 {% endif %}

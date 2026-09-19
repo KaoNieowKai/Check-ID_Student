@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Teacher Dashboard{% endblock %}
+{% block title %}แดชบอร์ดคุณครู — ระบบเช็คชื่อกิจกรรม{% endblock %}
 {% block body_class %}teacher-page{% endblock %}
 
 {% block extra_css %}
@@ -10,33 +10,33 @@
 <div class="teacher-container">
     <header class="teacher-header">
         <div class="teacher-header-info">
-            <h1><span data-i18n="teacher_welcome">Welcome,</span> {{ user.display_name }}</h1>
-            <p data-i18n="teacher_instruction">Select an activity and session to start attendance</p>
+            <h1><span data-i18n="teacher_welcome">ยินดีต้อนรับ,</span> {{ user.display_name }}</h1>
+            <p data-i18n="teacher_instruction">เลือกกิจกรรมและรอบกิจกรรมเพื่อเริ่มเปิดระบบเช็คชื่อ</p>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
-            <div data-lang-switcher data-lang-class="lang-switcher-dark"></div>
-            <a href="/logout" class="btn btn-outline-light" data-i18n="nav_logout">Logout</a>
+            <div data-lang-switcher></div>
+            <a href="/logout" class="btn btn-outline" data-i18n="nav_logout">ออกจากระบบ</a>
         </div>
     </header>
 
     <div class="teacher-content">
         <div class="select-card">
-            <h2 data-i18n="select_activity">1. Select Activity</h2>
+            <h2 data-i18n="select_activity">1. เลือกกิจกรรม</h2>
             <div class="activity-buttons" id="activityList">
                 {% for activity in activities %}
-                <button class="activity-btn" onclick="selectActivity({{ activity.id }}, '{{ activity.name }}')" data-id="{{ activity.id }}">
+                <button class="activity-btn" onclick="selectActivity({{ activity.id }}, '{{ activity.name|escape }}')" data-id="{{ activity.id }}">
                     <span class="activity-name">{{ activity.name }}</span>
-                    <span class="activity-status status-{{ activity.status }}">{{ activity.status }}</span>
+                    <span class="activity-status status-{{ activity.status }}" data-i18n="status_{{ activity.status }}">{{ activity.status|thai_status }}</span>
                 </button>
                 {% endfor %}
                 {% if not activities %}
-                <p class="empty-state">No active activities available. Please contact admin.</p>
+                <p class="empty-state" data-i18n="empty_teacher_activities">ไม่มีกิจกรรมที่เปิดใช้งานในขณะนี้ กรุณาติดต่อผู้ดูแลระบบ</p>
                 {% endif %}
             </div>
         </div>
 
         <div class="select-card" id="sessionSection" style="display:none">
-            <h2 data-i18n="select_session">2. Select Session</h2>
+            <h2 data-i18n="select_session">2. เลือกรอบกิจกรรม</h2>
             <div class="session-buttons" id="sessionList">
                 <!-- Populated dynamically -->
             </div>
@@ -47,7 +47,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32">
                     <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
-                <span data-i18n="start_attendance">Start Attendance</span>
+                <span data-i18n="start_attendance">เริ่มการเช็คชื่อ</span>
             </a>
         </div>
     </div>
@@ -61,11 +61,9 @@ let selectedSession = null;
 
 function selectActivity(id, name) {
     selectedActivity = id;
-    // Highlight selected
     document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('selected'));
     document.querySelector(`.activity-btn[data-id="${id}"]`).classList.add('selected');
 
-    // Load sessions
     document.getElementById('sessionSection').style.display = 'block';
     document.getElementById('startSection').style.display = 'none';
 
@@ -75,7 +73,7 @@ function selectActivity(id, name) {
             const list = document.getElementById('sessionList');
             list.innerHTML = '';
             if (sessions.length === 0) {
-                list.innerHTML = '<p class="empty-state">No sessions available for this activity.</p>';
+                list.innerHTML = '<p class="empty-state" data-i18n="empty_teacher_sessions">' + t('empty_teacher_sessions', 'ไม่มีรอบกิจกรรมสำหรับกิจกรรมนี้') + '</p>';
                 return;
             }
             sessions.forEach(s => {
@@ -89,6 +87,7 @@ function selectActivity(id, name) {
                 `;
                 list.appendChild(btn);
             });
+            if (typeof applyTranslations === 'function') applyTranslations();
         });
 }
 

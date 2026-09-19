@@ -4,16 +4,15 @@ import secrets
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, Request, Form, Query, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.exc import IntegrityError
 from app.database import get_db
 from app.models import Student, ActivitySession, AttendanceRecord, QRToken, CheckinSession, Activity
-from app.config import settings
+from app.config import settings, get_bkk_time
 from app.websocket import manager
+from app.templating import templates
 
 router = APIRouter(tags=["student"])
-templates = Jinja2Templates(directory="templates")
 
 VALID_GRADES = ["M.1", "M.2", "M.3", "M.4", "M.5", "M.6"]
 
@@ -35,7 +34,7 @@ def _validate_checkin_session(checkin_token: str, db: Session):
     if not cs:
         return None, "การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่"
 
-    if datetime.utcnow() > cs.expires_at:
+    if get_bkk_time() > cs.expires_at:
         return None, "การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่"
 
     return cs, None
@@ -64,7 +63,7 @@ async def checkin_page(
         qr_token = db.query(QRToken).filter(QRToken.token == token).first()
         if not qr_token:
             error = "QR Code ไม่ถูกต้อง"
-        elif datetime.utcnow() > qr_token.expires_at:
+        elif get_bkk_time() > qr_token.expires_at:
             error = "QR Code หมดอายุ กรุณาสแกน QR Code ปัจจุบัน"
         else:
             # QR is valid — load the activity session
@@ -74,7 +73,7 @@ async def checkin_page(
 
             if activity_session:
                 # Create a temporary CheckinSession
-                now = datetime.utcnow()
+                now = get_bkk_time()
                 checkin_token = secrets.token_urlsafe(32)
                 checkin_session = CheckinSession(
                     session_id=activity_session.id,
@@ -207,7 +206,7 @@ async def confirm_attendance(
         })
 
     # Record attendance (with duplicate protection)
-    now = datetime.utcnow()
+    now = get_bkk_time()
     record = AttendanceRecord(
         student_id=student.id,
         session_id=cs.session_id,
@@ -261,6 +260,7 @@ async def confirm_attendance(
         "success": True,
         "message": "บันทึกการเข้าร่วมเรียบร้อยแล้ว!",
         "checked_in_at": now.strftime("%H:%M:%S"),
+        "checked_in_date": now.strftime("%d/%m/%Y"),
         "student": {
             "student_id": student.student_id,
             "full_name": student.full_name,

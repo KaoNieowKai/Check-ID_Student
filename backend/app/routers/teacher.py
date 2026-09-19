@@ -6,18 +6,17 @@ import secrets
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect, Query, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, cast, Integer
 from app.database import get_db, SessionLocal
 from app.models import User, Student, Activity, ActivitySession, AttendanceRecord, QRToken
 from app.auth import require_teacher
-from app.config import settings
+from app.config import settings, get_bkk_time
 from app.websocket import manager
+from app.templating import templates
 import qrcode
 
 router = APIRouter(prefix="/teacher", tags=["teacher"])
-templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/dashboard", response_class=HTMLResponse)
@@ -92,7 +91,7 @@ async def generate_qr(session_id: int, request: Request, db: Session = Depends(g
 
     # Generate cryptographically random token
     token = secrets.token_urlsafe(32)
-    now = datetime.utcnow()
+    now = get_bkk_time()
     expires = now + timedelta(seconds=settings.QR_TOKEN_EXPIRE_SECONDS)
 
     qr_token = QRToken(
@@ -155,59 +154,23 @@ async def attendance_stats(session_id: int, db: Session = Depends(get_db), user:
     }
 
 
-@router.get("/not-checked-in/{session_id}", response_class=HTMLResponse)
-async def not_checked_in(
+@router.get("/attendance-list/{session_id}", response_class=HTMLResponse)
+async def attendance_list(
     session_id: int,
     request: Request,
-    grade: str = Query(""),
-    room: str = Query(""),
-    search: str = Query(""),
     db: Session = Depends(get_db),
     user: User = Depends(require_teacher)
 ):
-    """Show students who haven't checked in."""
+    """Show comprehensive attendance overview for the session."""
     session = db.query(ActivitySession).options(
         joinedload(ActivitySession.activity)
     ).filter(ActivitySession.id == session_id).first()
     if not session:
         raise HTTPException(status_code=404)
 
-    # Get all checked-in student IDs for this session
-    checked_in_ids = db.query(AttendanceRecord.student_id).filter(
-        AttendanceRecord.session_id == session_id
-    ).subquery()
-
-    # Get students NOT in checked_in_ids
-    query = db.query(Student).filter(
-        Student.is_active == True,
-        ~Student.id.in_(checked_in_ids)
-    )
-
-    if session.activity.eligible_grades:
-        grades_list = [g.strip() for g in session.activity.eligible_grades.split(",")]
-        query = query.filter(Student.grade.in_(grades_list))
-
-    if grade:
-        query = query.filter(Student.grade == grade)
-    if room:
-        query = query.filter(Student.room == room)
-    if search:
-        query = query.filter(or_(
-            Student.student_id.contains(search),
-            Student.full_name.contains(search)
-        ))
-
-    students = query.order_by(Student.grade, Student.room, Student.student_id).all()
-
-    grades = ["M.1", "M.2", "M.3", "M.4", "M.5", "M.6"]
-    rooms = [r[0] for r in db.query(Student.room).distinct().order_by(Student.room).all()]
-
-    return templates.TemplateResponse("teacher/not_checked_in.html", {
+    return templates.TemplateResponse("teacher/attendance_list.html", {
         "request": request, "user": user,
         "session": session, "activity": session.activity,
-        "students": students, "total": len(students),
-        "grade": grade, "room_filter": room, "search": search,
-        "grades": grades, "rooms": rooms,
     })
 
 
@@ -227,3 +190,75 @@ async def websocket_attendance(websocket: WebSocket, session_id: int):
         manager.disconnect(websocket, session_id)
     except Exception:
         manager.disconnect(websocket, session_id)
+
+
+# ─── Monitoring & History ──────────────────────────────────────────────
+
+@router.get("/api/monitoring/{session_id}")
+async def monitoring_data(
+    session_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_teacher)
+):
+    """API endpoint to get monitoring data for a session."""
+    session = db.query(ActivitySession).options(
+        joinedload(ActivitySession.activity)
+    ).filter(ActivitySession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404)
+
+    # 1. Stats & Eligible Students
+    student_query = db.query(Student).filter(Student.is_active == True)
+    if session.activity.eligible_grades:
+        grades = [g.strip() for g in session.activity.eligible_grades.split(",")]
+        student_query = student_query.filter(Student.grade.in_(grades))
+    
+    eligible_students = student_query.all()
+    total_count = len(eligible_students)
+
+    # 2. Checked In Records
+    records = db.query(AttendanceRecord).options(
+        joinedload(AttendanceRecord.student)
+    ).filter(AttendanceRecord.session_id == session_id).order_by(
+        AttendanceRecord.checked_in_at.asc()
+    ).all()
+
+    checked_in = []
+    checked_in_ids = set()
+    for rec in records:
+        checked_in_ids.add(rec.student_id)
+        checked_in.append({
+            "student_id": rec.student.student_id,
+            "full_name": rec.student.full_name,
+            "grade": rec.student.grade,
+            "room": rec.student.room,
+            "method": rec.checked_in_method,
+            "date": rec.checked_in_at.strftime("%Y-%m-%d"),
+            "time": rec.checked_in_at.strftime("%H:%M:%S")
+        })
+
+    # 3. Not Checked In
+    not_checked_in = []
+    for st in eligible_students:
+        if st.id not in checked_in_ids:
+            not_checked_in.append({
+                "student_id": st.student_id,
+                "full_name": st.full_name,
+                "grade": st.grade,
+                "room": st.room,
+                "status": "not_checked_in"
+            })
+    
+    # Sort not_checked_in by grade, room, student_id
+    not_checked_in.sort(key=lambda x: (x["grade"], int(x["room"]) if str(x["room"]).isdigit() else 999, x["student_id"]))
+
+    return {
+        "stats": {
+            "total": total_count,
+            "present": len(checked_in),
+            "absent": len(not_checked_in)
+        },
+        "checked_in": checked_in,
+        "not_checked_in": not_checked_in,
+        "history": checked_in
+    }

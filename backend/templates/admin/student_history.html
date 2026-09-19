@@ -1,43 +1,51 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Student History — Admin{% endblock %}
-{% block page_title %}Attendance History — {{ student.full_name }}{% endblock %}
+{% block title %}ประวัติการเข้าร่วม — {{ student.full_name }} — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_student_history">ประวัติการเข้าร่วมกิจกรรม</span> — {{ student.full_name }}{% endblock %}
 
 {% block content %}
-<div class="breadcrumb">
-    <a href="/admin/students">Students</a> &gt; <strong>{{ student.full_name }}</strong>
+<div class="breadcrumb" style="margin-bottom: 16px;">
+    <a href="/admin/students" data-i18n="breadcrumb_students">รายชื่อนักเรียน</a> &gt; <strong>{{ student.full_name }}</strong>
 </div>
 
-<div class="student-info-card">
-    <div class="info-row"><strong>Student ID:</strong> {{ student.student_id }}</div>
-    <div class="info-row"><strong>Grade:</strong> {{ student.grade }}</div>
-    <div class="info-row"><strong>Room:</strong> {{ student.room }}</div>
+<div class="student-info-card" style="background: white; border-radius: var(--border-radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: flex; gap: 30px;">
+    <div class="info-row"><strong data-i18n="lbl_history_student_id">รหัสนักเรียน:</strong> <code>{{ student.student_id }}</code></div>
+    <div class="info-row"><strong data-i18n="lbl_history_grade">ระดับชั้น:</strong> <span class="badge">{{ student.grade }}</span></div>
+    <div class="info-row"><strong data-i18n="lbl_history_room">ห้อง:</strong> {{ student.room }}</div>
 </div>
 
 <div class="table-container">
     <table class="data-table">
         <thead>
             <tr>
-                <th>Activity</th>
-                <th>Session</th>
-                <th>Date</th>
-                <th>Status</th>
-                <th>Check-in Time</th>
-                <th>Method</th>
+                <th data-i18n="th_activity">กิจกรรม</th>
+                <th data-i18n="th_session_round">รอบกิจกรรม</th>
+                <th data-i18n="th_date">วันที่</th>
+                <th data-i18n="th_status">สถานะ</th>
+                <th data-i18n="th_checkin_time">เวลาเช็คชื่อ</th>
+                <th data-i18n="th_checkin_method">วิธีการเช็คชื่อ</th>
             </tr>
         </thead>
         <tbody>
             {% for rec in records %}
             <tr>
-                <td>{{ rec.session.activity.name }}</td>
+                <td><strong>{{ rec.session.activity.name }}</strong></td>
                 <td>{{ rec.session.name }}</td>
-                <td>{{ rec.session.date }}</td>
-                <td><span class="status-badge status-active">{{ rec.status }}</span></td>
-                <td>{{ rec.checked_in_at.strftime('%H:%M:%S') if rec.checked_in_at else '—' }}</td>
-                <td>{{ rec.checked_in_method }}</td>
+                <td>{{ rec.session.date|to_bangkok_date }}</td>
+                <td><span class="status-badge status-active" data-i18n="status_{{ rec.status }}">{{ rec.status|thai_status }}</span></td>
+                <td>{{ rec.checked_in_at|to_bangkok }}</td>
+                <td>
+                    {% if rec.checked_in_method == 'qr' %}
+                    <span class="badge" style="background: var(--primary-bg); color: var(--primary);" data-i18n="method_qr">สแกน QR</span>
+                    {% elif rec.checked_in_method == 'manual' %}
+                    <span class="badge" style="background: var(--surface); color: var(--text-muted);" data-i18n="method_manual">โดยครูผู้สอน</span>
+                    {% else %}
+                    {{ rec.checked_in_method }}
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
             {% if not records %}
-            <tr><td colspan="6" class="empty-state">No attendance records found.</td></tr>
+            <tr><td colspan="6" class="empty-state" style="text-align: center; padding: 30px;" data-i18n="empty_history">ไม่พบประวัติการเข้าร่วมกิจกรรม</td></tr>
             {% endif %}
         </tbody>
     </table>
