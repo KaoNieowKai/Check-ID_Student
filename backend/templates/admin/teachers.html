@@ -40,7 +40,6 @@
                                 </button>
                             </form>
                             <button type="button" class="btn btn-sm btn-outline" onclick="showEditModal({{ teacher.id }}, '{{ teacher.username }}', '{{ teacher.display_name }}')" data-i18n="btn_edit_teacher">แก้ไข</button>
-                            <button type="button" class="btn btn-sm btn-outline" onclick="showResetModal({{ teacher.id }}, '{{ teacher.username }}')" data-i18n="btn_reset_password">รีเซ็ตรหัสผ่าน</button>
                             <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal({{ teacher.id }}, '{{ teacher.username }}')" data-i18n="btn_delete">ลบ</button>
                         </td>
                     </tr>
@@ -90,27 +89,13 @@
                 <label for="edit_display_name" data-i18n="lbl_teacher_display_name">ชื่อที่แสดง</label>
                 <input type="text" id="edit_display_name" name="display_name" required>
             </div>
+            <div class="form-group">
+                <label for="edit_new_password" data-i18n="lbl_edit_new_password">รหัสผ่านใหม่ (ถ้าต้องการเปลี่ยน)</label>
+                <input type="password" id="edit_new_password" name="new_password" minlength="6" placeholder="อย่างน้อย 6 ตัวอักษร" data-i18n-placeholder="ph_teacher_password">
+            </div>
             <div class="form-actions">
                 <button type="button" class="btn btn-outline" onclick="document.getElementById('editModal').style.display='none'" data-i18n="btn_cancel">ยกเลิก</button>
                 <button type="submit" class="btn btn-primary" data-i18n="btn_save">บันทึก</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Reset Password Modal -->
-<div class="modal-overlay" id="resetModal" style="display:none">
-    <div class="modal-card">
-        <h3 data-i18n="modal_reset_pwd_title">รีเซ็ตรหัสผ่าน</h3>
-        <p><span data-i18n="modal_reset_pwd_for">รีเซ็ตรหัสผ่านสำหรับ:</span> <strong id="resetUsername"></strong></p>
-        <form method="POST" id="resetForm">
-            <div class="form-group">
-                <label for="new_password" data-i18n="lbl_new_password">รหัสผ่านใหม่</label>
-                <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="อย่างน้อย 6 ตัวอักษร" data-i18n-placeholder="ph_teacher_password">
-            </div>
-            <div class="form-actions">
-                <button type="button" class="btn btn-outline" onclick="document.getElementById('resetModal').style.display='none'" data-i18n="btn_cancel">ยกเลิก</button>
-                <button type="submit" class="btn btn-primary" data-i18n="btn_save_password">บันทึกรหัสผ่านใหม่</button>
             </div>
         </form>
     </div>
@@ -157,13 +142,8 @@ function showEditModal(id, username, displayName) {
     document.getElementById('editModal').style.display = 'flex';
     document.getElementById('edit_username').value = username;
     document.getElementById('edit_display_name').value = displayName;
+    document.getElementById('edit_new_password').value = '';
     document.getElementById('editForm').action = '/admin/teachers/' + id + '/edit';
-}
-
-function showResetModal(id, username) {
-    document.getElementById('resetModal').style.display = 'flex';
-    document.getElementById('resetUsername').textContent = username;
-    document.getElementById('resetForm').action = '/admin/teachers/' + id + '/reset-password';
 }
 
 function showDeleteModal(id, username) {
@@ -175,7 +155,6 @@ function showDeleteModal(id, username) {
 window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.getElementById('editModal').style.display = 'none';
-        document.getElementById('resetModal').style.display = 'none';
         document.getElementById('deleteModal').style.display = 'none';
     }
 });

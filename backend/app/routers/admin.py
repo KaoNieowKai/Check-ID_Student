@@ -523,27 +523,13 @@ async def teacher_toggle(id: int, db: Session = Depends(get_db), user: User = De
     return RedirectResponse(url="/admin/teachers", status_code=303)
 
 
-@router.post("/teachers/{id}/reset-password")
-async def teacher_reset_password(
-    id: int,
-    new_password: str = Form(...),
-    db: Session = Depends(get_db),
-    user: User = Depends(require_admin)
-):
-    teacher = db.query(User).filter(User.id == id, User.role == "teacher").first()
-    if not teacher:
-        raise HTTPException(status_code=404)
-    teacher.password_hash = hash_password(new_password)
-    db.commit()
-    create_audit_log(db, user.id, "teacher_password_reset", "user", teacher.username)
-    return RedirectResponse(url="/admin/teachers", status_code=303)
-
 @router.post("/teachers/{id}/edit")
 async def teacher_edit(
     request: Request,
     id: int,
     username: str = Form(...),
     display_name: str = Form(...),
+    new_password: str = Form(None),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
@@ -561,6 +547,11 @@ async def teacher_edit(
             
     teacher.username = username
     teacher.display_name = display_name
+    
+    if new_password and len(new_password.strip()) > 0:
+        teacher.password_hash = hash_password(new_password.strip())
+        create_audit_log(db, user.id, "teacher_password_reset", "user", teacher.username)
+        
     db.commit()
     create_audit_log(db, user.id, "teacher_edited", "user", teacher.username)
     return RedirectResponse(url="/admin/teachers?success=edited", status_code=303)

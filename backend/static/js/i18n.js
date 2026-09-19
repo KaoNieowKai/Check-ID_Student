@@ -230,6 +230,7 @@ const I18N_DICTIONARY = {
         'modal_edit_teacher_title': 'แก้ไขข้อมูลครู',
         'msg_edit_teacher_success': 'แก้ไขข้อมูลครูสำเร็จ',
         'msg_duplicate_username': 'ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่ออื่น',
+        'lbl_edit_new_password': 'รหัสผ่านใหม่ (ถ้าต้องการเปลี่ยน)',
 
         // Sessions Management
         'breadcrumb_activities': 'รายการกิจกรรม',
@@ -567,6 +568,7 @@ const I18N_DICTIONARY = {
         'modal_edit_teacher_title': 'Edit Teacher Information',
         'msg_edit_teacher_success': 'Teacher information updated successfully.',
         'msg_duplicate_username': 'This username is already taken. Please choose another one.',
+        'lbl_edit_new_password': 'New Password (Optional)',
 
         // Sessions Management
         'breadcrumb_activities': 'Activities',
