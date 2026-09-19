@@ -199,6 +199,26 @@ async def student_delete(
     return RedirectResponse(url="/admin/students", status_code=303)
 
 
+@router.post("/students/delete-all")
+async def students_delete_all(
+    db: Session = Depends(get_db), user: User = Depends(require_admin)
+):
+    # Find all students with attendance records
+    students_with_attendance_subq = db.query(AttendanceRecord.student_id).distinct().subquery()
+    
+    # 1. Physically delete students with NO attendance records
+    db.query(Student).filter(Student.id.notin_(students_with_attendance_subq)).delete(synchronize_session=False)
+    
+    # 2. Soft delete students WITH attendance records (is_active = False)
+    db.query(Student).filter(Student.id.in_(students_with_attendance_subq)).update({"is_active": False}, synchronize_session=False)
+    
+    db.commit()
+    
+    create_audit_log(db, user.id, "students_deleted_all", "student", "all")
+    
+    return RedirectResponse(url="/admin/students?success=deleted_all", status_code=303)
+
+
 # ─── Excel Import ────────────────────────────────────────────────────
 
 @router.get("/students/import", response_class=HTMLResponse)
@@ -517,6 +537,49 @@ async def teacher_reset_password(
     db.commit()
     create_audit_log(db, user.id, "teacher_password_reset", "user", teacher.username)
     return RedirectResponse(url="/admin/teachers", status_code=303)
+
+@router.post("/teachers/{id}/edit")
+async def teacher_edit(
+    request: Request,
+    id: int,
+    username: str = Form(...),
+    display_name: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    teacher = db.query(User).filter(User.id == id, User.role == "teacher").first()
+    if not teacher:
+        raise HTTPException(status_code=404)
+        
+    # Check if username is changed and already exists
+    if teacher.username != username:
+        existing = db.query(User).filter(User.username == username).first()
+        if existing:
+            # We can use the error query param or render the template
+            # For simplicity, returning a redirect with an error query param
+            return RedirectResponse(url=f"/admin/teachers?error=duplicate_username", status_code=303)
+            
+    teacher.username = username
+    teacher.display_name = display_name
+    db.commit()
+    create_audit_log(db, user.id, "teacher_edited", "user", teacher.username)
+    return RedirectResponse(url="/admin/teachers?success=edited", status_code=303)
+
+
+@router.post("/teachers/{id}/delete")
+async def teacher_delete(
+    id: int, db: Session = Depends(get_db), user: User = Depends(require_admin)
+):
+    teacher = db.query(User).filter(User.id == id, User.role == "teacher").first()
+    if not teacher:
+        raise HTTPException(status_code=404)
+        
+    username = teacher.username
+    db.delete(teacher)
+    db.commit()
+    create_audit_log(db, user.id, "teacher_deleted", "user", username)
+    
+    return RedirectResponse(url="/admin/teachers?success=deleted", status_code=303)
 
 
 # ─── Activity Management ─────────────────────────────────────────────

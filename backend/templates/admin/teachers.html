@@ -39,7 +39,9 @@
                                     <span data-i18n="{% if teacher.is_active %}btn_disable{% else %}btn_enable{% endif %}">{% if teacher.is_active %}ปิดใช้งาน{% else %}เปิดใช้งาน{% endif %}</span>
                                 </button>
                             </form>
+                            <button type="button" class="btn btn-sm btn-outline" onclick="showEditModal({{ teacher.id }}, '{{ teacher.username }}', '{{ teacher.display_name }}')" data-i18n="btn_edit_teacher">แก้ไข</button>
                             <button type="button" class="btn btn-sm btn-outline" onclick="showResetModal({{ teacher.id }}, '{{ teacher.username }}')" data-i18n="btn_reset_password">รีเซ็ตรหัสผ่าน</button>
+                            <button type="button" class="btn btn-sm btn-danger" onclick="showDeleteModal({{ teacher.id }}, '{{ teacher.username }}')" data-i18n="btn_delete">ลบ</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -75,6 +77,27 @@
     </div>
 </div>
 
+<!-- Edit Teacher Modal -->
+<div class="modal-overlay" id="editModal" style="display:none">
+    <div class="modal-card">
+        <h3 data-i18n="modal_edit_teacher_title">แก้ไขข้อมูลครู</h3>
+        <form method="POST" id="editForm">
+            <div class="form-group">
+                <label for="edit_username" data-i18n="lbl_teacher_username">ชื่อผู้ใช้</label>
+                <input type="text" id="edit_username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_display_name" data-i18n="lbl_teacher_display_name">ชื่อที่แสดง</label>
+                <input type="text" id="edit_display_name" name="display_name" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('editModal').style.display='none'" data-i18n="btn_cancel">ยกเลิก</button>
+                <button type="submit" class="btn btn-primary" data-i18n="btn_save">บันทึก</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Reset Password Modal -->
 <div class="modal-overlay" id="resetModal" style="display:none">
     <div class="modal-card">
@@ -92,14 +115,69 @@
         </form>
     </div>
 </div>
+
+<!-- Delete Teacher Modal -->
+<div class="modal-overlay" id="deleteModal" style="display:none">
+    <div class="modal-card">
+        <h3 data-i18n="modal_delete_teacher_title">ยืนยันการลบครู?</h3>
+        <p><span data-i18n="modal_delete_teacher_for">ครูที่ต้องการลบ:</span> <strong id="deleteUsername"></strong></p>
+        <p class="modal-warning" style="color: var(--danger); font-size: 14px; margin-top: 8px;" data-i18n="modal_delete_teacher_warning">
+            คุณต้องการลบครูคนนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้
+        </p>
+        <form method="POST" id="deleteForm" style="margin-top: 20px;">
+            <div class="form-actions">
+                <button type="button" class="btn btn-outline" onclick="document.getElementById('deleteModal').style.display='none'" data-i18n="btn_cancel">ยกเลิก</button>
+                <button type="submit" class="btn btn-danger" data-i18n="btn_delete">ลบ</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === 'deleted') {
+        alert(t('msg_delete_teacher_success', 'ลบข้อมูลครูสำเร็จ'));
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path:newUrl}, '', newUrl);
+    } else if (urlParams.get('success') === 'edited') {
+        alert(t('msg_edit_teacher_success', 'แก้ไขข้อมูลครูสำเร็จ'));
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path:newUrl}, '', newUrl);
+    } else if (urlParams.get('error') === 'duplicate_username') {
+        alert(t('msg_duplicate_username', 'ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่ออื่น'));
+        const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({path:newUrl}, '', newUrl);
+    }
+});
+
+function showEditModal(id, username, displayName) {
+    document.getElementById('editModal').style.display = 'flex';
+    document.getElementById('edit_username').value = username;
+    document.getElementById('edit_display_name').value = displayName;
+    document.getElementById('editForm').action = '/admin/teachers/' + id + '/edit';
+}
+
 function showResetModal(id, username) {
     document.getElementById('resetModal').style.display = 'flex';
     document.getElementById('resetUsername').textContent = username;
     document.getElementById('resetForm').action = '/admin/teachers/' + id + '/reset-password';
 }
+
+function showDeleteModal(id, username) {
+    document.getElementById('deleteModal').style.display = 'flex';
+    document.getElementById('deleteUsername').textContent = username;
+    document.getElementById('deleteForm').action = '/admin/teachers/' + id + '/delete';
+}
+
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('resetModal').style.display = 'none';
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+});
 </script>
 {% endblock %}

@@ -222,6 +222,14 @@ const I18N_DICTIONARY = {
         'modal_reset_pwd_for': 'รีเซ็ตรหัสผ่านสำหรับ:',
         'lbl_new_password': 'รหัสผ่านใหม่',
         'empty_teachers': 'ยังไม่มีข้อมูลครูในระบบ',
+        'modal_delete_teacher_title': 'ยืนยันการลบครู?',
+        'modal_delete_teacher_for': 'ครูที่ต้องการลบ:',
+        'modal_delete_teacher_warning': 'คุณต้องการลบครูคนนี้ใช่หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้',
+        'msg_delete_teacher_success': 'ลบข้อมูลครูสำเร็จ',
+        'btn_edit_teacher': 'แก้ไข',
+        'modal_edit_teacher_title': 'แก้ไขข้อมูลครู',
+        'msg_edit_teacher_success': 'แก้ไขข้อมูลครูสำเร็จ',
+        'msg_duplicate_username': 'ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่ออื่น',
 
         // Sessions Management
         'breadcrumb_activities': 'รายการกิจกรรม',
@@ -329,7 +337,16 @@ const I18N_DICTIONARY = {
         'saving': 'กำลังบันทึก...',
         'checkin_time_label': 'เวลาเช็คชื่อ: ',
         'err_conn': 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่',
-        'err_enter_id': 'กรุณากรอกรหัสนักเรียน'
+        'err_enter_id': 'กรุณากรอกรหัสนักเรียน',
+        
+        // Delete All Students
+        'btn_delete_all': 'ลบนักเรียนทั้งหมด',
+        'modal_delete_all_title': 'ยืนยันการลบนักเรียนทั้งหมด?',
+        'modal_delete_all_warning': 'การดำเนินการนี้จะลบข้อมูลนักเรียนทั้งหมดออกจากระบบ และไม่สามารถย้อนกลับได้',
+        'lbl_delete_all_confirm': 'พิมพ์ "ลบนักเรียนทั้งหมด" เพื่อยืนยัน:',
+        'ph_delete_all_confirm': 'ลบนักเรียนทั้งหมด',
+        'msg_delete_all_success': 'ลบข้อมูลนักเรียนทั้งหมดสำเร็จ',
+        'msg_delete_all_error': 'เกิดข้อผิดพลาดในการลบข้อมูล'
     },
     en: {
         // App / Brand
@@ -542,6 +559,14 @@ const I18N_DICTIONARY = {
         'modal_reset_pwd_for': 'Reset password for:',
         'lbl_new_password': 'New Password',
         'empty_teachers': 'No teachers found in system',
+        'modal_delete_teacher_title': 'Confirm Delete Teacher?',
+        'modal_delete_teacher_for': 'Teacher to delete:',
+        'modal_delete_teacher_warning': 'Are you sure you want to delete this teacher? This action cannot be undone.',
+        'msg_delete_teacher_success': 'Teacher deleted successfully.',
+        'btn_edit_teacher': 'Edit',
+        'modal_edit_teacher_title': 'Edit Teacher Information',
+        'msg_edit_teacher_success': 'Teacher information updated successfully.',
+        'msg_duplicate_username': 'This username is already taken. Please choose another one.',
 
         // Sessions Management
         'breadcrumb_activities': 'Activities',
@@ -649,7 +674,16 @@ const I18N_DICTIONARY = {
         'saving': 'Saving...',
         'checkin_time_label': 'Check-in Time: ',
         'err_conn': 'Connection error. Please try again.',
-        'err_enter_id': 'Please enter your Student ID.'
+        'err_enter_id': 'Please enter your Student ID.',
+        
+        // Delete All Students
+        'btn_delete_all': 'Delete All Students',
+        'modal_delete_all_title': 'Confirm Delete All Students?',
+        'modal_delete_all_warning': 'This action will delete all student records from the system and cannot be easily undone.',
+        'lbl_delete_all_confirm': 'Type "DELETE ALL STUDENTS" to confirm:',
+        'ph_delete_all_confirm': 'DELETE ALL STUDENTS',
+        'msg_delete_all_success': 'All student records have been deleted successfully.',
+        'msg_delete_all_error': 'An error occurred while deleting.'
     }
 };
 
