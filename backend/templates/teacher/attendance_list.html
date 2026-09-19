@@ -124,6 +124,57 @@
         transform: translateY(-50%);
         color: #64748B;
     }
+
+    /* Mobile Responsive Adjustments */
+    @media (max-width: 768px) {
+        .teacher-container {
+            padding: 0 16px;
+        }
+        
+        .teacher-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            padding: 16px 0 !important;
+            gap: 16px;
+        }
+
+        .teacher-header h1 {
+            font-size: 1.25rem !important;
+        }
+
+        .teacher-header > div:last-child {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .summary-cards {
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .summary-card {
+            padding: 16px;
+        }
+
+        .summary-card .value {
+            font-size: 2rem;
+        }
+
+        .search-container {
+            max-width: 100%;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .data-table th, .data-table td {
+            white-space: nowrap;
+        }
+    }
 </style>
 {% endblock %}
 
