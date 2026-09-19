@@ -94,4 +94,5 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ---
-*Built with ❤️ for the best check-in experience!*
+*Built with ❤️ for the best check-in experience!*  
+*created by **RyzerX (Tanakrit Phumcharoen)** from Nakprasith 79*
