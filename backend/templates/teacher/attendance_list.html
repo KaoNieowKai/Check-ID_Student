@@ -125,6 +125,66 @@
         color: #64748B;
     }
 
+    /* Filter Controls */
+    .controls-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 24px;
+        align-items: flex-end;
+    }
+
+    .search-container {
+        flex: 1;
+        min-width: 250px;
+        max-width: 500px;
+        margin-bottom: 0; /* Overrides previous margin */
+    }
+
+    .filters-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .filter-item {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .filter-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #64748B;
+    }
+
+    .filter-select {
+        padding: 10px 36px 10px 12px;
+        border: 1px solid #CBD5E1;
+        border-radius: 8px;
+        background: #FFFFFF;
+        color: #1E293B;
+        font-size: 0.95rem;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748B'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+        min-width: 140px;
+        transition: border-color 0.2s;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #2563EB;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .mobile-label { display: none; }
+
     /* Mobile Responsive Adjustments */
     @media (max-width: 768px) {
         .teacher-container {
@@ -161,18 +221,108 @@
             font-size: 2rem;
         }
 
+        .controls-container {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+        }
+
         .search-container {
             max-width: 100%;
         }
 
-        .table-container {
-            overflow-x: auto;
-            overflow-y: hidden;
-            -webkit-overflow-scrolling: touch;
+        .filters-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
         }
         
-        .data-table th, .data-table td {
-            white-space: nowrap;
+        .filter-select {
+            width: 100%;
+            min-width: 0;
+        }
+
+        .table-container {
+            border: none;
+            box-shadow: none;
+            background: transparent;
+            overflow: visible;
+        }
+        
+        .data-table {
+            background: transparent;
+        }
+
+        .data-table thead {
+            display: none;
+        }
+        
+        .data-table tbody {
+            display: block;
+        }
+        
+        .data-table tr {
+            display: flex;
+            flex-direction: column;
+            background: #FFFFFF;
+            border: 1px solid #CBD5E1;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            padding: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .data-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none !important;
+            padding: 8px 0 !important;
+            white-space: normal;
+        }
+        
+        .mobile-label {
+            display: block;
+            font-size: 0.95rem;
+            color: #64748B;
+            font-weight: 500;
+        }
+        
+        .cell-value {
+            font-size: 1rem;
+            color: #1E293B;
+            text-align: right;
+        }
+        
+        .student-name-cell {
+            order: -1;
+            border-bottom: 1px solid #F1F5F9 !important;
+            padding-bottom: 12px !important;
+            margin-bottom: 8px;
+            justify-content: flex-start !important;
+        }
+        
+        .student-name-cell .cell-value {
+            font-size: 1.15rem;
+            font-weight: 600 !important;
+            color: #0F172A !important;
+            text-align: left;
+        }
+        
+        .status-cell {
+            order: 99;
+            border-top: 1px solid #F1F5F9 !important;
+            padding-top: 12px !important;
+            margin-top: 8px;
+        }
+
+        .data-table td.empty-state {
+            display: block;
+            text-align: center;
+            padding: 32px !important;
+            border: 1px solid #CBD5E1 !important;
+            border-radius: 12px;
+            background: #FFFFFF;
         }
     }
 </style>
@@ -209,16 +359,36 @@
             </div>
         </div>
 
-        <!-- Search Input -->
-        <div class="search-container">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20"
-                height="20">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input type="text" id="searchInput" class="search-input"
-                placeholder="Search by name, student ID, or room..." data-i18n-placeholder="ph_search_student"
-                onkeyup="handleSearch()">
+        <!-- Controls: Search and Filters -->
+        <div class="controls-container">
+            <div class="search-container">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" id="searchInput" class="search-input" placeholder="Search by name, ID, or room..." data-i18n-placeholder="ph_search_student" onkeyup="handleSearch()">
+            </div>
+            
+            <div class="filters-group">
+                <div class="filter-item">
+                    <label class="filter-label">Grade</label>
+                    <select id="gradeFilter" class="filter-select" onchange="handleSearch()">
+                        <option value="all">All Grades</option>
+                        <option value="1">ม.1</option>
+                        <option value="2">ม.2</option>
+                        <option value="3">ม.3</option>
+                        <option value="4">ม.4</option>
+                        <option value="5">ม.5</option>
+                        <option value="6">ม.6</option>
+                    </select>
+                </div>
+                <div class="filter-item">
+                    <label class="filter-label">Room</label>
+                    <select id="roomFilter" class="filter-select" onchange="handleSearch()">
+                        <option value="all">All Rooms</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <!-- Checked In List -->
@@ -282,25 +452,103 @@
         return method;
     }
 
+    let selectedGrade = "all";
+    let selectedRoom = "all";
+
+    function updateRoomFilter() {
+        const allStudents = [...currentData.checked_in, ...currentData.not_checked_in];
+        const uniqueRooms = [...new Set(allStudents.map(s => s.room).filter(Boolean))];
+        
+        // Sort numerically
+        uniqueRooms.sort((a, b) => {
+            const strA = String(a);
+            const strB = String(b);
+            const numA = parseInt(strA, 10);
+            const numB = parseInt(strB, 10);
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return numA - numB;
+            }
+            return strA.localeCompare(strB);
+        });
+
+        const roomFilter = document.getElementById('roomFilter');
+        const currentValue = roomFilter.value;
+        
+        const allRoomsText = document.documentElement.lang === 'en' ? 'All Rooms' : 'ทุกห้อง';
+        let optionsHtml = '<option value="all">' + allRoomsText + '</option>';
+        
+        uniqueRooms.forEach(room => {
+            optionsHtml += '<option value="' + room + '">' + room + '</option>';
+        });
+        
+        roomFilter.innerHTML = optionsHtml;
+        
+        // Restore selection if still valid
+        if (uniqueRooms.includes(currentValue)) {
+            roomFilter.value = currentValue;
+        } else {
+            roomFilter.value = 'all';
+        }
+    }
+
     function handleSearch() {
         searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+        selectedGrade = document.getElementById('gradeFilter').value;
+        selectedRoom = document.getElementById('roomFilter').value;
         renderTables();
     }
 
     function matchSearch(row) {
-        if (!searchQuery) return true;
-        const term = searchQuery;
-        return (
-            (row.student_id && row.student_id.toLowerCase().includes(term)) ||
-            (row.full_name && row.full_name.toLowerCase().includes(term)) ||
-            (row.room && row.room.toLowerCase().includes(term)) ||
-            (row.grade && row.grade.toLowerCase().includes(term))
-        );
+        // Filter by Grade
+        if (selectedGrade !== "all") {
+            const rowGradeNum = String(row.grade || "").replace(/\D/g, '');
+            if (rowGradeNum !== selectedGrade) {
+                return false;
+            }
+        }
+        
+        // Filter by Room
+        if (selectedRoom !== "all" && String(row.room) !== selectedRoom) {
+            return false;
+        }
+        
+        // Filter by Search Query
+        if (searchQuery) {
+            const term = searchQuery;
+            return (
+                (row.student_id && String(row.student_id).toLowerCase().includes(term)) ||
+                (row.full_name && String(row.full_name).toLowerCase().includes(term)) ||
+                (row.room && String(row.room).toLowerCase().includes(term)) ||
+                (row.grade && String(row.grade).toLowerCase().includes(term))
+            );
+        }
+        return true;
+    }
+
+    function sortStudents(a, b) {
+        // 1. Sort by Grade (extract digits)
+        const gradeA = parseInt(String(a.grade || "").replace(/\D/g, ''), 10) || 0;
+        const gradeB = parseInt(String(b.grade || "").replace(/\D/g, ''), 10) || 0;
+        if (gradeA !== gradeB) {
+            return gradeA - gradeB; // Ascending (M.1, M.2, ...)
+        }
+        
+        // 2. Sort by Room
+        const roomA = parseInt(String(a.room || ""), 10) || 0;
+        const roomB = parseInt(String(b.room || ""), 10) || 0;
+        if (roomA !== roomB) {
+            return roomA - roomB;
+        }
+        
+        // 3. Sort by Student ID
+        const idA = String(a.student_id || "");
+        const idB = String(b.student_id || "");
+        return idA.localeCompare(idB);
     }
 
     function renderTables() {
-        const filteredCheckedIn = currentData.checked_in.filter(matchSearch);
-        const filteredNotCheckedIn = currentData.not_checked_in.filter(matchSearch);
+        const filteredCheckedIn = currentData.checked_in.filter(matchSearch).sort(sortStudents);
+        const filteredNotCheckedIn = currentData.not_checked_in.filter(matchSearch).sort(sortStudents);
 
         // Update Checked In Table
         const checkedInBody = document.getElementById('checkedInBody');
@@ -309,13 +557,33 @@
         } else {
             checkedInBody.innerHTML = filteredCheckedIn.map(row => `
             <tr>
-                <td><code style="color:#1E293B; background:none;">${row.student_id}</code></td>
-                <td style="font-weight: 500;">${row.full_name}</td>
-                <td><span class="badge badge-lg" style="background:#EFF6FF; color:#2563EB;">${row.grade}</span></td>
-                <td>${row.room}</td>
-                <td><span style="color: #16A34A; font-weight: 600;" data-i18n="checked_in">${document.documentElement.lang === 'en' ? 'Checked In' : 'เช็คชื่อแล้ว'}</span></td>
-                <td style="font-weight: 600; color: #1E293B;">${row.time}</td>
-                <td>${renderMethod(row.method)}</td>
+                <td>
+                    <span class="mobile-label" data-i18n="th_student_id">รหัสนักเรียน</span>
+                    <span class="cell-value"><code style="color:#1E293B; background:none; padding:0;">${row.student_id}</code></span>
+                </td>
+                <td class="student-name-cell">
+                    <span class="cell-value" style="font-weight: 500;">${row.full_name}</span>
+                </td>
+                <td>
+                    <span class="mobile-label" data-i18n="th_grade">ระดับชั้น</span>
+                    <span class="cell-value"><span class="badge badge-lg" style="background:#EFF6FF; color:#2563EB;">${row.grade}</span></span>
+                </td>
+                <td>
+                    <span class="mobile-label" data-i18n="th_room">ห้อง</span>
+                    <span class="cell-value">${row.room}</span>
+                </td>
+                <td class="status-cell">
+                    <span class="mobile-label" data-i18n="th_status">สถานะ</span>
+                    <span class="cell-value"><span style="color: #16A34A; font-weight: 600;" data-i18n="checked_in">${document.documentElement.lang === 'en' ? 'Checked In' : 'เช็คชื่อแล้ว'}</span></span>
+                </td>
+                <td>
+                    <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็คชื่อ</span>
+                    <span class="cell-value" style="font-weight: 600; color: #1E293B;">${row.time}</span>
+                </td>
+                <td>
+                    <span class="mobile-label" data-i18n="th_checkin_method">วิธีการเช็คชื่อ</span>
+                    <span class="cell-value">${renderMethod(row.method)}</span>
+                </td>
             </tr>
         `).join('');
         }
@@ -327,12 +595,29 @@
         } else {
             notCheckedInBody.innerHTML = filteredNotCheckedIn.map(row => `
             <tr>
-                <td><code style="color:#1E293B; background:none;">${row.student_id}</code></td>
-                <td style="font-weight: 500;">${row.full_name}</td>
-                <td><span class="badge badge-lg" style="background:#F5F7FA; color:#64748B;">${row.grade}</span></td>
-                <td>${row.room}</td>
-                <td><span style="color: #DC2626; font-weight: 600;" data-i18n="not_checked_in">${document.documentElement.lang === 'en' ? 'Not Checked In' : 'ยังไม่เช็คชื่อ'}</span></td>
-                <td style="font-weight: bold; color: #CBD5E1; text-align: center;">-</td>
+                <td>
+                    <span class="mobile-label" data-i18n="th_student_id">รหัสนักเรียน</span>
+                    <span class="cell-value"><code style="color:#1E293B; background:none; padding:0;">${row.student_id}</code></span>
+                </td>
+                <td class="student-name-cell">
+                    <span class="cell-value" style="font-weight: 500;">${row.full_name}</span>
+                </td>
+                <td>
+                    <span class="mobile-label" data-i18n="th_grade">ระดับชั้น</span>
+                    <span class="cell-value"><span class="badge badge-lg" style="background:#F5F7FA; color:#64748B;">${row.grade}</span></span>
+                </td>
+                <td>
+                    <span class="mobile-label" data-i18n="th_room">ห้อง</span>
+                    <span class="cell-value">${row.room}</span>
+                </td>
+                <td class="status-cell">
+                    <span class="mobile-label" data-i18n="th_status">สถานะ</span>
+                    <span class="cell-value"><span style="color: #DC2626; font-weight: 600;" data-i18n="not_checked_in">${document.documentElement.lang === 'en' ? 'Not Checked In' : 'ยังไม่เช็คชื่อ'}</span></span>
+                </td>
+                <td>
+                    <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็คชื่อ</span>
+                    <span class="cell-value" style="font-weight: bold; color: #CBD5E1;">-</span>
+                </td>
             </tr>
         `).join('');
         }
@@ -354,6 +639,7 @@
 
             currentData.checked_in = data.checked_in;
             currentData.not_checked_in = data.not_checked_in;
+            updateRoomFilter();
             renderTables();
         } catch (e) {
             console.error('Failed to fetch monitoring data', e);
