@@ -49,8 +49,8 @@
             <button class="btn-link" onclick="backToStep1()" data-i18n="change">Change</button>
         </p>
         <div class="id-input-group">
-            <input type="text" id="studentIdInput" inputmode="numeric" pattern="[0-9]*"
-                   data-i18n-placeholder="enter_student_id" placeholder="Enter your Student ID" maxlength="10" autofocus>
+            <input type="text" id="studentIdInput" inputmode="numeric" pattern="[0-9]{5}"
+                   data-i18n-placeholder="enter_student_id" placeholder="Enter your Student ID" maxlength="5" autofocus>
         </div>
         <button class="btn btn-primary btn-xl btn-block" onclick="verifyStudent()" id="verifyBtn">
             <span data-i18n="verify_student">Verify Student</span>
@@ -212,6 +212,11 @@ async function verifyStudent() {
     const studentId = document.getElementById('studentIdInput').value.trim();
     if (!studentId) {
         showError(t('err_enter_id', 'กรุณากรอกรหัสนักเรียน'));
+        return;
+    }
+
+    if (studentId.length !== 5) {
+        showError(t('err_invalid_id', 'กรุณากรอกรหัสนักเรียน 5 หลัก'));
         return;
     }
 
