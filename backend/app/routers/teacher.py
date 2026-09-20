@@ -304,6 +304,9 @@ async def summary_pdf(
         checked_in_ids.add(rec.student_id)
         checked_in.append(rec)
 
+    # Sort checked_in by grade, room, student_id
+    checked_in.sort(key=lambda rec: (rec.student.grade, int(rec.student.room) if str(rec.student.room).isdigit() else 999, rec.student.student_id))
+
     # 3. Not Checked In
     not_checked_in = []
     for st in eligible_students:
@@ -425,11 +428,15 @@ async def summary_pdf(
         
     pdf_bytes = bytes(pdf.output())
     
-    safe_name = re.sub(r'[^a-zA-Z0-9_\-]', '_', session.activity.name)
-    filename = f"Attendance_Summary_{safe_name}_{session.date}.pdf"
+    import urllib.parse
+    base_name = f"สรุปการเช็คชื่อ" if lang == "th" else f"Attendance_Summary"
+    filename = f"{base_name}_{session.activity.name}_{session.date}.pdf"
+    
+    # URL encode the filename for the Content-Disposition header to support Thai characters
+    encoded_filename = urllib.parse.quote(filename)
     
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename*=utf-8''{encoded_filename}"}
     )
