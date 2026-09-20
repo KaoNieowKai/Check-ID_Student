@@ -766,6 +766,8 @@ function translateDynamicPatterns(text) {
     const isEn = currentLang === 'en';
 
     if (isEn) {
+        // Grades options (M.1 -> ม.1 handling for translation back to English)
+        text = text.replace(/ม\.(\d+)/g, 'M.$1');
         // Room options: "ห้อง 1" -> "Room 1"
         text = text.replace(/^ห้อง\s*(\d+)$/i, 'Room $1');
         // "แสดง 25 จากทั้งหมด 100 คน"
@@ -795,6 +797,8 @@ function translateDynamicPatterns(text) {
         text = text.replace(/มา\s*\(Present\)/gi, 'Present');
         text = text.replace(/ปรับแก้โดยครู\s*\(Manual\)/gi, 'Manual');
     } else {
+        // "M.1" -> "ม.1"
+        text = text.replace(/M\.(\d+)/g, 'ม.$1');
         // "Room 1" -> "ห้อง 1"
         text = text.replace(/^Room\s*(\d+)$/i, 'ห้อง $1');
         // "Showing 25 of 100 students"
@@ -891,7 +895,7 @@ function applyTranslations() {
     });
 
     // 6. Dynamic pattern replacement across text containers
-    document.querySelectorAll('.table-info, .page-info, .activity-meta, .session-meta, .empty-state, .preview-stats span, .header-meta, .breadcrumb, p, h1, h2, h3, h4, th, span, div, strong').forEach(el => {
+    document.querySelectorAll('.table-info, .page-info, .activity-meta, .session-meta, .empty-state, .preview-stats span, .header-meta, .breadcrumb, p, h1, h2, h3, h4, th, span, div, strong, button').forEach(el => {
         if (el.closest('.lang-switcher') || el.hasAttribute('data-i18n')) return;
         el.childNodes.forEach(node => {
             if (node.nodeType === Node.TEXT_NODE) {
