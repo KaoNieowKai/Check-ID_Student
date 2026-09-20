@@ -316,6 +316,7 @@ const I18N_DICTIONARY = {
         'remaining_prefix': 'เหลืออีก',
         'not_checked_in_unit': 'คนที่ยังไม่เช็คชื่อ',
         'attendance_list': 'รายชื่อผู้เข้าร่วม',
+        'attendance_summary_pdf': 'สรุปการเช็คชื่อ',
 
         // Student Interface
         'checkin_title': 'ระบบเช็คชื่อเข้าร่วมกิจกรรม',
@@ -654,6 +655,7 @@ const I18N_DICTIONARY = {
         'remaining_prefix': 'Remaining',
         'not_checked_in_unit': 'students not checked in',
         'attendance_list': 'Attendance List',
+        'attendance_summary_pdf': 'Attendance Summary',
 
         // Student Interface
         'checkin_title': 'Attendance Check-In',
