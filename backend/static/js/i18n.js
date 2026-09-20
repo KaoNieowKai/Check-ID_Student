@@ -30,7 +30,7 @@ const I18N_DICTIONARY = {
         'sec_attendance': 'การเข้าร่วม',
         'nav_attendance': 'จัดการการเข้าร่วม',
         'sec_reports': 'รายงาน',
-        'nav_reports': 'ส่งออก Excel',
+        'nav_reports': 'ส่งออก Excel & PDF',
         'sec_system': 'ระบบ',
         'nav_audit_logs': 'บันทึกการใช้งาน',
         'nav_logout': 'ออกจากระบบ',
@@ -111,6 +111,7 @@ const I18N_DICTIONARY = {
         'btn_correct_status': 'แก้ไขสถานะ',
         'btn_save_correction': 'บันทึกการแก้ไข',
         'btn_export_excel': 'ส่งออกเป็นไฟล์ Excel',
+        'btn_generate_pdf': 'สร้างรายงาน PDF',
         'btn_choose_file': 'เลือกไฟล์',
         'btn_upload_preview': 'อัปโหลดและตรวจสอบข้อมูล',
         'btn_confirm_import': 'ยืนยันการนำเข้าข้อมูล',
@@ -259,7 +260,7 @@ const I18N_DICTIONARY = {
         'opt_status_manual': 'ปรับแก้โดยครู (Manual)',
 
         // Reports
-        'export_excel_heading': 'ส่งออกข้อมูลการเช็คชื่อเป็นไฟล์ Excel',
+        'export_excel_heading': 'ส่งออกข้อมูลการเช็คชื่อเป็นไฟล์ Excel & PDF',
         'export_excel_desc': 'เลือกกิจกรรมหรือรอบกิจกรรมที่ต้องการดาวน์โหลดรายงานสรุปการเข้าร่วมของนักเรียน',
         'lbl_activity_required': 'กิจกรรม',
         'opt_select_activity_report': 'เลือกกิจกรรม (สำหรับรายงานทั้งกิจกรรม)',
@@ -316,6 +317,7 @@ const I18N_DICTIONARY = {
         'remaining_prefix': 'เหลืออีก',
         'not_checked_in_unit': 'คนที่ยังไม่เช็คชื่อ',
         'attendance_list': 'รายชื่อผู้เข้าร่วม',
+        'attendance_summary_pdf': 'สรุปการเช็คชื่อ',
 
         // Student Interface
         'checkin_title': 'ระบบเช็คชื่อเข้าร่วมกิจกรรม',
@@ -368,7 +370,7 @@ const I18N_DICTIONARY = {
         'sec_attendance': 'Attendance',
         'nav_attendance': 'Manage Attendance',
         'sec_reports': 'Reports',
-        'nav_reports': 'Export Excel',
+        'nav_reports': 'Export Excel & PDF',
         'sec_system': 'System',
         'nav_audit_logs': 'Audit Logs',
         'nav_logout': 'Logout',
@@ -449,6 +451,7 @@ const I18N_DICTIONARY = {
         'btn_correct_status': 'Correct Status',
         'btn_save_correction': 'Save Correction',
         'btn_export_excel': 'Export to Excel',
+        'btn_generate_pdf': 'Generate PDF Report',
         'btn_choose_file': 'Choose File',
         'btn_upload_preview': 'Upload & Preview',
         'btn_confirm_import': 'Confirm Import',
@@ -597,7 +600,7 @@ const I18N_DICTIONARY = {
         'opt_status_manual': 'Manual',
 
         // Reports
-        'export_excel_heading': 'Export Attendance to Excel',
+        'export_excel_heading': 'Export Attendance to Excel & PDF',
         'export_excel_desc': 'Select activity and optional session to download attendance report.',
         'lbl_activity_required': 'Activity',
         'opt_select_activity_report': 'Select Activity (for full report)',
@@ -654,6 +657,7 @@ const I18N_DICTIONARY = {
         'remaining_prefix': 'Remaining',
         'not_checked_in_unit': 'students not checked in',
         'attendance_list': 'Attendance List',
+        'attendance_summary_pdf': 'Attendance Summary',
 
         // Student Interface
         'checkin_title': 'Attendance Check-In',
@@ -762,6 +766,8 @@ function translateDynamicPatterns(text) {
     const isEn = currentLang === 'en';
 
     if (isEn) {
+        // Grades options (M.1 -> ม.1 handling for translation back to English)
+        text = text.replace(/ม\.(\d+)/g, 'M.$1');
         // Room options: "ห้อง 1" -> "Room 1"
         text = text.replace(/^ห้อง\s*(\d+)$/i, 'Room $1');
         // "แสดง 25 จากทั้งหมด 100 คน"
@@ -791,6 +797,8 @@ function translateDynamicPatterns(text) {
         text = text.replace(/มา\s*\(Present\)/gi, 'Present');
         text = text.replace(/ปรับแก้โดยครู\s*\(Manual\)/gi, 'Manual');
     } else {
+        // "M.1" -> "ม.1"
+        text = text.replace(/M\.(\d+)/g, 'ม.$1');
         // "Room 1" -> "ห้อง 1"
         text = text.replace(/^Room\s*(\d+)$/i, 'ห้อง $1');
         // "Showing 25 of 100 students"
@@ -887,7 +895,7 @@ function applyTranslations() {
     });
 
     // 6. Dynamic pattern replacement across text containers
-    document.querySelectorAll('.table-info, .page-info, .activity-meta, .session-meta, .empty-state, .preview-stats span, .header-meta, .breadcrumb, p, h1, h2, h3, h4, th, span, div, strong').forEach(el => {
+    document.querySelectorAll('.table-info, .page-info, .activity-meta, .session-meta, .empty-state, .preview-stats span, .header-meta, .breadcrumb, p, h1, h2, h3, h4, th, span, div, strong, button').forEach(el => {
         if (el.closest('.lang-switcher') || el.hasAttribute('data-i18n')) return;
         el.childNodes.forEach(node => {
             if (node.nodeType === Node.TEXT_NODE) {

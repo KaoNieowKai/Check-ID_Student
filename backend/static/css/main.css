@@ -144,6 +144,18 @@ a:hover {
     background: var(--danger-bg);
 }
 
+.btn-gray {
+    background: #F1F5F9;
+    color: #475569;
+    border-color: #E2E8F0;
+}
+
+.btn-gray:hover {
+    background: #E2E8F0;
+    border-color: #CBD5E1;
+    color: #1E293B;
+}
+
 .btn-outline {
     background: transparent;
     color: var(--text-secondary);
