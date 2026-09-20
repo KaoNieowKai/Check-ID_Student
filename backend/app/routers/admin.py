@@ -1152,6 +1152,222 @@ async def export_attendance(
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
 
+@router.get("/reports/pdf")
+async def generate_pdf_report(
+    request: Request,
+    session_id: int = Query(0),
+    activity_id: int = Query(0),
+    grade: str = Query(""),
+    room: str = Query(""),
+    lang: str = Query("th"),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    """Generate attendance summary PDF report."""
+    from fpdf import FPDF
+    import os
+    import urllib.parse
+    
+    # Register fonts
+    class PDF(FPDF):
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('Prompt', '', 8)
+            self.cell(0, 10, f'Page {self.page_no()}/{{nb}}', align='C')
+
+    pdf = PDF()
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    font_path_reg = os.path.join(base_dir, "static", "fonts", "Prompt-Regular.ttf")
+    font_path_med = os.path.join(base_dir, "static", "fonts", "Prompt-Medium.ttf")
+    pdf.add_font("Prompt", "", font_path_reg)
+    pdf.add_font("Prompt", "B", font_path_med)
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    report_title = "รายงานสรุปการเช็คชื่อ" if lang == "th" else "Attendance Summary Report"
+    
+    def render_session_report(session_obj, students, attendance_map):
+        pdf.add_page()
+        pdf.set_font('Prompt', 'B', 16)
+        pdf.cell(0, 10, report_title, align='C', new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font('Prompt', '', 12)
+        pdf.cell(0, 10, f"{session_obj.activity.name} - {session_obj.name} ({session_obj.date})", align='C', new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(5)
+        
+        present_count = sum(1 for st in students if st.id in attendance_map)
+        absent_count = len(students) - present_count
+        total_count = len(students)
+        rate = (present_count / total_count * 100) if total_count > 0 else 0
+        
+        pdf.set_font('Prompt', 'B', 14)
+        summary_title = "ข้อมูลสรุป" if lang == "th" else "Summary"
+        pdf.cell(0, 10, summary_title, new_x="LMARGIN", new_y="NEXT")
+        
+        pdf.set_font('Prompt', '', 12)
+        lbl_total = "นักเรียนทั้งหมด:" if lang == "th" else "Total Students:"
+        lbl_present = "มาเช็คชื่อแล้ว:" if lang == "th" else "Present:"
+        lbl_absent = "ยังไม่เช็คชื่อ:" if lang == "th" else "Not Checked In:"
+        lbl_rate = "อัตราการเข้าร่วม:" if lang == "th" else "Attendance Rate:"
+        
+        pdf.cell(50, 8, lbl_total)
+        pdf.cell(0, 8, str(total_count), new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(50, 8, lbl_present)
+        pdf.cell(0, 8, str(present_count), new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(50, 8, lbl_absent)
+        pdf.cell(0, 8, str(absent_count), new_x="LMARGIN", new_y="NEXT")
+        pdf.cell(50, 8, lbl_rate)
+        pdf.cell(0, 8, f"{rate:.1f}%", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(5)
+        
+        # Present Table
+        pdf.set_font('Prompt', 'B', 14)
+        present_title = "รายชื่อนักเรียนที่มา" if lang == "th" else "Present Students"
+        pdf.cell(0, 10, present_title, new_x="LMARGIN", new_y="NEXT")
+        
+        pdf.set_font('Prompt', 'B', 10)
+        col_widths = [10, 25, 60, 20, 20, 25, 30]
+        headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "เวลาเช็คชื่อ", "วิธีการ"]
+        headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Time", "Method"]
+        headers = headers_th if lang == "th" else headers_en
+        
+        for i in range(len(headers)):
+            pdf.cell(col_widths[i], 8, headers[i], border=1, align='C')
+        pdf.ln(8)
+        
+        pdf.set_font('Prompt', '', 10)
+        idx = 1
+        for st in students:
+            if st.id in attendance_map:
+                rec = attendance_map[st.id]
+                pdf.cell(col_widths[0], 8, str(idx), border=1, align='C')
+                pdf.cell(col_widths[1], 8, st.student_id, border=1, align='C')
+                pdf.cell(col_widths[2], 8, st.full_name, border=1)
+                pdf.cell(col_widths[3], 8, st.grade, border=1, align='C')
+                pdf.cell(col_widths[4], 8, str(st.room), border=1, align='C')
+                pdf.cell(col_widths[5], 8, rec.checked_in_at.strftime("%H:%M:%S") if rec.checked_in_at else "-", border=1, align='C')
+                method = rec.checked_in_method
+                if method in ("admin_manual", "qr"):
+                    method = "สแกน QR" if lang == "th" else "QR Scan"
+                elif method == "manual":
+                    method = "ปรับแก้โดยครู" if lang == "th" else "Manual"
+                pdf.cell(col_widths[6], 8, method, border=1, align='C')
+                pdf.ln(8)
+                idx += 1
+                
+        pdf.ln(10)
+        
+        # Absent Table
+        pdf.set_font('Prompt', 'B', 14)
+        absent_title = "รายชื่อนักเรียนที่ไม่มา" if lang == "th" else "Not Checked In Students"
+        pdf.cell(0, 10, absent_title, new_x="LMARGIN", new_y="NEXT")
+        
+        pdf.set_font('Prompt', 'B', 10)
+        col_widths_absent = [10, 25, 70, 25, 25, 35]
+        headers_absent_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ระดับชั้น", "ห้อง", "สถานะ"]
+        headers_absent_en = ["No.", "Student ID", "Name", "Grade", "Room", "Status"]
+        headers_absent = headers_absent_th if lang == "th" else headers_absent_en
+        
+        for i in range(len(headers_absent)):
+            pdf.cell(col_widths_absent[i], 8, headers_absent[i], border=1, align='C')
+        pdf.ln(8)
+        
+        pdf.set_font('Prompt', '', 10)
+        status_text = "ยังไม่เช็คชื่อ" if lang == "th" else "Not Checked In"
+        idx = 1
+        for st in students:
+            if st.id not in attendance_map:
+                pdf.cell(col_widths_absent[0], 8, str(idx), border=1, align='C')
+                pdf.cell(col_widths_absent[1], 8, st.student_id, border=1, align='C')
+                pdf.cell(col_widths_absent[2], 8, st.full_name, border=1)
+                pdf.cell(col_widths_absent[3], 8, st.grade, border=1, align='C')
+                pdf.cell(col_widths_absent[4], 8, str(st.room), border=1, align='C')
+                pdf.cell(col_widths_absent[5], 8, status_text, border=1, align='C')
+                pdf.ln(8)
+                idx += 1
+                
+    # Build query similar to Excel export
+    if session_id:
+        session = db.query(ActivitySession).options(
+            joinedload(ActivitySession.activity)
+        ).filter(ActivitySession.id == session_id).first()
+        if not session:
+            raise HTTPException(status_code=404)
+            
+        student_query = db.query(Student).filter(Student.is_active == True)
+        if session.activity.eligible_grades:
+            grades_list = [g.strip() for g in session.activity.eligible_grades.split(",")]
+            student_query = student_query.filter(Student.grade.in_(grades_list))
+        if grade:
+            student_query = student_query.filter(Student.grade == grade)
+        if room:
+            student_query = student_query.filter(Student.room == room)
+            
+        # Ensure sorting by grade, room, student_id
+        students = student_query.order_by(Student.grade, Student.room, Student.student_id).all()
+        # Custom sort logic for room as integer if possible
+        students.sort(key=lambda s: (s.grade, int(s.room) if str(s.room).isdigit() else 999, s.student_id))
+        
+        attendance_map = {}
+        for rec in db.query(AttendanceRecord).filter(AttendanceRecord.session_id == session_id).all():
+            attendance_map[rec.student_id] = rec
+            
+        render_session_report(session, students, attendance_map)
+        activity_name = session.activity.name
+        date_str = str(session.date)
+        
+    elif activity_id:
+        activity = db.query(Activity).filter(Activity.id == activity_id).first()
+        if not activity:
+            raise HTTPException(status_code=404)
+            
+        sessions = db.query(ActivitySession).options(
+            joinedload(ActivitySession.activity)
+        ).filter(ActivitySession.activity_id == activity_id).order_by(ActivitySession.date).all()
+        
+        student_query = db.query(Student).filter(Student.is_active == True)
+        if activity.eligible_grades:
+            grades_list = [g.strip() for g in activity.eligible_grades.split(",")]
+            student_query = student_query.filter(Student.grade.in_(grades_list))
+        if grade:
+            student_query = student_query.filter(Student.grade == grade)
+        if room:
+            student_query = student_query.filter(Student.room == room)
+            
+        students = student_query.order_by(Student.grade, Student.room, Student.student_id).all()
+        students.sort(key=lambda s: (s.grade, int(s.room) if str(s.room).isdigit() else 999, s.student_id))
+        
+        all_records = db.query(AttendanceRecord).filter(
+            AttendanceRecord.session_id.in_([s.id for s in sessions])
+        ).all()
+        
+        att_map = {}
+        for rec in all_records:
+            att_map.setdefault(rec.session_id, {})[rec.student_id] = rec
+            
+        if not sessions:
+            # Handle empty sessions gracefully
+            pdf.add_page()
+            pdf.set_font('Prompt', '', 12)
+            pdf.cell(0, 10, "No sessions found." if lang == "en" else "ไม่พบรอบกิจกรรม", align='C')
+            
+        for sess in sessions:
+            render_session_report(sess, students, att_map.get(sess.id, {}))
+            
+        activity_name = activity.name
+        date_str = get_bkk_time().strftime('%Y-%m-%d')
+    else:
+        raise HTTPException(status_code=400, detail="Must provide session_id or activity_id")
+
+    pdf_bytes = bytes(pdf.output())
+    base_name = f"สรุปการเช็คชื่อ" if lang == "th" else f"Attendance_Summary"
+    filename = f"{base_name}_{activity_name}_{date_str}.pdf"
+    encoded_filename = urllib.parse.quote(filename)
+    
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename*=utf-8''{encoded_filename}"}
+    )
+
 
 # ─── Audit Logs ──────────────────────────────────────────────────────
 

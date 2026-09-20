@@ -30,7 +30,7 @@ const I18N_DICTIONARY = {
         'sec_attendance': 'การเข้าร่วม',
         'nav_attendance': 'จัดการการเข้าร่วม',
         'sec_reports': 'รายงาน',
-        'nav_reports': 'ส่งออก Excel',
+        'nav_reports': 'ส่งออก Excel & PDF',
         'sec_system': 'ระบบ',
         'nav_audit_logs': 'บันทึกการใช้งาน',
         'nav_logout': 'ออกจากระบบ',
@@ -111,6 +111,7 @@ const I18N_DICTIONARY = {
         'btn_correct_status': 'แก้ไขสถานะ',
         'btn_save_correction': 'บันทึกการแก้ไข',
         'btn_export_excel': 'ส่งออกเป็นไฟล์ Excel',
+        'btn_generate_pdf': 'สร้างรายงาน PDF',
         'btn_choose_file': 'เลือกไฟล์',
         'btn_upload_preview': 'อัปโหลดและตรวจสอบข้อมูล',
         'btn_confirm_import': 'ยืนยันการนำเข้าข้อมูล',
@@ -259,7 +260,7 @@ const I18N_DICTIONARY = {
         'opt_status_manual': 'ปรับแก้โดยครู (Manual)',
 
         // Reports
-        'export_excel_heading': 'ส่งออกข้อมูลการเช็คชื่อเป็นไฟล์ Excel',
+        'export_excel_heading': 'ส่งออกข้อมูลการเช็คชื่อเป็นไฟล์ Excel & PDF',
         'export_excel_desc': 'เลือกกิจกรรมหรือรอบกิจกรรมที่ต้องการดาวน์โหลดรายงานสรุปการเข้าร่วมของนักเรียน',
         'lbl_activity_required': 'กิจกรรม',
         'opt_select_activity_report': 'เลือกกิจกรรม (สำหรับรายงานทั้งกิจกรรม)',
@@ -369,7 +370,7 @@ const I18N_DICTIONARY = {
         'sec_attendance': 'Attendance',
         'nav_attendance': 'Manage Attendance',
         'sec_reports': 'Reports',
-        'nav_reports': 'Export Excel',
+        'nav_reports': 'Export Excel & PDF',
         'sec_system': 'System',
         'nav_audit_logs': 'Audit Logs',
         'nav_logout': 'Logout',
@@ -450,6 +451,7 @@ const I18N_DICTIONARY = {
         'btn_correct_status': 'Correct Status',
         'btn_save_correction': 'Save Correction',
         'btn_export_excel': 'Export to Excel',
+        'btn_generate_pdf': 'Generate PDF Report',
         'btn_choose_file': 'Choose File',
         'btn_upload_preview': 'Upload & Preview',
         'btn_confirm_import': 'Confirm Import',
@@ -598,7 +600,7 @@ const I18N_DICTIONARY = {
         'opt_status_manual': 'Manual',
 
         // Reports
-        'export_excel_heading': 'Export Attendance to Excel',
+        'export_excel_heading': 'Export Attendance to Excel & PDF',
         'export_excel_desc': 'Select activity and optional session to download attendance report.',
         'lbl_activity_required': 'Activity',
         'opt_select_activity_report': 'Select Activity (for full report)',
