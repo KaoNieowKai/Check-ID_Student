@@ -20,6 +20,7 @@ Our system is built with a modern, fast, and reliable architecture:
 ### 🌐 Frontend (What You See)
 * **Core**: HTML5, CSS3, Vanilla JavaScript 🖥️
 * **Dynamic Content**: Jinja2 templates 🌟
+* **Internationalization (i18n)**: Custom-built JavaScript engine supporting seamless switching between Thai (th) and English (en) languages across the entire application! 🌍
 
 ---
 
@@ -38,12 +39,14 @@ Here are the key parts that make our system work:
 
 ---
 
-## 🚀 🎯 Application Workflows
+## 🚀 🎯 Application Workflows & Features
 
 ### 1️⃣ 👑 Administrator Workflow
 * **Authentication**: Secure login using credentials. 🔐
 * **User Management**: Create and manage teacher accounts with love. 👥
+* **Student Management**: Add students manually or **Bulk Import from Excel** files for quick onboarding! 📝
 * **System Monitoring**: View audit logs to keep the system safe. 🔍
+* **Database Maintenance**: Safely soft/hard delete all student records for end-of-year resets. 🧹
 
 ### 2️⃣ 👩‍🏫 Teacher Workflow
 * **Dashboard Access**: Get a beautiful overview of all activities. 📊
@@ -52,7 +55,7 @@ Here are the key parts that make our system work:
   * 📸 Show an auto-refreshing, dynamic QR code to the class.
   * 👀 Watch students check in *live* via WebSockets!
   * ✍️ Manually check in students who need a little help.
-* **Reporting**: Export reports to see how many joined the fun. 📈
+* **Reporting**: **Export attendance reports directly to Excel and PDF formats!** 📈
 
 ### 3️⃣ 📱 Student Check-in Workflow
 Super quick and easy—no account needed!
