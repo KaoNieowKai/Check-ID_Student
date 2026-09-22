@@ -494,97 +494,75 @@
         if (filtered.length === 0) {
             wrapper.innerHTML = '<div class="table-container"><div class="empty-state" data-i18n="empty_students">No students found</div></div>';
         } else {
-            const order = ['present', 'leave', 'sick_leave', 'absent'];
+            let html = `
+                <div class="table-container" style="margin-bottom: 0;">
+                    <table class="data-table data-table-lg">
+                        <thead>
+                            <tr>
+                                <th data-i18n="th_student_id">รหัสนักเรียน</th>
+                                <th data-i18n="th_fullname">ชื่อ-นามสกุล</th>
+                                <th data-i18n="th_grade">ระดับชั้น</th>
+                                <th data-i18n="th_room">ห้อง</th>
+                                <th data-i18n="th_status">สถานะ</th>
+                                <th data-i18n="th_checkin_time">เวลาเช็กชื่อ</th>
+                                <th data-i18n="th_checkin_method">วิธีการเช็กชื่อ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
             
-            const colorMap = {
-                'present': { bg: '#F0FDF4', border: '#86EFAC', text: '#16A34A' },
-                'leave': { bg: '#FFFBEB', border: '#FDE68A', text: '#D97706' },
-                'sick_leave': { bg: '#FEF9C3', border: '#FDE047', text: '#CA8A04' },
-                'absent': { bg: '#FEF2F2', border: '#FCA5A5', text: '#DC2626' }
-            };
-
-            let html = '';
+            html += filtered.map(row => {
+                const isPresent = row.status === 'present';
+                const isLeave = row.status === 'leave';
+                const isSick = row.status === 'sick_leave';
+                const isAbsent = row.status === 'absent';
+                
+                return `
+                <tr>
+                    <td>
+                        <span class="mobile-label" data-i18n="th_student_id">รหัสนักเรียน</span>
+                        <span class="cell-value"><code style="color:#1E293B; background:none; padding:0;">${row.student_id}</code></span>
+                    </td>
+                    <td class="student-name-cell">
+                        <span class="cell-value" style="font-weight: 500;">${row.full_name}</span>
+                    </td>
+                    <td>
+                        <span class="mobile-label" data-i18n="th_grade">ระดับชั้น</span>
+                        <span class="cell-value"><span class="badge badge-lg" style="background:#EFF6FF; color:#2563EB;">${row.grade}</span></span>
+                    </td>
+                    <td>
+                        <span class="mobile-label" data-i18n="th_room">ห้อง</span>
+                        <span class="cell-value">${row.room}</span>
+                    </td>
+                    <td class="status-cell">
+                        <span class="mobile-label" data-i18n="th_status">สถานะ</span>
+                        <span class="cell-value">
+                            <select class="status-select-inline filter-select st-${row.status}" onchange="initiateStatusChange('${row.student_id}', this)" data-original="${row.status}">
+                                <option value="present" ${isPresent ? 'selected' : ''} data-i18n="attendance_present">มา</option>
+                                <option value="leave" ${isLeave ? 'selected' : ''} data-i18n="attendance_leave">ลา</option>
+                                <option value="sick_leave" ${isSick ? 'selected' : ''} data-i18n="attendance_sick_leave">ลาป่วย</option>
+                                <option value="absent" ${isAbsent ? 'selected' : ''} data-i18n="attendance_absent">ไม่มา</option>
+                            </select>
+                        </span>
+                    </td>
+                    <td>
+                        <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็กชื่อ</span>
+                        <span class="cell-value" style="font-weight: 600; color: ${row.time === '-' ? '#CBD5E1' : '#1E293B'};">${row.time}</span>
+                    </td>
+                    <td>
+                        <span class="mobile-label" data-i18n="th_checkin_method">วิธีการเช็กชื่อ</span>
+                        <span class="cell-value">${renderMethod(row.method)}</span>
+                    </td>
+                </tr>
+                `;
+            }).join('');
             
-            order.forEach(st => {
-                const groupStudents = filtered.filter(s => s.status === st);
-                if (groupStudents.length > 0) {
-                    const statusLabel = getStatusLabel(st);
-                    const colors = colorMap[st];
-                    
-                    html += `
-                        <div class="table-container" style="border-top: 4px solid ${colors.text}; margin-bottom: 0;">
-                            <div style="background: ${colors.bg}; padding: 12px 20px; border-bottom: 1px solid #CBD5E1; display: flex; align-items: center; gap: 12px;">
-                                <h3 style="margin: 0; color: ${colors.text}; font-size: 1.15rem;">${statusLabel}</h3>
-                                <span class="badge" style="background: white; color: ${colors.text}; border: 1px solid ${colors.border}; font-size: 0.95rem;">${groupStudents.length}</span>
-                            </div>
-                            <table class="data-table data-table-lg">
-                                <thead>
-                                    <tr>
-                                        <th data-i18n="th_student_id">รหัสนักเรียน</th>
-                                        <th data-i18n="th_fullname">ชื่อ-นามสกุล</th>
-                                        <th data-i18n="th_grade">ระดับชั้น</th>
-                                        <th data-i18n="th_room">ห้อง</th>
-                                        <th data-i18n="th_status">สถานะ</th>
-                                        <th data-i18n="th_checkin_time">เวลาเช็กชื่อ</th>
-                                        <th data-i18n="th_checkin_method">วิธีการเช็กชื่อ</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-                    
-                    html += groupStudents.map(row => {
-                        const isPresent = row.status === 'present';
-                        const isLeave = row.status === 'leave';
-                        const isSick = row.status === 'sick_leave';
-                        const isAbsent = row.status === 'absent';
-                        
-                        return `
-                        <tr>
-                            <td>
-                                <span class="mobile-label" data-i18n="th_student_id">รหัสนักเรียน</span>
-                                <span class="cell-value"><code style="color:#1E293B; background:none; padding:0;">${row.student_id}</code></span>
-                            </td>
-                            <td class="student-name-cell">
-                                <span class="cell-value" style="font-weight: 500;">${row.full_name}</span>
-                            </td>
-                            <td>
-                                <span class="mobile-label" data-i18n="th_grade">ระดับชั้น</span>
-                                <span class="cell-value"><span class="badge badge-lg" style="background:#EFF6FF; color:#2563EB;">${row.grade}</span></span>
-                            </td>
-                            <td>
-                                <span class="mobile-label" data-i18n="th_room">ห้อง</span>
-                                <span class="cell-value">${row.room}</span>
-                            </td>
-                            <td class="status-cell">
-                                <span class="mobile-label" data-i18n="th_status">สถานะ</span>
-                                <span class="cell-value">
-                                    <select class="status-select-inline filter-select st-${row.status}" onchange="initiateStatusChange('${row.student_id}', this)" data-original="${row.status}">
-                                        <option value="present" ${isPresent ? 'selected' : ''} data-i18n="attendance_present">มา</option>
-                                        <option value="leave" ${isLeave ? 'selected' : ''} data-i18n="attendance_leave">ลา</option>
-                                        <option value="sick_leave" ${isSick ? 'selected' : ''} data-i18n="attendance_sick_leave">ลาป่วย</option>
-                                        <option value="absent" ${isAbsent ? 'selected' : ''} data-i18n="attendance_absent">ไม่มา</option>
-                                    </select>
-                                </span>
-                            </td>
-                            <td>
-                                <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็กชื่อ</span>
-                                <span class="cell-value" style="font-weight: 600; color: ${row.time === '-' ? '#CBD5E1' : '#1E293B'};">${row.time}</span>
-                            </td>
-                            <td>
-                                <span class="mobile-label" data-i18n="th_checkin_method">วิธีการเช็กชื่อ</span>
-                                <span class="cell-value">${renderMethod(row.method)}</span>
-                            </td>
-                        </tr>
-                        `;
-                    }).join('');
-                    
-                    html += `
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-                }
-            });
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            
             wrapper.innerHTML = html;
         }
 

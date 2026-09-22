@@ -430,19 +430,38 @@ async def summary_pdf(
     
     pdf.ln(5)
     
-    pdf.set_font('Prompt', 'B', 14)
-    list_title = "รายชื่อนักเรียน" if lang == "th" else "Student List"
-    pdf.cell(0, 10, list_title, new_x="LMARGIN", new_y="NEXT")
+    status_map_th = {"present": "มา", "leave": "ลา", "sick_leave": "ลาป่วย", "absent": "ไม่มา"}
+    status_map_en = {"present": "Present", "leave": "Leave", "sick_leave": "Sick Leave", "absent": "Absent"}
+    status_map = status_map_th if lang == "th" else status_map_en
     
-    pdf.set_font('Prompt', 'B', 10)
     col_widths = [10, 25, 60, 20, 20, 30, 25]
     headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "สถานะ", "เวลา"]
     headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Status", "Time"]
     headers = headers_th if lang == "th" else headers_en
     
-    for i in range(len(headers)):
-        pdf.cell(col_widths[i], 8, headers[i], border=1, align='C')
-    pdf.ln(8)
+    for st_val in ["present", "leave", "sick_leave", "absent"]:
+        group_students = [s for s in students_list if s["status"] == st_val]
+        if group_students:
+            pdf.set_font('Prompt', 'B', 14)
+            group_title = f"{status_map[st_val]} ({len(group_students)})"
+            pdf.cell(0, 10, group_title, new_x="LMARGIN", new_y="NEXT")
+            
+            pdf.set_font('Prompt', 'B', 10)
+            for i in range(len(headers)):
+                pdf.cell(col_widths[i], 8, headers[i], border=1, align='C')
+            pdf.ln(8)
+            
+            pdf.set_font('Prompt', '', 10)
+            for idx, row in enumerate(group_students, 1):
+                pdf.cell(col_widths[0], 8, str(idx), border=1, align='C')
+                pdf.cell(col_widths[1], 8, row["student_id"], border=1, align='C')
+                pdf.cell(col_widths[2], 8, row["full_name"], border=1)
+                pdf.cell(col_widths[3], 8, row["grade"], border=1, align='C')
+                pdf.cell(col_widths[4], 8, str(row["room"]), border=1, align='C')
+                pdf.cell(col_widths[5], 8, status_map.get(row["status"], row["status"]), border=1, align='C')
+                pdf.cell(col_widths[6], 8, row["time"], border=1, align='C')
+                pdf.ln(8)
+            pdf.ln(5)
     
     pdf.set_font('Prompt', '', 10)
     
@@ -460,6 +479,7 @@ async def summary_pdf(
         pdf.cell(col_widths[6], 8, row["time"], border=1, align='C')
         pdf.ln(8)
         
+
     pdf_bytes = bytes(pdf.output())
     
     base_name = f"สรุปการเช็กชื่อ" if lang == "th" else f"Attendance_Summary"
