@@ -319,7 +319,7 @@ async def summary_pdf(
     class PDF(FPDF):
         def header(self):
             self.set_font('Prompt', 'B', 16)
-            title = "สรุปการเช็คชื่อ" if lang == "th" else "Attendance Summary"
+            title = "สรุปการเช็กชื่อ" if lang == "th" else "Attendance Summary"
             self.cell(0, 10, title, align='C', new_x="LMARGIN", new_y="NEXT")
             self.set_font('Prompt', '', 12)
             self.cell(0, 10, f"{session.activity.name} - {session.name} ({session.date})", align='C', new_x="LMARGIN", new_y="NEXT")
@@ -354,8 +354,8 @@ async def summary_pdf(
     rate = (present_count / total_count * 100) if total_count > 0 else 0
     
     lbl_total = "นักเรียนทั้งหมด:" if lang == "th" else "Total Students:"
-    lbl_present = "มาเช็คชื่อแล้ว:" if lang == "th" else "Present:"
-    lbl_absent = "ยังไม่เช็คชื่อ:" if lang == "th" else "Not Checked In:"
+    lbl_present = "มาเช็กชื่อแล้ว:" if lang == "th" else "Present:"
+    lbl_absent = "ยังไม่เช็กชื่อ:" if lang == "th" else "Not Checked In:"
     lbl_rate = "อัตราการเข้าร่วม:" if lang == "th" else "Attendance Rate:"
     
     pdf.cell(50, 8, lbl_total)
@@ -376,7 +376,7 @@ async def summary_pdf(
     
     pdf.set_font('Prompt', 'B', 10)
     col_widths = [10, 25, 60, 20, 20, 25, 30]
-    headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "เวลาเช็คชื่อ", "วิธีการ"]
+    headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "เวลาเช็กชื่อ", "วิธีการ"]
     headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Time", "Method"]
     headers = headers_th if lang == "th" else headers_en
     
@@ -416,7 +416,7 @@ async def summary_pdf(
     pdf.ln(8)
     
     pdf.set_font('Prompt', '', 10)
-    status_text = "ยังไม่เช็คชื่อ" if lang == "th" else "Not Checked In"
+    status_text = "ยังไม่เช็กชื่อ" if lang == "th" else "Not Checked In"
     for idx, st in enumerate(not_checked_in, 1):
         pdf.cell(col_widths_absent[0], 8, str(idx), border=1, align='C')
         pdf.cell(col_widths_absent[1], 8, st.student_id, border=1, align='C')
@@ -429,7 +429,7 @@ async def summary_pdf(
     pdf_bytes = bytes(pdf.output())
     
     import urllib.parse
-    base_name = f"สรุปการเช็คชื่อ" if lang == "th" else f"Attendance_Summary"
+    base_name = f"สรุปการเช็กชื่อ" if lang == "th" else f"Attendance_Summary"
     filename = f"{base_name}_{session.activity.name}_{session.date}.pdf"
     
     # URL encode the filename for the Content-Disposition header to support Thai characters

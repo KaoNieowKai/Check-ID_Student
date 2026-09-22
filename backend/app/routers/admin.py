@@ -887,7 +887,7 @@ async def attendance_manual_add(
         student = db.query(Student).filter(Student.id == student_db_id).first()
         return JSONResponse(status_code=409, content={
             "success": False,
-            "message": "นักเรียนคนนี้เช็คชื่อกิจกรรมนี้แล้ว",
+            "message": "นักเรียนคนนี้เช็กชื่อกิจกรรมนี้แล้ว",
             "already_exists": True,
         })
 
@@ -1183,7 +1183,7 @@ async def generate_pdf_report(
     pdf.add_font("Prompt", "B", font_path_med)
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    report_title = "รายงานสรุปการเช็คชื่อ" if lang == "th" else "Attendance Summary Report"
+    report_title = "รายงานสรุปการเช็กชื่อ" if lang == "th" else "Attendance Summary Report"
     
     def render_session_report(session_obj, students, attendance_map):
         pdf.add_page()
@@ -1204,8 +1204,8 @@ async def generate_pdf_report(
         
         pdf.set_font('Prompt', '', 12)
         lbl_total = "นักเรียนทั้งหมด:" if lang == "th" else "Total Students:"
-        lbl_present = "มาเช็คชื่อแล้ว:" if lang == "th" else "Present:"
-        lbl_absent = "ยังไม่เช็คชื่อ:" if lang == "th" else "Not Checked In:"
+        lbl_present = "มาเช็กชื่อแล้ว:" if lang == "th" else "Present:"
+        lbl_absent = "ยังไม่เช็กชื่อ:" if lang == "th" else "Not Checked In:"
         lbl_rate = "อัตราการเข้าร่วม:" if lang == "th" else "Attendance Rate:"
         
         pdf.cell(50, 8, lbl_total)
@@ -1225,7 +1225,7 @@ async def generate_pdf_report(
         
         pdf.set_font('Prompt', 'B', 10)
         col_widths = [10, 25, 60, 20, 20, 25, 30]
-        headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "เวลาเช็คชื่อ", "วิธีการ"]
+        headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "เวลาเช็กชื่อ", "วิธีการ"]
         headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Time", "Method"]
         headers = headers_th if lang == "th" else headers_en
         
@@ -1271,7 +1271,7 @@ async def generate_pdf_report(
         pdf.ln(8)
         
         pdf.set_font('Prompt', '', 10)
-        status_text = "ยังไม่เช็คชื่อ" if lang == "th" else "Not Checked In"
+        status_text = "ยังไม่เช็กชื่อ" if lang == "th" else "Not Checked In"
         idx = 1
         for st in students:
             if st.id not in attendance_map:
@@ -1358,7 +1358,7 @@ async def generate_pdf_report(
         raise HTTPException(status_code=400, detail="Must provide session_id or activity_id")
 
     pdf_bytes = bytes(pdf.output())
-    base_name = f"สรุปการเช็คชื่อ" if lang == "th" else f"Attendance_Summary"
+    base_name = f"สรุปการเช็กชื่อ" if lang == "th" else f"Attendance_Summary"
     filename = f"{base_name}_{activity_name}_{date_str}.pdf"
     encoded_filename = urllib.parse.quote(filename)
     

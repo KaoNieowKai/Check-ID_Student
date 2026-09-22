@@ -1,6 +1,6 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}จัดการการเช็คชื่อ — ผู้ดูแลระบบ{% endblock %}
-{% block page_title %}<span data-i18n="title_attendance">จัดการการเช็คชื่อ</span>{% endblock %}
+{% block title %}จัดการการเช็กชื่อ — ผู้ดูแลระบบ{% endblock %}
+{% block page_title %}<span data-i18n="title_attendance">จัดการการเช็กชื่อ</span>{% endblock %}
 
 {% block content %}
 <div class="toolbar">
@@ -54,8 +54,8 @@
                 <th data-i18n="th_grade">ระดับชั้น</th>
                 <th data-i18n="th_room">ห้อง</th>
                 <th data-i18n="th_status">สถานะ</th>
-                <th data-i18n="th_checkin_time">เวลาเช็คชื่อ</th>
-                <th data-i18n="th_checkin_method">วิธีการเช็คชื่อ</th>
+                <th data-i18n="th_checkin_time">เวลาเช็กชื่อ</th>
+                <th data-i18n="th_checkin_method">วิธีการเช็กชื่อ</th>
                 <th data-i18n="th_actions">จัดการ</th>
             </tr>
         </thead>
@@ -85,7 +85,7 @@
             </tr>
             {% endfor %}
             {% if not records %}
-            <tr><td colspan="8" class="empty-state" style="text-align: center; padding: 30px;" data-i18n="empty_attendance">ไม่พบรายการเช็คชื่อ</td></tr>
+            <tr><td colspan="8" class="empty-state" style="text-align: center; padding: 30px;" data-i18n="empty_attendance">ไม่พบรายการเช็กชื่อ</td></tr>
             {% endif %}
         </tbody>
     </table>
@@ -95,7 +95,7 @@
 <!-- ── Correct Attendance Modal ───────────────────── -->
 <div class="modal-overlay" id="correctModal" style="display:none">
     <div class="modal-card">
-        <h3 data-i18n="modal_correct_title">แก้ไขสถานะการเช็คชื่อ</h3>
+        <h3 data-i18n="modal_correct_title">แก้ไขสถานะการเช็กชื่อ</h3>
         <form method="POST" id="correctForm">
             <div class="form-group">
                 <label data-i18n="lbl_new_status">สถานะใหม่</label>
@@ -292,7 +292,7 @@ async function searchStudents() {
                 </div>
                 <div>
                 ${s.already_checked_in
-                    ? `<span class="badge" style="background:#d1fae5;color:#065f46;font-size:11px;">เช็คชื่อแล้ว</span>`
+                    ? `<span class="badge" style="background:#d1fae5;color:#065f46;font-size:11px;">เช็กชื่อแล้ว</span>`
                     : `<button class="btn btn-primary btn-sm" onclick="selectStudent(${s.db_id},'${escHtml(s.full_name)}','${s.student_id}','${s.grade}','${s.room}')">เลือก</button>`
                 }
                 </div>`;

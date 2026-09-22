@@ -13,10 +13,10 @@
 const I18N_DICTIONARY = {
     th: {
         // App / Brand
-        'app_name': 'ระบบเช็คชื่อกิจกรรมนักเรียน',
+        'app_name': 'ระบบเช็กชื่อกิจกรรมนักเรียน',
         'app_subtitle': 'Activity Attendance Management System',
-        'brand_logo': 'ระบบเช็คชื่อ',
-        'attendance': 'การเช็คชื่อ',
+        'brand_logo': 'ระบบเช็กชื่อ',
+        'attendance': 'การเช็กชื่อ',
 
         // Navigation Sidebar
         'nav_dashboard': 'แดชบอร์ด',
@@ -49,7 +49,7 @@ const I18N_DICTIONARY = {
         'title_student_history': 'ประวัติการเข้าร่วมกิจกรรม',
         'title_teachers': 'จัดการข้อมูลครู',
         'title_sessions': 'รอบกิจกรรม',
-        'title_attendance': 'จัดการการเช็คชื่อ',
+        'title_attendance': 'จัดการการเช็กชื่อ',
         'title_reports': 'รายงานและส่งออกข้อมูล',
         'title_audit_logs': 'บันทึกประวัติการใช้งานระบบ',
 
@@ -120,7 +120,7 @@ const I18N_DICTIONARY = {
         'btn_prev': '← ก่อนหน้า',
         'btn_next': 'ถัดไป →',
         'btn_search': 'ค้นหา',
-        'btn_history': 'ประวัติการเช็คชื่อ',
+        'btn_history': 'ประวัติการเช็กชื่อ',
 
         // Activity Management
         'lbl_activity_name': 'ชื่อกิจกรรม',
@@ -136,7 +136,7 @@ const I18N_DICTIONARY = {
         'all_rooms': 'ทุกห้อง',
         'empty_activities': 'ยังไม่มีกิจกรรมในระบบ',
         'modal_delete_activity_title': 'ยืนยันการลบกิจกรรม',
-        'modal_delete_activity_warning': 'การดำเนินการนี้จะลบข้อมูลรอบกิจกรรม ประวัติการเช็คชื่อ และ QR Code ทั้งหมดที่เกี่ยวข้องกับกิจกรรมนี้อย่างถาวร',
+        'modal_delete_activity_warning': 'การดำเนินการนี้จะลบข้อมูลรอบกิจกรรม ประวัติการเช็กชื่อ และ QR Code ทั้งหมดที่เกี่ยวข้องกับกิจกรรมนี้อย่างถาวร',
         'modal_delete_activity_prefix': '⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรม',
         'modal_delete_session_confirm': 'คุณแน่ใจหรือไม่ว่าต้องการลบรอบกิจกรรมนี้?',
         'confirm_disable_student': 'คุณแน่ใจหรือไม่ว่าต้องการระงับการใช้งานนักเรียนคนนี้?',
@@ -159,8 +159,8 @@ const I18N_DICTIONARY = {
         'th_operation': 'การดำเนินการ',
         'th_target': 'เป้าหมาย',
         'th_details': 'รายละเอียด',
-        'th_checkin_time': 'เวลาเช็คชื่อ',
-        'th_checkin_method': 'วิธีการเช็คชื่อ',
+        'th_checkin_time': 'เวลาเช็กชื่อ',
+        'th_checkin_method': 'วิธีการเช็กชื่อ',
         'th_index': 'ลำดับ',
         'th_sheet': 'แผ่นงาน',
         'th_session_round': 'รอบกิจกรรม',
@@ -242,7 +242,7 @@ const I18N_DICTIONARY = {
         'lbl_start_time': 'เวลาเริ่มต้น',
         'lbl_end_time': 'เวลาสิ้นสุด',
         'ph_session_name': 'เช่น ช่วงเช้า วันที่ 1',
-        'checked_in_prefix': 'เช็คชื่อแล้ว',
+        'checked_in_prefix': 'เช็กชื่อแล้ว',
         'empty_sessions': 'ยังไม่มีรอบกิจกรรมสำหรับกิจกรรมนี้ กรุณาเพิ่มรอบกิจกรรมจากแบบฟอร์มด้านขวา',
 
         // Attendance Management
@@ -250,9 +250,9 @@ const I18N_DICTIONARY = {
         'opt_select_session': 'เลือกรอบกิจกรรม',
         'found_records': 'พบข้อมูล',
         'records_unit': 'รายการ',
-        'empty_attendance': 'ไม่พบรายการเช็คชื่อ',
+        'empty_attendance': 'ไม่พบรายการเช็กชื่อ',
         'btn_add_student': 'เพิ่มรายชื่อนักเรียน',
-        'modal_correct_title': 'แก้ไขสถานะการเช็คชื่อ',
+        'modal_correct_title': 'แก้ไขสถานะการเช็กชื่อ',
         'lbl_new_status': 'สถานะใหม่',
         'lbl_reason_required': 'เหตุผลในการแก้ไข',
         'ph_correction_reason': 'เช่น นักเรียนเข้าร่วมกิจกรรมแต่สแกน QR ไม่สำเร็จ',
@@ -260,7 +260,7 @@ const I18N_DICTIONARY = {
         'opt_status_manual': 'ปรับแก้โดยครู (Manual)',
 
         // Reports
-        'export_excel_heading': 'ส่งออกข้อมูลการเช็คชื่อเป็นไฟล์ Excel & PDF',
+        'export_excel_heading': 'ส่งออกข้อมูลการเช็กชื่อเป็นไฟล์ Excel & PDF',
         'export_excel_desc': 'เลือกกิจกรรมหรือรอบกิจกรรมที่ต้องการดาวน์โหลดรายงานสรุปการเข้าร่วมของนักเรียน',
         'lbl_activity_required': 'กิจกรรม',
         'opt_select_activity_report': 'เลือกกิจกรรม (สำหรับรายงานทั้งกิจกรรม)',
@@ -294,33 +294,33 @@ const I18N_DICTIONARY = {
 
         // Teacher Interface
         'teacher_welcome': 'ยินดีต้อนรับ,',
-        'teacher_instruction': 'เลือกกิจกรรมและรอบกิจกรรมเพื่อเริ่มเปิดระบบเช็คชื่อ',
+        'teacher_instruction': 'เลือกกิจกรรมและรอบกิจกรรมเพื่อเริ่มเปิดระบบเช็กชื่อ',
         'select_activity': '1. เลือกกิจกรรม',
         'select_session': '2. เลือกรอบกิจกรรม',
-        'start_attendance': 'เริ่มการเช็คชื่อ',
-        'checked_in': 'เช็คชื่อแล้ว',
-        'not_checked_in': 'รายชื่อที่ยังไม่เช็คชื่อ',
-        'end_attendance': 'สิ้นสุดการเช็คชื่อ',
+        'start_attendance': 'เริ่มการเช็กชื่อ',
+        'checked_in': 'เช็กชื่อแล้ว',
+        'not_checked_in': 'รายชื่อที่ยังไม่เช็กชื่อ',
+        'end_attendance': 'สิ้นสุดการเช็กชื่อ',
         'qr_loading': 'กำลังโหลด QR Code...',
         'qr_refresh_prefix': 'QR Code จะเปลี่ยนใหม่ในอีก',
         'seconds': 'วินาที',
         'total_students_count': 'นักเรียนทั้งหมด',
-        'present_count': 'มาเช็คชื่อแล้ว',
+        'present_count': 'มาเช็กชื่อแล้ว',
         'attendance_rate': 'อัตราการเข้าร่วม',
-        'recent_checkin_title': 'นักเรียนที่เช็คชื่อล่าสุด',
+        'recent_checkin_title': 'นักเรียนที่เช็กชื่อล่าสุด',
         'empty_teacher_activities': 'ไม่มีกิจกรรมที่เปิดใช้งานในขณะนี้ กรุณาติดต่อผู้ดูแลระบบ',
         'empty_teacher_sessions': 'ไม่มีรอบกิจกรรมสำหรับกิจกรรมนี้',
-        'title_not_checked_in': 'รายชื่อนักเรียนที่ยังไม่เช็คชื่อ',
-        'back_to_attendance': '← กลับไปหน้าระบบเช็คชื่อ',
-        'all_checked_in_success': 'นักเรียนทุกคนเช็คชื่อครบแล้ว! 🎉',
+        'title_not_checked_in': 'รายชื่อนักเรียนที่ยังไม่เช็กชื่อ',
+        'back_to_attendance': '← กลับไปหน้าระบบเช็กชื่อ',
+        'all_checked_in_success': 'นักเรียนทุกคนเช็กชื่อครบแล้ว! 🎉',
         'ph_search_not_checked': 'ค้นหาด้วยชื่อหรือรหัสนักเรียน...',
         'remaining_prefix': 'เหลืออีก',
-        'not_checked_in_unit': 'คนที่ยังไม่เช็คชื่อ',
+        'not_checked_in_unit': 'คนที่ยังไม่เช็กชื่อ',
         'attendance_list': 'รายชื่อผู้เข้าร่วม',
-        'attendance_summary_pdf': 'สรุปการเช็คชื่อ',
+        'attendance_summary_pdf': 'สรุปการเช็กชื่อ',
 
         // Student Interface
-        'checkin_title': 'ระบบเช็คชื่อเข้าร่วมกิจกรรม',
+        'checkin_title': 'ระบบเช็กชื่อเข้าร่วมกิจกรรม',
         'step1_title': 'ขั้นตอนที่ 1: เลือกระดับชั้นของคุณ',
         'step2_title': 'ขั้นตอนที่ 2: กรอกรหัสนักเรียน',
         'grade_label': 'ระดับชั้น:',
@@ -330,15 +330,15 @@ const I18N_DICTIONARY = {
         'step3_title': 'ขั้นตอนที่ 3: ตรวจสอบและยืนยันข้อมูลของคุณ',
         'name': 'ชื่อ-นามสกุล',
         'student_id': 'รหัสนักเรียน',
-        'confirm_checkin': '✓ ยืนยันการเช็คชื่อ',
+        'confirm_checkin': '✓ ยืนยันการเช็กชื่อ',
         'back': '← ย้อนกลับ',
-        'checkin_success': 'บันทึกการเช็คชื่อสำเร็จแล้ว!',
-        'session_expired_title': 'การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่',
+        'checkin_success': 'บันทึกการเช็กชื่อสำเร็จแล้ว!',
+        'session_expired_title': 'การเช็กชื่อหมดเวลา กรุณาสแกน QR Code ใหม่',
         'scan_qr_hint': 'กรุณาสแกน QR Code ที่แสดงบนหน้าจอของคุณครู',
-        'scan_qr_prompt': 'กรุณาสแกน QR Code เพื่อเช็คชื่อ',
+        'scan_qr_prompt': 'กรุณาสแกน QR Code เพื่อเช็กชื่อ',
         'verifying': 'กำลังตรวจสอบ...',
         'saving': 'กำลังบันทึก...',
-        'checkin_time_label': 'เวลาเช็คชื่อ: ',
+        'checkin_time_label': 'เวลาเช็กชื่อ: ',
         'err_conn': 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่',
         'err_enter_id': 'กรุณากรอกรหัสนักเรียน',
         
@@ -780,14 +780,14 @@ function translateDynamicPatterns(text) {
         text = text.replace(/พบข้อมูล\s*(\d+)\s*รายการ/g, 'Found $1 records');
         // "ทั้งหมด 5 รายการ"
         text = text.replace(/ทั้งหมด\s*(\d+)\s*รายการ/g, 'Total $1 records');
-        // "เช็คชื่อแล้ว 10 คน"
-        text = text.replace(/เช็คชื่อแล้ว\s*(\d+)\s*คน/g, 'Checked in $1 students');
+        // "เช็กชื่อแล้ว 10 คน"
+        text = text.replace(/เช็กชื่อแล้ว\s*(\d+)\s*คน/g, 'Checked in $1 students');
         // "ใหม่ 10 คน"
         text = text.replace(/ใหม่\s*(\d+)\s*คน/g, 'New $1 students');
         // "อัปเดตข้อมูลเดิม 10 คน"
         text = text.replace(/อัปเดตข้อมูลเดิม\s*(\d+)\s*คน/g, 'Updated $1 students');
-        // "เหลืออีก 5 คนที่ยังไม่เช็คชื่อ"
-        text = text.replace(/เหลืออีก\s*(\d+)\s*คนที่ยังไม่เช็คชื่อ/g, '$1 students remaining');
+        // "เหลืออีก 5 คนที่ยังไม่เช็กชื่อ"
+        text = text.replace(/เหลืออีก\s*(\d+)\s*คนที่ยังไม่เช็กชื่อ/g, '$1 students remaining');
         // Dropdown statuses:
         text = text.replace(/แบบร่าง\s*\(Draft\)/gi, 'Draft');
         text = text.replace(/กำหนดการแล้ว\s*\(Scheduled\)/gi, 'Scheduled');
@@ -812,13 +812,13 @@ function translateDynamicPatterns(text) {
         // "Total 5 records"
         text = text.replace(/Total\s*(\d+)\s*records/g, 'ทั้งหมด $1 รายการ');
         // "Checked in 10 students"
-        text = text.replace(/Checked\s*in\s*(\d+)\s*students/g, 'เช็คชื่อแล้ว $1 คน');
+        text = text.replace(/Checked\s*in\s*(\d+)\s*students/g, 'เช็กชื่อแล้ว $1 คน');
         // "New 10 students"
         text = text.replace(/New\s*(\d+)\s*students/g, 'ใหม่ $1 คน');
         // "Updated 10 students"
         text = text.replace(/Updated\s*(\d+)\s*students/g, 'อัปเดตข้อมูลเดิม $1 คน');
         // "$1 students remaining"
-        text = text.replace(/(\d+)\s*students\s*remaining/g, 'เหลืออีก $1 คนที่ยังไม่เช็คชื่อ');
+        text = text.replace(/(\d+)\s*students\s*remaining/g, 'เหลืออีก $1 คนที่ยังไม่เช็กชื่อ');
     }
     return text;
 }
@@ -931,38 +931,38 @@ function applyTranslations() {
             .replace('จัดการกิจกรรม', 'Activity Management')
             .replace('จัดการข้อมูลนักเรียน', 'Student Management')
             .replace('จัดการข้อมูลครู', 'Teacher Management')
-            .replace('จัดการการเช็คชื่อ', 'Attendance Management')
+            .replace('จัดการการเช็กชื่อ', 'Attendance Management')
             .replace('รายงานและส่งออกข้อมูล', 'Reports & Export')
             .replace('บันทึกประวัติระบบ', 'Audit Logs')
             .replace('บันทึกประวัติการใช้งานระบบ', 'Audit Logs')
-            .replace('แดชบอร์ดคุณครู — ระบบเช็คชื่อกิจกรรม', 'Teacher Dashboard — Attendance System')
+            .replace('แดชบอร์ดคุณครู — ระบบเช็กชื่อกิจกรรม', 'Teacher Dashboard — Attendance System')
             .replace('แดชบอร์ด', 'Dashboard')
             .replace('รอบกิจกรรม', 'Sessions')
             .replace('แก้ไขกิจกรรม', 'Edit Activity')
             .replace('สร้างกิจกรรมใหม่', 'New Activity')
             .replace('เข้าสู่ระบบ', 'Sign In')
             .replace('ผู้ดูแลระบบ', 'Admin')
-            .replace('ระบบเช็คชื่อกิจกรรมนักเรียน', 'Student Attendance System')
-            .replace('ระบบเช็คชื่อ', 'Attendance System')
-            .replace('รายชื่อที่ยังไม่เช็คชื่อ', 'Not Checked In');
+            .replace('ระบบเช็กชื่อกิจกรรมนักเรียน', 'Student Attendance System')
+            .replace('ระบบเช็กชื่อ', 'Attendance System')
+            .replace('รายชื่อที่ยังไม่เช็กชื่อ', 'Not Checked In');
     } else {
         document.title = docTitle
             .replace('Activity Management', 'จัดการกิจกรรม')
             .replace('Student Management', 'จัดการข้อมูลนักเรียน')
             .replace('Teacher Management', 'จัดการข้อมูลครู')
-            .replace('Attendance Management', 'จัดการการเช็คชื่อ')
+            .replace('Attendance Management', 'จัดการการเช็กชื่อ')
             .replace('Reports & Export', 'รายงานและส่งออกข้อมูล')
             .replace('Audit Logs', 'บันทึกประวัติการใช้งานระบบ')
-            .replace('Teacher Dashboard — Attendance System', 'แดชบอร์ดคุณครู — ระบบเช็คชื่อกิจกรรม')
+            .replace('Teacher Dashboard — Attendance System', 'แดชบอร์ดคุณครู — ระบบเช็กชื่อกิจกรรม')
             .replace('Dashboard', 'แดชบอร์ด')
             .replace('Sessions', 'รอบกิจกรรม')
             .replace('Edit Activity', 'แก้ไขกิจกรรม')
             .replace('New Activity', 'สร้างกิจกรรมใหม่')
             .replace('Sign In', 'เข้าสู่ระบบ')
             .replace('Admin', 'ผู้ดูแลระบบ')
-            .replace('Student Attendance System', 'ระบบเช็คชื่อกิจกรรมนักเรียน')
-            .replace('Attendance System', 'ระบบเช็คชื่อ')
-            .replace('Not Checked In', 'รายชื่อที่ยังไม่เช็คชื่อ');
+            .replace('Student Attendance System', 'ระบบเช็กชื่อกิจกรรมนักเรียน')
+            .replace('Attendance System', 'ระบบเช็กชื่อ')
+            .replace('Not Checked In', 'รายชื่อที่ยังไม่เช็กชื่อ');
     }
     } finally {
         // Always restore observer and clear guard — even if translation threw

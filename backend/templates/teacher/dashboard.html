@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}แดชบอร์ดคุณครู — ระบบเช็คชื่อกิจกรรม{% endblock %}
+{% block title %}แดชบอร์ดคุณครู — ระบบเช็กชื่อกิจกรรม{% endblock %}
 {% block body_class %}teacher-page{% endblock %}
 
 {% block extra_css %}
@@ -11,7 +11,7 @@
     <header class="teacher-header">
         <div class="teacher-header-info">
             <h1><span data-i18n="teacher_welcome">ยินดีต้อนรับ,</span> {{ user.display_name }}</h1>
-            <p data-i18n="teacher_instruction">เลือกกิจกรรมและรอบกิจกรรมเพื่อเริ่มเปิดระบบเช็คชื่อ</p>
+            <p data-i18n="teacher_instruction">เลือกกิจกรรมและรอบกิจกรรมเพื่อเริ่มเปิดระบบเช็กชื่อ</p>
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <div data-lang-switcher></div>
@@ -47,7 +47,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32">
                     <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
-                <span data-i18n="start_attendance">เริ่มการเช็คชื่อ</span>
+                <span data-i18n="start_attendance">เริ่มการเช็กชื่อ</span>
             </a>
         </div>
     </div>

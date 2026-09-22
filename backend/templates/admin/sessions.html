@@ -21,7 +21,7 @@
                             {% if session.start_time %}
                             <span>🕐 {{ session.start_time.strftime('%H:%M') }}{% if session.end_time %}–{{ session.end_time.strftime('%H:%M') }}{% endif %}</span>
                             {% endif %}
-                            <span>👤 <span data-i18n="checked_in_prefix">เช็คชื่อแล้ว</span> {{ session_stats.get(session.id, 0) }} <span data-i18n="person_unit">คน</span></span>
+                            <span>👤 <span data-i18n="checked_in_prefix">เช็กชื่อแล้ว</span> {{ session_stats.get(session.id, 0) }} <span data-i18n="person_unit">คน</span></span>
                         </div>
                     </div>
                     <span class="status-badge status-{{ session.status }}" data-i18n="status_{{ session.status }}">{{ session.status|thai_status }}</span>

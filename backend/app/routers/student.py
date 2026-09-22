@@ -25,17 +25,17 @@ def _validate_checkin_session(checkin_token: str, db: Session):
     Returns (checkin_session, error_message).
     """
     if not checkin_token:
-        return None, "การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่"
+        return None, "การเช็กชื่อหมดเวลา กรุณาสแกน QR Code ใหม่"
 
     cs = db.query(CheckinSession).filter(
         CheckinSession.checkin_token == checkin_token
     ).first()
 
     if not cs:
-        return None, "การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่"
+        return None, "การเช็กชื่อหมดเวลา กรุณาสแกน QR Code ใหม่"
 
     if get_bkk_time() > cs.expires_at:
-        return None, "การเช็คชื่อหมดเวลา กรุณาสแกน QR Code ใหม่"
+        return None, "การเช็กชื่อหมดเวลา กรุณาสแกน QR Code ใหม่"
 
     return cs, None
 

@@ -338,7 +338,7 @@
         <div style="display: flex; align-items: center; gap: 12px;">
             <div data-lang-switcher></div>
             <a href="/teacher/attendance/{{ session.id }}" class="btn btn-primary btn-lg"
-                data-i18n="back_to_attendance">← กลับไปหน้าระบบเช็คชื่อ</a>
+                data-i18n="back_to_attendance">← กลับไปหน้าระบบเช็กชื่อ</a>
         </div>
     </header>
 
@@ -351,11 +351,11 @@
             </div>
             <div class="summary-card">
                 <div class="value" id="checkedInCount">-</div>
-                <div class="label" data-i18n="checked_in">เช็คชื่อแล้ว</div>
+                <div class="label" data-i18n="checked_in">เช็กชื่อแล้ว</div>
             </div>
             <div class="summary-card">
                 <div class="value" id="notCheckedInCount">-</div>
-                <div class="label" data-i18n="not_checked_in">ยังไม่เช็คชื่อ</div>
+                <div class="label" data-i18n="not_checked_in">ยังไม่เช็กชื่อ</div>
             </div>
         </div>
 
@@ -392,7 +392,7 @@
         </div>
 
         <!-- Checked In List -->
-        <h2 class="section-title" data-i18n="checked_in">เช็คชื่อแล้ว</h2>
+        <h2 class="section-title" data-i18n="checked_in">เช็กชื่อแล้ว</h2>
         <div class="table-container" style="margin-bottom: 40px;">
             <table class="data-table data-table-lg">
                 <thead>
@@ -402,8 +402,8 @@
                         <th data-i18n="th_grade">ระดับชั้น</th>
                         <th data-i18n="th_room">ห้อง</th>
                         <th data-i18n="th_status">สถานะ</th>
-                        <th data-i18n="th_checkin_time">เวลาเช็คชื่อ</th>
-                        <th data-i18n="th_checkin_method">วิธีการเช็คชื่อ</th>
+                        <th data-i18n="th_checkin_time">เวลาเช็กชื่อ</th>
+                        <th data-i18n="th_checkin_method">วิธีการเช็กชื่อ</th>
                     </tr>
                 </thead>
                 <tbody id="checkedInBody">
@@ -415,7 +415,7 @@
         </div>
 
         <!-- Not Checked In List -->
-        <h2 class="section-title" data-i18n="not_checked_in">ยังไม่เช็คชื่อ</h2>
+        <h2 class="section-title" data-i18n="not_checked_in">ยังไม่เช็กชื่อ</h2>
         <div class="table-container">
             <table class="data-table data-table-lg">
                 <thead>
@@ -425,7 +425,7 @@
                         <th data-i18n="th_grade">ระดับชั้น</th>
                         <th data-i18n="th_room">ห้อง</th>
                         <th data-i18n="th_status">สถานะ</th>
-                        <th data-i18n="th_time">เวลาเช็คชื่อ</th>
+                        <th data-i18n="th_time">เวลาเช็กชื่อ</th>
                     </tr>
                 </thead>
                 <tbody id="notCheckedInBody">
@@ -574,14 +574,14 @@
                 </td>
                 <td class="status-cell">
                     <span class="mobile-label" data-i18n="th_status">สถานะ</span>
-                    <span class="cell-value"><span style="color: #16A34A; font-weight: 600;" data-i18n="checked_in">${document.documentElement.lang === 'en' ? 'Checked In' : 'เช็คชื่อแล้ว'}</span></span>
+                    <span class="cell-value"><span style="color: #16A34A; font-weight: 600;" data-i18n="checked_in">${document.documentElement.lang === 'en' ? 'Checked In' : 'เช็กชื่อแล้ว'}</span></span>
                 </td>
                 <td>
-                    <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็คชื่อ</span>
+                    <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็กชื่อ</span>
                     <span class="cell-value" style="font-weight: 600; color: #1E293B;">${row.time}</span>
                 </td>
                 <td>
-                    <span class="mobile-label" data-i18n="th_checkin_method">วิธีการเช็คชื่อ</span>
+                    <span class="mobile-label" data-i18n="th_checkin_method">วิธีการเช็กชื่อ</span>
                     <span class="cell-value">${renderMethod(row.method)}</span>
                 </td>
             </tr>
@@ -612,10 +612,10 @@
                 </td>
                 <td class="status-cell">
                     <span class="mobile-label" data-i18n="th_status">สถานะ</span>
-                    <span class="cell-value"><span style="color: #DC2626; font-weight: 600;" data-i18n="not_checked_in">${document.documentElement.lang === 'en' ? 'Not Checked In' : 'ยังไม่เช็คชื่อ'}</span></span>
+                    <span class="cell-value"><span style="color: #DC2626; font-weight: 600;" data-i18n="not_checked_in">${document.documentElement.lang === 'en' ? 'Not Checked In' : 'ยังไม่เช็กชื่อ'}</span></span>
                 </td>
                 <td>
-                    <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็คชื่อ</span>
+                    <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็กชื่อ</span>
                     <span class="cell-value" style="font-weight: bold; color: #CBD5E1;">-</span>
                 </td>
             </tr>
