@@ -4,7 +4,8 @@ import io
 import base64
 import secrets
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect, Query, HTTPException
+from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect, Query, HTTPException, Body
+from pydantic import BaseModel
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, or_, cast, Integer
@@ -17,6 +18,10 @@ from app.templating import templates
 import qrcode
 import os
 from fpdf import FPDF
+
+class StatusUpdateRequest(BaseModel):
+    student_id: str
+    status: str
 
 router = APIRouter(prefix="/teacher", tags=["teacher"])
 
@@ -225,45 +230,90 @@ async def monitoring_data(
         AttendanceRecord.checked_in_at.asc()
     ).all()
 
-    checked_in = []
-    checked_in_ids = set()
-    for rec in records:
-        checked_in_ids.add(rec.student_id)
-        checked_in.append({
-            "student_id": rec.student.student_id,
-            "full_name": rec.student.full_name,
-            "grade": rec.student.grade,
-            "room": rec.student.room,
-            "method": rec.checked_in_method,
-            "date": rec.checked_in_at.strftime("%Y-%m-%d"),
-            "time": rec.checked_in_at.strftime("%H:%M:%S")
-        })
-
-    # 3. Not Checked In
-    not_checked_in = []
-    for st in eligible_students:
-        if st.id not in checked_in_ids:
-            not_checked_in.append({
-                "student_id": st.student_id,
-                "full_name": st.full_name,
-                "grade": st.grade,
-                "room": st.room,
-                "status": "not_checked_in"
-            })
+    student_records = {rec.student_id: rec for rec in records}
     
-    # Sort not_checked_in by grade, room, student_id
-    not_checked_in.sort(key=lambda x: (x["grade"], int(x["room"]) if str(x["room"]).isdigit() else 999, x["student_id"]))
+    students_list = []
+    stats = {"total": total_count, "present": 0, "leave": 0, "sick_leave": 0, "absent": 0}
+    
+    for st in eligible_students:
+        rec = student_records.get(st.id)
+        if rec:
+            status = rec.status
+            method = rec.checked_in_method
+            time_str = rec.checked_in_at.strftime("%H:%M:%S")
+        else:
+            status = "absent"
+            method = "-"
+            time_str = "-"
+            
+        if status not in stats:
+            status = "absent"
+            
+        stats[status] += 1
+        
+        students_list.append({
+            "student_id": st.student_id,
+            "full_name": st.full_name,
+            "grade": st.grade,
+            "room": st.room,
+            "status": status,
+            "method": method,
+            "time": time_str
+        })
+        
+    students_list.sort(key=lambda x: (x["grade"], int(x["room"]) if str(x["room"]).isdigit() else 999, x["student_id"]))
 
     return {
-        "stats": {
-            "total": total_count,
-            "present": len(checked_in),
-            "absent": len(not_checked_in)
-        },
-        "checked_in": checked_in,
-        "not_checked_in": not_checked_in,
-        "history": checked_in
+        "stats": stats,
+        "students": students_list
     }
+
+
+@router.post("/api/attendance/{session_id}/status")
+async def update_attendance_status(
+    session_id: int,
+    request: StatusUpdateRequest,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_teacher)
+):
+    """Update attendance status for a student."""
+    session = db.query(ActivitySession).filter(ActivitySession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    student = db.query(Student).filter(Student.student_id == request.student_id).first()
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        
+    valid_statuses = ["present", "leave", "sick_leave", "absent"]
+    if request.status not in valid_statuses:
+        raise HTTPException(status_code=400, detail="Invalid status")
+        
+    record = db.query(AttendanceRecord).filter(
+        AttendanceRecord.session_id == session_id,
+        AttendanceRecord.student_id == student.id
+    ).first()
+    
+    if record:
+        record.status = request.status
+        record.checked_in_method = "manual"
+        record.checked_in_at = get_bkk_time()
+    else:
+        record = AttendanceRecord(
+            student_id=student.id,
+            session_id=session_id,
+            status=request.status,
+            checked_in_method="manual",
+            checked_in_at=get_bkk_time()
+        )
+        db.add(record)
+        
+    db.commit()
+    
+    # Notify websockets
+    await manager.broadcast_to_session(session_id, {"type": "update"})
+    
+    return {"success": True, "status": request.status}
 
 @router.get("/api/summary_pdf/{session_id}")
 async def summary_pdf(
@@ -274,7 +324,7 @@ async def summary_pdf(
 ):
     """Generate and download a PDF summary of the attendance."""
     from fastapi.responses import StreamingResponse
-    import re
+    import urllib.parse
 
     session = db.query(ActivitySession).options(
         joinedload(ActivitySession.activity)
@@ -282,7 +332,6 @@ async def summary_pdf(
     if not session:
         raise HTTPException(status_code=404)
 
-    # 1. Stats & Eligible Students
     student_query = db.query(Student).filter(Student.is_active == True)
     if session.activity.eligible_grades:
         grades = [g.strip() for g in session.activity.eligible_grades.split(",")]
@@ -291,30 +340,44 @@ async def summary_pdf(
     eligible_students = student_query.all()
     total_count = len(eligible_students)
 
-    # 2. Checked In Records
     records = db.query(AttendanceRecord).options(
         joinedload(AttendanceRecord.student)
     ).filter(AttendanceRecord.session_id == session_id).order_by(
         AttendanceRecord.checked_in_at.asc()
     ).all()
 
-    checked_in = []
-    checked_in_ids = set()
-    for rec in records:
-        checked_in_ids.add(rec.student_id)
-        checked_in.append(rec)
-
-    # Sort checked_in by grade, room, student_id
-    checked_in.sort(key=lambda rec: (rec.student.grade, int(rec.student.room) if str(rec.student.room).isdigit() else 999, rec.student.student_id))
-
-    # 3. Not Checked In
-    not_checked_in = []
-    for st in eligible_students:
-        if st.id not in checked_in_ids:
-            not_checked_in.append(st)
+    student_records = {rec.student_id: rec for rec in records}
     
-    # Sort not_checked_in by grade, room, student_id
-    not_checked_in.sort(key=lambda x: (x.grade, int(x.room) if str(x.room).isdigit() else 999, x.student_id))
+    students_list = []
+    stats = {"present": 0, "leave": 0, "sick_leave": 0, "absent": 0}
+    
+    for st in eligible_students:
+        rec = student_records.get(st.id)
+        if rec:
+            status = rec.status
+            method = rec.checked_in_method
+            time_str = rec.checked_in_at.strftime("%H:%M:%S")
+        else:
+            status = "absent"
+            method = "-"
+            time_str = "-"
+            
+        if status not in stats:
+            status = "absent"
+            
+        stats[status] += 1
+        
+        students_list.append({
+            "student_id": st.student_id,
+            "full_name": st.full_name,
+            "grade": st.grade,
+            "room": st.room,
+            "status": status,
+            "method": method,
+            "time": time_str
+        })
+        
+    students_list.sort(key=lambda x: (x["grade"], int(x["room"]) if str(x["room"]).isdigit() else 999, x["student_id"]))
 
     class PDF(FPDF):
         def header(self):
@@ -332,7 +395,6 @@ async def summary_pdf(
 
     pdf = PDF()
     
-    # Register fonts
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     font_path_reg = os.path.join(base_dir, "static", "fonts", "Prompt-Regular.ttf")
     font_path_med = os.path.join(base_dir, "static", "fonts", "Prompt-Medium.ttf")
@@ -343,41 +405,39 @@ async def summary_pdf(
     pdf.set_auto_page_break(auto=True, margin=15)
     pdf.add_page()
     
-    # Summary Section
     pdf.set_font('Prompt', 'B', 14)
     summary_title = "ข้อมูลสรุป" if lang == "th" else "Summary"
     pdf.cell(0, 10, summary_title, new_x="LMARGIN", new_y="NEXT")
     
     pdf.set_font('Prompt', '', 12)
-    present_count = len(checked_in)
-    absent_count = len(not_checked_in)
-    rate = (present_count / total_count * 100) if total_count > 0 else 0
     
     lbl_total = "นักเรียนทั้งหมด:" if lang == "th" else "Total Students:"
-    lbl_present = "มาเช็กชื่อแล้ว:" if lang == "th" else "Present:"
-    lbl_absent = "ยังไม่เช็กชื่อ:" if lang == "th" else "Not Checked In:"
-    lbl_rate = "อัตราการเข้าร่วม:" if lang == "th" else "Attendance Rate:"
+    lbl_present = "มา:" if lang == "th" else "Present:"
+    lbl_leave = "ลา:" if lang == "th" else "Leave:"
+    lbl_sick = "ลาป่วย:" if lang == "th" else "Sick Leave:"
+    lbl_absent = "ไม่มา:" if lang == "th" else "Absent:"
     
     pdf.cell(50, 8, lbl_total)
     pdf.cell(0, 8, str(total_count), new_x="LMARGIN", new_y="NEXT")
     pdf.cell(50, 8, lbl_present)
-    pdf.cell(0, 8, str(present_count), new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, str(stats['present']), new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(50, 8, lbl_leave)
+    pdf.cell(0, 8, str(stats['leave']), new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(50, 8, lbl_sick)
+    pdf.cell(0, 8, str(stats['sick_leave']), new_x="LMARGIN", new_y="NEXT")
     pdf.cell(50, 8, lbl_absent)
-    pdf.cell(0, 8, str(absent_count), new_x="LMARGIN", new_y="NEXT")
-    pdf.cell(50, 8, lbl_rate)
-    pdf.cell(0, 8, f"{rate:.1f}%", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, str(stats['absent']), new_x="LMARGIN", new_y="NEXT")
     
     pdf.ln(5)
     
-    # Present Students Table
     pdf.set_font('Prompt', 'B', 14)
-    present_title = "รายชื่อนักเรียนที่มา" if lang == "th" else "Present Students"
-    pdf.cell(0, 10, present_title, new_x="LMARGIN", new_y="NEXT")
+    list_title = "รายชื่อนักเรียน" if lang == "th" else "Student List"
+    pdf.cell(0, 10, list_title, new_x="LMARGIN", new_y="NEXT")
     
     pdf.set_font('Prompt', 'B', 10)
-    col_widths = [10, 25, 60, 20, 20, 25, 30]
-    headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "เวลาเช็กชื่อ", "วิธีการ"]
-    headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Time", "Method"]
+    col_widths = [10, 25, 60, 20, 20, 30, 25]
+    headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "สถานะ", "เวลา"]
+    headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Status", "Time"]
     headers = headers_th if lang == "th" else headers_en
     
     for i in range(len(headers)):
@@ -385,54 +445,25 @@ async def summary_pdf(
     pdf.ln(8)
     
     pdf.set_font('Prompt', '', 10)
-    for idx, rec in enumerate(checked_in, 1):
+    
+    status_map_th = {"present": "มา", "leave": "ลา", "sick_leave": "ลาป่วย", "absent": "ไม่มา"}
+    status_map_en = {"present": "Present", "leave": "Leave", "sick_leave": "Sick Leave", "absent": "Absent"}
+    status_map = status_map_th if lang == "th" else status_map_en
+    
+    for idx, row in enumerate(students_list, 1):
         pdf.cell(col_widths[0], 8, str(idx), border=1, align='C')
-        pdf.cell(col_widths[1], 8, rec.student.student_id, border=1, align='C')
-        pdf.cell(col_widths[2], 8, rec.student.full_name, border=1)
-        pdf.cell(col_widths[3], 8, rec.student.grade, border=1, align='C')
-        pdf.cell(col_widths[4], 8, rec.student.room, border=1, align='C')
-        pdf.cell(col_widths[5], 8, rec.checked_in_at.strftime("%H:%M:%S"), border=1, align='C')
-        method = rec.checked_in_method
-        if method in ("admin_manual", "qr"):
-            method = "สแกน QR" if lang == "th" else "QR Scan"
-        pdf.cell(col_widths[6], 8, method, border=1, align='C')
-        pdf.ln(8)
-    
-    pdf.ln(10)
-    
-    # Not Checked In Table
-    pdf.set_font('Prompt', 'B', 14)
-    absent_title = "รายชื่อนักเรียนที่ไม่มา" if lang == "th" else "Not Checked In Students"
-    pdf.cell(0, 10, absent_title, new_x="LMARGIN", new_y="NEXT")
-    
-    pdf.set_font('Prompt', 'B', 10)
-    col_widths_absent = [10, 25, 70, 25, 25, 35]
-    headers_absent_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ระดับชั้น", "ห้อง", "สถานะ"]
-    headers_absent_en = ["No.", "Student ID", "Name", "Grade", "Room", "Status"]
-    headers_absent = headers_absent_th if lang == "th" else headers_absent_en
-    
-    for i in range(len(headers_absent)):
-        pdf.cell(col_widths_absent[i], 8, headers_absent[i], border=1, align='C')
-    pdf.ln(8)
-    
-    pdf.set_font('Prompt', '', 10)
-    status_text = "ยังไม่เช็กชื่อ" if lang == "th" else "Not Checked In"
-    for idx, st in enumerate(not_checked_in, 1):
-        pdf.cell(col_widths_absent[0], 8, str(idx), border=1, align='C')
-        pdf.cell(col_widths_absent[1], 8, st.student_id, border=1, align='C')
-        pdf.cell(col_widths_absent[2], 8, st.full_name, border=1)
-        pdf.cell(col_widths_absent[3], 8, st.grade, border=1, align='C')
-        pdf.cell(col_widths_absent[4], 8, st.room, border=1, align='C')
-        pdf.cell(col_widths_absent[5], 8, status_text, border=1, align='C')
+        pdf.cell(col_widths[1], 8, row["student_id"], border=1, align='C')
+        pdf.cell(col_widths[2], 8, row["full_name"], border=1)
+        pdf.cell(col_widths[3], 8, row["grade"], border=1, align='C')
+        pdf.cell(col_widths[4], 8, row["room"], border=1, align='C')
+        pdf.cell(col_widths[5], 8, status_map.get(row["status"], row["status"]), border=1, align='C')
+        pdf.cell(col_widths[6], 8, row["time"], border=1, align='C')
         pdf.ln(8)
         
     pdf_bytes = bytes(pdf.output())
     
-    import urllib.parse
     base_name = f"สรุปการเช็กชื่อ" if lang == "th" else f"Attendance_Summary"
     filename = f"{base_name}_{session.activity.name}_{session.date}.pdf"
-    
-    # URL encode the filename for the Content-Disposition header to support Thai characters
     encoded_filename = urllib.parse.quote(filename)
     
     return StreamingResponse(

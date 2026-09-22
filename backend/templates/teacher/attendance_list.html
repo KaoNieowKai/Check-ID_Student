@@ -17,14 +17,14 @@
 
     .summary-cards {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 20px;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 15px;
         margin-bottom: 30px;
     }
 
     .summary-card {
         background: #FFFFFF;
-        padding: 24px;
+        padding: 20px 15px;
         border-radius: 12px;
         border: 1px solid #CBD5E1;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -32,22 +32,20 @@
     }
 
     .summary-card .value {
-        font-size: 2.5rem;
+        font-size: 2rem;
         font-weight: 700;
         color: #2563EB;
     }
     
-    #checkedInCount {
-        color: #16A34A !important;
-    }
-    
-    #notCheckedInCount {
-        color: #DC2626 !important;
-    }
+    #countTotal { color: #2563EB !important; }
+    #countPresent { color: #16A34A !important; }
+    #countLeave { color: #F59E0B !important; }
+    #countSick { color: #EAB308 !important; }
+    #countAbsent { color: #DC2626 !important; }
 
     .summary-card .label {
         color: #64748B;
-        font-size: 1.1rem;
+        font-size: 0.95rem;
         font-weight: 500;
         margin-top: 8px;
     }
@@ -138,7 +136,7 @@
         flex: 1;
         min-width: 250px;
         max-width: 500px;
-        margin-bottom: 0; /* Overrides previous margin */
+        margin-bottom: 0;
     }
 
     .filters-group {
@@ -176,92 +174,82 @@
         min-width: 140px;
         transition: border-color 0.2s;
     }
+    
+    .status-select-inline {
+        padding: 6px 28px 6px 12px;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        min-width: 120px;
+        border: 1px solid #CBD5E1;
+    }
+    
+    .status-select-inline.st-present { background-color: #DCFCE7; color: #16A34A; border-color: #BBF7D0; }
+    .status-select-inline.st-leave { background-color: #FEF3C7; color: #D97706; border-color: #FDE68A; }
+    .status-select-inline.st-sick_leave { background-color: #FEF9C3; color: #CA8A04; border-color: #FEF08A; }
+    .status-select-inline.st-absent { background-color: #FEE2E2; color: #DC2626; border-color: #FECACA; }
 
-    .filter-select:focus {
+    .filter-select:focus, .status-select-inline:focus {
         outline: none;
-        border-color: #2563EB;
-        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
     }
 
     .mobile-label { display: none; }
 
+    /* Modal Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 100;
+        opacity: 0;
+        visibility: hidden;
+        transition: 0.2s;
+    }
+    .modal-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+    .status-modal {
+        background: #FFF;
+        padding: 24px;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 400px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transform: translateY(20px);
+        transition: 0.3s;
+    }
+    .modal-overlay.show .status-modal {
+        transform: translateY(0);
+    }
+
     /* Mobile Responsive Adjustments */
     @media (max-width: 768px) {
-        .teacher-container {
-            padding: 0 16px;
-        }
-        
-        .teacher-header {
-            flex-direction: column !important;
-            align-items: flex-start !important;
-            padding: 16px 0 !important;
-            gap: 16px;
-        }
-
-        .teacher-header h1 {
-            font-size: 1.25rem !important;
-        }
-
-        .teacher-header > div:last-child {
-            width: 100%;
-            justify-content: space-between;
-        }
-
         .summary-cards {
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .summary-card {
-            padding: 16px;
-        }
-
-        .summary-card .value {
-            font-size: 2rem;
-        }
-
-        .controls-container {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 16px;
-        }
-
-        .search-container {
-            max-width: 100%;
-        }
-
-        .filters-group {
-            display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        }
+        .summary-cards .summary-card:first-child {
+            grid-column: span 2;
         }
         
-        .filter-select {
-            width: 100%;
-            min-width: 0;
+        .filters-group {
+            grid-template-columns: 1fr 1fr 1fr;
         }
-
-        .table-container {
-            border: none;
-            box-shadow: none;
-            background: transparent;
-            overflow: visible;
-        }
-        
-        .data-table {
-            background: transparent;
-        }
-
         .data-table thead {
             display: none;
         }
-        
         .data-table tbody {
             display: block;
         }
-        
-        .data-table tr {
+        .data-table tr:not(.status-group-header) {
             display: flex;
             flex-direction: column;
             background: #FFFFFF;
@@ -269,31 +257,26 @@
             border-radius: 12px;
             margin-bottom: 16px;
             padding: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
-        
+        .status-group-header td {
+            display: block !important;
+            padding: 12px 4px 8px 4px !important;
+            border: none !important;
+            background: transparent !important;
+        }
         .data-table td {
             display: flex;
             justify-content: space-between;
             align-items: center;
             border: none !important;
             padding: 8px 0 !important;
-            white-space: normal;
         }
-        
         .mobile-label {
             display: block;
             font-size: 0.95rem;
             color: #64748B;
             font-weight: 500;
         }
-        
-        .cell-value {
-            font-size: 1rem;
-            color: #1E293B;
-            text-align: right;
-        }
-        
         .student-name-cell {
             order: -1;
             border-bottom: 1px solid #F1F5F9 !important;
@@ -301,28 +284,9 @@
             margin-bottom: 8px;
             justify-content: flex-start !important;
         }
-        
         .student-name-cell .cell-value {
             font-size: 1.15rem;
             font-weight: 600 !important;
-            color: #0F172A !important;
-            text-align: left;
-        }
-        
-        .status-cell {
-            order: 99;
-            border-top: 1px solid #F1F5F9 !important;
-            padding-top: 12px !important;
-            margin-top: 8px;
-        }
-
-        .data-table td.empty-state {
-            display: block;
-            text-align: center;
-            padding: 32px !important;
-            border: 1px solid #CBD5E1 !important;
-            border-radius: 12px;
-            background: #FFFFFF;
         }
     }
 </style>
@@ -346,16 +310,24 @@
         <!-- Summary Stats -->
         <div class="summary-cards">
             <div class="summary-card">
-                <div class="value" id="totalStudents">-</div>
+                <div class="value" id="countTotal">-</div>
                 <div class="label" data-i18n="total_students_count">นักเรียนทั้งหมด</div>
             </div>
             <div class="summary-card">
-                <div class="value" id="checkedInCount">-</div>
-                <div class="label" data-i18n="checked_in">เช็กชื่อแล้ว</div>
+                <div class="value" id="countPresent">-</div>
+                <div class="label" data-i18n="attendance_present">มา</div>
             </div>
             <div class="summary-card">
-                <div class="value" id="notCheckedInCount">-</div>
-                <div class="label" data-i18n="not_checked_in">ยังไม่เช็กชื่อ</div>
+                <div class="value" id="countLeave">-</div>
+                <div class="label" data-i18n="attendance_leave">ลา</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="countSick">-</div>
+                <div class="label" data-i18n="attendance_sick_leave">ลาป่วย</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="countAbsent">-</div>
+                <div class="label" data-i18n="attendance_absent">ไม่มา</div>
             </div>
         </div>
 
@@ -370,6 +342,16 @@
             </div>
             
             <div class="filters-group">
+                <div class="filter-item">
+                    <label class="filter-label" data-i18n="th_status">Status</label>
+                    <select id="statusFilter" class="filter-select" onchange="handleSearch()">
+                        <option value="all" data-i18n="attendance_all">ทั้งหมด</option>
+                        <option value="present" data-i18n="attendance_present">มา</option>
+                        <option value="leave" data-i18n="attendance_leave">ลา</option>
+                        <option value="sick_leave" data-i18n="attendance_sick_leave">ลาป่วย</option>
+                        <option value="absent" data-i18n="attendance_absent">ไม่มา</option>
+                    </select>
+                </div>
                 <div class="filter-item">
                     <label class="filter-label">Grade</label>
                     <select id="gradeFilter" class="filter-select" onchange="handleSearch()">
@@ -391,89 +373,61 @@
             </div>
         </div>
 
-        <!-- Checked In List -->
-        <h2 class="section-title" data-i18n="checked_in">เช็กชื่อแล้ว</h2>
-        <div class="table-container" style="margin-bottom: 40px;">
-            <table class="data-table data-table-lg">
-                <thead>
-                    <tr>
-                        <th data-i18n="th_student_id">รหัสนักเรียน</th>
-                        <th data-i18n="th_fullname">ชื่อ-นามสกุล</th>
-                        <th data-i18n="th_grade">ระดับชั้น</th>
-                        <th data-i18n="th_room">ห้อง</th>
-                        <th data-i18n="th_status">สถานะ</th>
-                        <th data-i18n="th_checkin_time">เวลาเช็กชื่อ</th>
-                        <th data-i18n="th_checkin_method">วิธีการเช็กชื่อ</th>
-                    </tr>
-                </thead>
-                <tbody id="checkedInBody">
-                    <tr>
-                        <td colspan="7" class="empty-state">กำลังโหลดข้อมูล...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- Not Checked In List -->
-        <h2 class="section-title" data-i18n="not_checked_in">ยังไม่เช็กชื่อ</h2>
-        <div class="table-container">
-            <table class="data-table data-table-lg">
-                <thead>
-                    <tr>
-                        <th data-i18n="th_student_id">รหัสนักเรียน</th>
-                        <th data-i18n="th_fullname">ชื่อ-นามสกุล</th>
-                        <th data-i18n="th_grade">ระดับชั้น</th>
-                        <th data-i18n="th_room">ห้อง</th>
-                        <th data-i18n="th_status">สถานะ</th>
-                        <th data-i18n="th_time">เวลาเช็กชื่อ</th>
-                    </tr>
-                </thead>
-                <tbody id="notCheckedInBody">
-                    <tr>
-                        <td colspan="6" class="empty-state">กำลังโหลดข้อมูล...</td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- Student List -->
+        <div id="studentTablesWrapper" style="margin-bottom: 40px; display: flex; flex-direction: column; gap: 24px;">
+            <div class="empty-state">กำลังโหลดข้อมูล...</div>
         </div>
     </div>
 </div>
+
+<!-- Status Change Confirmation Modal -->
+<div class="modal-overlay" id="statusModalOverlay">
+    <div class="status-modal">
+        <h3 style="margin-top:0" data-i18n="attendance_confirm_status_change">ยืนยันการเปลี่ยนสถานะ</h3>
+        <p id="statusModalMsg" style="color:#475569; margin:16px 0;"></p>
+        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:24px;">
+            <button class="btn btn-outline" onclick="cancelStatusChange()" data-i18n="attendance_cancel">ยกเลิก</button>
+            <button class="btn btn-primary" id="confirmStatusBtn" data-i18n="attendance_save_status">บันทึกสถานะ</button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
     const SESSION_ID = {{ session.id }};
-    let currentData = { checked_in: [], not_checked_in: [] };
+    let currentData = { students: [] };
     let searchQuery = "";
+    
+    let pendingStatusChange = null;
 
     function renderMethod(method) {
         if (method === 'qr' || method === 'admin_manual') {
             return '<span class="badge badge-lg" data-i18n="method_qr" style="background:#F5F7FA; color:#64748B;">' + (document.documentElement.lang === 'en' ? 'QR Scan' : 'สแกน QR') + '</span>';
+        }
+        if (method === 'manual') {
+            return '<span class="badge badge-lg" data-i18n="status_manual" style="background:#F5F7FA; color:#64748B;">' + (document.documentElement.lang === 'en' ? 'Manual' : 'ปรับแก้โดยครู') + '</span>';
         }
         return method;
     }
 
     let selectedGrade = "all";
     let selectedRoom = "all";
+    let selectedStatus = "all";
 
     function updateRoomFilter() {
-        const allStudents = [...currentData.checked_in, ...currentData.not_checked_in];
-        const uniqueRooms = [...new Set(allStudents.map(s => s.room).filter(Boolean))];
+        const uniqueRooms = [...new Set(currentData.students.map(s => s.room).filter(Boolean))];
         
-        // Sort numerically
         uniqueRooms.sort((a, b) => {
-            const strA = String(a);
-            const strB = String(b);
-            const numA = parseInt(strA, 10);
-            const numB = parseInt(strB, 10);
-            if (!isNaN(numA) && !isNaN(numB)) {
-                return numA - numB;
-            }
-            return strA.localeCompare(strB);
+            const numA = parseInt(String(a), 10);
+            const numB = parseInt(String(b), 10);
+            if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+            return String(a).localeCompare(String(b));
         });
 
         const roomFilter = document.getElementById('roomFilter');
         const currentValue = roomFilter.value;
-        
         const allRoomsText = document.documentElement.lang === 'en' ? 'All Rooms' : 'ทุกห้อง';
         let optionsHtml = '<option value="all">' + allRoomsText + '</option>';
         
@@ -482,37 +436,28 @@
         });
         
         roomFilter.innerHTML = optionsHtml;
-        
-        // Restore selection if still valid
-        if (uniqueRooms.includes(currentValue)) {
-            roomFilter.value = currentValue;
-        } else {
-            roomFilter.value = 'all';
-        }
+        if (uniqueRooms.includes(currentValue)) roomFilter.value = currentValue;
+        else roomFilter.value = 'all';
     }
 
     function handleSearch() {
         searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
         selectedGrade = document.getElementById('gradeFilter').value;
         selectedRoom = document.getElementById('roomFilter').value;
+        selectedStatus = document.getElementById('statusFilter').value;
         renderTables();
     }
 
     function matchSearch(row) {
-        // Filter by Grade
+        if (selectedStatus !== "all" && row.status !== selectedStatus) return false;
+        
         if (selectedGrade !== "all") {
             const rowGradeNum = String(row.grade || "").replace(/\D/g, '');
-            if (rowGradeNum !== selectedGrade) {
-                return false;
-            }
+            if (rowGradeNum !== selectedGrade) return false;
         }
         
-        // Filter by Room
-        if (selectedRoom !== "all" && String(row.room) !== selectedRoom) {
-            return false;
-        }
+        if (selectedRoom !== "all" && String(row.room) !== selectedRoom) return false;
         
-        // Filter by Search Query
         if (searchQuery) {
             const term = searchQuery;
             return (
@@ -526,105 +471,182 @@
     }
 
     function sortStudents(a, b) {
-        // 1. Sort by Grade (extract digits)
         const gradeA = parseInt(String(a.grade || "").replace(/\D/g, ''), 10) || 0;
         const gradeB = parseInt(String(b.grade || "").replace(/\D/g, ''), 10) || 0;
-        if (gradeA !== gradeB) {
-            return gradeA - gradeB; // Ascending (M.1, M.2, ...)
-        }
+        if (gradeA !== gradeB) return gradeA - gradeB;
         
-        // 2. Sort by Room
         const roomA = parseInt(String(a.room || ""), 10) || 0;
         const roomB = parseInt(String(b.room || ""), 10) || 0;
-        if (roomA !== roomB) {
-            return roomA - roomB;
-        }
+        if (roomA !== roomB) return roomA - roomB;
         
-        // 3. Sort by Student ID
-        const idA = String(a.student_id || "");
-        const idB = String(b.student_id || "");
-        return idA.localeCompare(idB);
+        return String(a.student_id || "").localeCompare(String(b.student_id || ""));
+    }
+    
+    function getStatusLabel(statusVal) {
+        const trKey = 'attendance_' + statusVal;
+        return typeof t === 'function' ? t(trKey, statusVal) : statusVal;
     }
 
     function renderTables() {
-        const filteredCheckedIn = currentData.checked_in.filter(matchSearch).sort(sortStudents);
-        const filteredNotCheckedIn = currentData.not_checked_in.filter(matchSearch).sort(sortStudents);
-
-        // Update Checked In Table
-        const checkedInBody = document.getElementById('checkedInBody');
-        if (filteredCheckedIn.length === 0) {
-            checkedInBody.innerHTML = '<tr><td colspan="7" class="empty-state">No students found</td></tr>';
+        const filtered = currentData.students.filter(matchSearch).sort(sortStudents);
+        const wrapper = document.getElementById('studentTablesWrapper');
+        
+        if (filtered.length === 0) {
+            wrapper.innerHTML = '<div class="table-container"><div class="empty-state" data-i18n="empty_students">No students found</div></div>';
         } else {
-            checkedInBody.innerHTML = filteredCheckedIn.map(row => `
-            <tr>
-                <td>
-                    <span class="mobile-label" data-i18n="th_student_id">รหัสนักเรียน</span>
-                    <span class="cell-value"><code style="color:#1E293B; background:none; padding:0;">${row.student_id}</code></span>
-                </td>
-                <td class="student-name-cell">
-                    <span class="cell-value" style="font-weight: 500;">${row.full_name}</span>
-                </td>
-                <td>
-                    <span class="mobile-label" data-i18n="th_grade">ระดับชั้น</span>
-                    <span class="cell-value"><span class="badge badge-lg" style="background:#EFF6FF; color:#2563EB;">${row.grade}</span></span>
-                </td>
-                <td>
-                    <span class="mobile-label" data-i18n="th_room">ห้อง</span>
-                    <span class="cell-value">${row.room}</span>
-                </td>
-                <td class="status-cell">
-                    <span class="mobile-label" data-i18n="th_status">สถานะ</span>
-                    <span class="cell-value"><span style="color: #16A34A; font-weight: 600;" data-i18n="checked_in">${document.documentElement.lang === 'en' ? 'Checked In' : 'เช็กชื่อแล้ว'}</span></span>
-                </td>
-                <td>
-                    <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็กชื่อ</span>
-                    <span class="cell-value" style="font-weight: 600; color: #1E293B;">${row.time}</span>
-                </td>
-                <td>
-                    <span class="mobile-label" data-i18n="th_checkin_method">วิธีการเช็กชื่อ</span>
-                    <span class="cell-value">${renderMethod(row.method)}</span>
-                </td>
-            </tr>
-        `).join('');
-        }
+            const order = ['present', 'leave', 'sick_leave', 'absent'];
+            
+            const colorMap = {
+                'present': { bg: '#F0FDF4', border: '#86EFAC', text: '#16A34A' },
+                'leave': { bg: '#FFFBEB', border: '#FDE68A', text: '#D97706' },
+                'sick_leave': { bg: '#FEF9C3', border: '#FDE047', text: '#CA8A04' },
+                'absent': { bg: '#FEF2F2', border: '#FCA5A5', text: '#DC2626' }
+            };
 
-        // Update Not Checked In Table
-        const notCheckedInBody = document.getElementById('notCheckedInBody');
-        if (filteredNotCheckedIn.length === 0) {
-            notCheckedInBody.innerHTML = '<tr><td colspan="6" class="empty-state">No students found</td></tr>';
-        } else {
-            notCheckedInBody.innerHTML = filteredNotCheckedIn.map(row => `
-            <tr>
-                <td>
-                    <span class="mobile-label" data-i18n="th_student_id">รหัสนักเรียน</span>
-                    <span class="cell-value"><code style="color:#1E293B; background:none; padding:0;">${row.student_id}</code></span>
-                </td>
-                <td class="student-name-cell">
-                    <span class="cell-value" style="font-weight: 500;">${row.full_name}</span>
-                </td>
-                <td>
-                    <span class="mobile-label" data-i18n="th_grade">ระดับชั้น</span>
-                    <span class="cell-value"><span class="badge badge-lg" style="background:#F5F7FA; color:#64748B;">${row.grade}</span></span>
-                </td>
-                <td>
-                    <span class="mobile-label" data-i18n="th_room">ห้อง</span>
-                    <span class="cell-value">${row.room}</span>
-                </td>
-                <td class="status-cell">
-                    <span class="mobile-label" data-i18n="th_status">สถานะ</span>
-                    <span class="cell-value"><span style="color: #DC2626; font-weight: 600;" data-i18n="not_checked_in">${document.documentElement.lang === 'en' ? 'Not Checked In' : 'ยังไม่เช็กชื่อ'}</span></span>
-                </td>
-                <td>
-                    <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็กชื่อ</span>
-                    <span class="cell-value" style="font-weight: bold; color: #CBD5E1;">-</span>
-                </td>
-            </tr>
-        `).join('');
+            let html = '';
+            
+            order.forEach(st => {
+                const groupStudents = filtered.filter(s => s.status === st);
+                if (groupStudents.length > 0) {
+                    const statusLabel = getStatusLabel(st);
+                    const colors = colorMap[st];
+                    
+                    html += `
+                        <div class="table-container" style="border-top: 4px solid ${colors.text}; margin-bottom: 0;">
+                            <div style="background: ${colors.bg}; padding: 12px 20px; border-bottom: 1px solid #CBD5E1; display: flex; align-items: center; gap: 12px;">
+                                <h3 style="margin: 0; color: ${colors.text}; font-size: 1.15rem;">${statusLabel}</h3>
+                                <span class="badge" style="background: white; color: ${colors.text}; border: 1px solid ${colors.border}; font-size: 0.95rem;">${groupStudents.length}</span>
+                            </div>
+                            <table class="data-table data-table-lg">
+                                <thead>
+                                    <tr>
+                                        <th data-i18n="th_student_id">รหัสนักเรียน</th>
+                                        <th data-i18n="th_fullname">ชื่อ-นามสกุล</th>
+                                        <th data-i18n="th_grade">ระดับชั้น</th>
+                                        <th data-i18n="th_room">ห้อง</th>
+                                        <th data-i18n="th_status">สถานะ</th>
+                                        <th data-i18n="th_checkin_time">เวลาเช็กชื่อ</th>
+                                        <th data-i18n="th_checkin_method">วิธีการเช็กชื่อ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    html += groupStudents.map(row => {
+                        const isPresent = row.status === 'present';
+                        const isLeave = row.status === 'leave';
+                        const isSick = row.status === 'sick_leave';
+                        const isAbsent = row.status === 'absent';
+                        
+                        return `
+                        <tr>
+                            <td>
+                                <span class="mobile-label" data-i18n="th_student_id">รหัสนักเรียน</span>
+                                <span class="cell-value"><code style="color:#1E293B; background:none; padding:0;">${row.student_id}</code></span>
+                            </td>
+                            <td class="student-name-cell">
+                                <span class="cell-value" style="font-weight: 500;">${row.full_name}</span>
+                            </td>
+                            <td>
+                                <span class="mobile-label" data-i18n="th_grade">ระดับชั้น</span>
+                                <span class="cell-value"><span class="badge badge-lg" style="background:#EFF6FF; color:#2563EB;">${row.grade}</span></span>
+                            </td>
+                            <td>
+                                <span class="mobile-label" data-i18n="th_room">ห้อง</span>
+                                <span class="cell-value">${row.room}</span>
+                            </td>
+                            <td class="status-cell">
+                                <span class="mobile-label" data-i18n="th_status">สถานะ</span>
+                                <span class="cell-value">
+                                    <select class="status-select-inline filter-select st-${row.status}" onchange="initiateStatusChange('${row.student_id}', this)" data-original="${row.status}">
+                                        <option value="present" ${isPresent ? 'selected' : ''} data-i18n="attendance_present">มา</option>
+                                        <option value="leave" ${isLeave ? 'selected' : ''} data-i18n="attendance_leave">ลา</option>
+                                        <option value="sick_leave" ${isSick ? 'selected' : ''} data-i18n="attendance_sick_leave">ลาป่วย</option>
+                                        <option value="absent" ${isAbsent ? 'selected' : ''} data-i18n="attendance_absent">ไม่มา</option>
+                                    </select>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="mobile-label" data-i18n="th_checkin_time">เวลาเช็กชื่อ</span>
+                                <span class="cell-value" style="font-weight: 600; color: ${row.time === '-' ? '#CBD5E1' : '#1E293B'};">${row.time}</span>
+                            </td>
+                            <td>
+                                <span class="mobile-label" data-i18n="th_checkin_method">วิธีการเช็กชื่อ</span>
+                                <span class="cell-value">${renderMethod(row.method)}</span>
+                            </td>
+                        </tr>
+                        `;
+                    }).join('');
+                    
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+            });
+            wrapper.innerHTML = html;
         }
 
         if (typeof applyTranslations === 'function') {
             applyTranslations();
         }
+    }
+    
+    function initiateStatusChange(studentId, selectEl) {
+        const newStatus = selectEl.value;
+        const originalStatus = selectEl.getAttribute('data-original');
+        const translatedStatus = getStatusLabel(newStatus);
+        
+        let confirmMsgTpl = typeof t === 'function' ? t('attendance_status_update_confirm') : 'Are you sure you want to change this student\'s status to "{status}"?';
+        const msg = confirmMsgTpl.replace('{status}', translatedStatus);
+        
+        pendingStatusChange = {
+            student_id: studentId,
+            status: newStatus,
+            selectEl: selectEl,
+            originalStatus: originalStatus
+        };
+        
+        document.getElementById('statusModalMsg').textContent = msg;
+        document.getElementById('statusModalOverlay').classList.add('show');
+        
+        const confirmBtn = document.getElementById('confirmStatusBtn');
+        confirmBtn.onclick = async () => {
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '...';
+            try {
+                const res = await fetch(`/teacher/api/attendance/${SESSION_ID}/status`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        student_id: pendingStatusChange.student_id,
+                        status: pendingStatusChange.status
+                    })
+                });
+                if (res.ok) {
+                    await fetchAttendanceList();
+                } else {
+                    alert('Error updating status');
+                    cancelStatusChange();
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Connection error');
+                cancelStatusChange();
+            }
+            confirmBtn.disabled = false;
+            confirmBtn.innerHTML = typeof t === 'function' ? t('attendance_save_status') : 'Save';
+            document.getElementById('statusModalOverlay').classList.remove('show');
+        };
+    }
+    
+    function cancelStatusChange() {
+        if (pendingStatusChange) {
+            pendingStatusChange.selectEl.value = pendingStatusChange.originalStatus;
+            pendingStatusChange = null;
+        }
+        document.getElementById('statusModalOverlay').classList.remove('show');
     }
 
     async function fetchAttendanceList() {
@@ -632,13 +654,13 @@
             const res = await fetch(`/teacher/api/monitoring/${SESSION_ID}`);
             const data = await res.json();
 
-            // Update Stats
-            document.getElementById('totalStudents').textContent = data.stats.total;
-            document.getElementById('checkedInCount').textContent = data.stats.present;
-            document.getElementById('notCheckedInCount').textContent = data.stats.absent;
+            document.getElementById('countTotal').textContent = data.stats.total;
+            document.getElementById('countPresent').textContent = data.stats.present;
+            document.getElementById('countLeave').textContent = data.stats.leave;
+            document.getElementById('countSick').textContent = data.stats.sick_leave;
+            document.getElementById('countAbsent').textContent = data.stats.absent;
 
-            currentData.checked_in = data.checked_in;
-            currentData.not_checked_in = data.not_checked_in;
+            currentData.students = data.students;
             updateRoomFilter();
             renderTables();
         } catch (e) {
@@ -651,6 +673,6 @@
     });
 
     fetchAttendanceList();
-    setInterval(fetchAttendanceList, 30000);
+    setInterval(fetchAttendanceList, 15000); // 15 sec refresh
 </script>
 {% endblock %}

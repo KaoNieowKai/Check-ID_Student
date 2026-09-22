@@ -349,7 +349,20 @@ const I18N_DICTIONARY = {
         'lbl_delete_all_confirm': 'พิมพ์ "ลบนักเรียนทั้งหมด" เพื่อยืนยัน:',
         'ph_delete_all_confirm': 'ลบนักเรียนทั้งหมด',
         'msg_delete_all_success': 'ลบข้อมูลนักเรียนทั้งหมดสำเร็จ',
-        'msg_delete_all_error': 'เกิดข้อผิดพลาดในการลบข้อมูล'
+        'msg_delete_all_error': 'เกิดข้อผิดพลาดในการลบข้อมูล',
+        
+        // Attendance Status Management
+        'attendance_present': 'มา',
+        'attendance_leave': 'ลา',
+        'attendance_sick_leave': 'ลาป่วย',
+        'attendance_absent': 'ไม่มา',
+        'attendance_all': 'ทั้งหมด',
+        'attendance_save_status': 'บันทึกสถานะ',
+        'attendance_change_status': 'เปลี่ยนสถานะ',
+        'attendance_confirm_status_change': 'ยืนยันการเปลี่ยนสถานะ',
+        'attendance_cancel': 'ยกเลิก',
+        'attendance_status_update_success': 'เปลี่ยนสถานะเรียบร้อยแล้ว',
+        'attendance_status_update_confirm': 'คุณต้องการเปลี่ยนสถานะนักเรียนคนนี้เป็น "{status}" ใช่หรือไม่?'
     },
     en: {
         // App / Brand
@@ -689,7 +702,20 @@ const I18N_DICTIONARY = {
         'lbl_delete_all_confirm': 'Type "DELETE ALL STUDENTS" to confirm:',
         'ph_delete_all_confirm': 'DELETE ALL STUDENTS',
         'msg_delete_all_success': 'All student records have been deleted successfully.',
-        'msg_delete_all_error': 'An error occurred while deleting.'
+        'msg_delete_all_error': 'An error occurred while deleting.',
+        
+        // Attendance Status Management
+        'attendance_present': 'Present',
+        'attendance_leave': 'Leave',
+        'attendance_sick_leave': 'Sick Leave',
+        'attendance_absent': 'Absent',
+        'attendance_all': 'All',
+        'attendance_save_status': 'Save Status',
+        'attendance_change_status': 'Change Status',
+        'attendance_confirm_status_change': 'Confirm Status Change',
+        'attendance_cancel': 'Cancel',
+        'attendance_status_update_success': 'Attendance status updated successfully.',
+        'attendance_status_update_confirm': 'Are you sure you want to change this student\'s status to "{status}"?'
     }
 };
 

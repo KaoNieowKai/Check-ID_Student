@@ -16,8 +16,9 @@ STATUS_THAI = {
     "cancelled": "ยกเลิก",
     "present": "มา",
     "late": "สาย",
-    "absent": "ขาด",
+    "absent": "ไม่มา",
     "leave": "ลา",
+    "sick_leave": "ลาป่วย",
 }
 
 ROLE_THAI = {
