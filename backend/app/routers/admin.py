@@ -819,20 +819,51 @@ async def attendance_list(
 
     if session_id:
         selected_session = db.query(ActivitySession).filter(ActivitySession.id == session_id).first()
-        query = db.query(AttendanceRecord).options(
-            joinedload(AttendanceRecord.student)
-        ).filter(AttendanceRecord.session_id == session_id)
-
+        
+        # Get all eligible students
+        student_query = db.query(Student).filter(Student.is_active == True)
+        if selected_session and selected_session.activity.eligible_grades:
+            grades = [g.strip() for g in selected_session.activity.eligible_grades.split(",")]
+            student_query = student_query.filter(Student.grade.in_(grades))
+            
         if grade:
-            query = query.join(Student).filter(Student.grade == grade)
+            student_query = student_query.filter(Student.grade == grade)
         if room:
-            query = query.join(Student, isouter=True).filter(Student.room == room)
+            student_query = student_query.filter(Student.room == room)
         if search:
-            query = query.join(Student, isouter=True).filter(
+            student_query = student_query.filter(
                 or_(Student.student_id.contains(search), Student.full_name.contains(search))
             )
-
-        records = query.order_by(AttendanceRecord.checked_in_at).all()
+            
+        students = student_query.order_by(Student.grade, Student.room, Student.student_id).all()
+        
+        # Get attendance records for these students
+        db_records = db.query(AttendanceRecord).options(
+            joinedload(AttendanceRecord.student)
+        ).filter(AttendanceRecord.session_id == session_id).all()
+        
+        record_map = {rec.student_id: rec for rec in db_records}
+        
+        for st in students:
+            rec = record_map.get(st.id)
+            if rec:
+                status = rec.status
+                time = rec.checked_in_at
+                method = rec.checked_in_method
+                record_id = rec.id
+            else:
+                status = "absent"
+                time = None
+                method = None
+                record_id = None
+                
+            records.append({
+                "student": st,
+                "status": status,
+                "time": time,
+                "method": method,
+                "record_id": record_id
+            })
 
     return templates.TemplateResponse("admin/attendance.html", {
         "request": request, "user": user,
@@ -844,129 +875,43 @@ async def attendance_list(
     })
 
 
-@router.post("/attendance/{id}/correct")
+@router.post("/attendance/session/{session_id}/student/{student_id}/correct")
 async def attendance_correct(
-    id: int,
+    session_id: int,
+    student_id: int,
     status: str = Form(...),
     reason: str = Form(...),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
-    record = db.query(AttendanceRecord).filter(AttendanceRecord.id == id).first()
-    if not record:
-        raise HTTPException(status_code=404)
-    prev_status = record.status
-    record.status = status
-    record.checked_in_method = "manual"
-    db.commit()
-    create_audit_log(db, user.id, "attendance_corrected", "attendance", str(id),
-                     previous_value=prev_status, new_value=status, reason=reason)
-    return RedirectResponse(url=f"/admin/attendance?session_id={record.session_id}", status_code=303)
-
-
-@router.post("/attendance/manual-add")
-async def attendance_manual_add(
-    session_id: int = Form(...),
-    student_db_id: int = Form(...),
-    db: Session = Depends(get_db),
-    user: User = Depends(require_admin)
-):
-    """Manually add attendance for a student who couldn't check in via QR.
-    
-    NOTE: This operation is intentionally NOT logged to the audit log /
-    system usage history. It is a data-management operation only.
-    """
-    from fastapi.responses import JSONResponse
-
-    # Check if already exists
-    existing = db.query(AttendanceRecord).filter(
-        AttendanceRecord.student_id == student_db_id,
-        AttendanceRecord.session_id == session_id
+    record = db.query(AttendanceRecord).filter(
+        AttendanceRecord.session_id == session_id,
+        AttendanceRecord.student_id == student_id
     ).first()
-    if existing:
-        student = db.query(Student).filter(Student.id == student_db_id).first()
-        return JSONResponse(status_code=409, content={
-            "success": False,
-            "message": "นักเรียนคนนี้เช็กชื่อกิจกรรมนี้แล้ว",
-            "already_exists": True,
-        })
+    
+    if record:
+        prev_status = record.status
+        record.status = status
+        record.checked_in_method = "manual"
+        db.commit()
+        create_audit_log(db, user.id, "attendance_corrected", "attendance", str(record.id),
+                         previous_value=prev_status, new_value=status, reason=reason)
+    else:
+        # Create new record
+        if status != "absent":
+            record = AttendanceRecord(
+                student_id=student_id,
+                session_id=session_id,
+                status=status,
+                checked_in_method="manual",
+                checked_in_at=get_bkk_time(),
+            )
+            db.add(record)
+            db.commit()
+            create_audit_log(db, user.id, "attendance_manual_add", "attendance", str(record.id),
+                             previous_value="absent", new_value=status, reason=reason)
 
-    record = AttendanceRecord(
-        student_id=student_db_id,
-        session_id=session_id,
-        status="present",
-        checked_in_method="admin_manual",
-        checked_in_at=get_bkk_time(),
-    )
-    db.add(record)
-    db.commit()
-
-    student = db.query(Student).filter(Student.id == student_db_id).first()
-    return JSONResponse(status_code=200, content={
-        "success": True,
-        "message": "เพิ่มรายชื่อนักเรียนเรียบร้อยแล้ว",
-        "student": {
-            "student_id": student.student_id if student else "",
-            "full_name": student.full_name if student else "",
-        }
-    })
-
-
-@router.get("/attendance/students-search")
-async def attendance_students_search(
-    session_id: int = Query(...),
-    q: str = Query(""),
-    db: Session = Depends(get_db),
-    user: User = Depends(require_admin)
-):
-    """Search for students to manually add to attendance.
-    Returns students who are eligible for the session and NOT yet checked in.
-    """
-    from fastapi.responses import JSONResponse
-
-    # Load session to find eligible grades
-    session = db.query(ActivitySession).options(
-        joinedload(ActivitySession.activity)
-    ).filter(ActivitySession.id == session_id).first()
-    if not session:
-        return JSONResponse(status_code=404, content={"students": []})
-
-    # Get already checked-in student IDs
-    checked_in_ids = [
-        r.student_id for r in
-        db.query(AttendanceRecord.student_id).filter(
-            AttendanceRecord.session_id == session_id
-        ).all()
-    ]
-
-    query = db.query(Student).filter(Student.is_active == True)
-
-    # Filter by eligible grades
-    if session.activity.eligible_grades:
-        grades = [g.strip() for g in session.activity.eligible_grades.split(",")]
-        query = query.filter(Student.grade.in_(grades))
-
-    # Search filter
-    if q and len(q.strip()) >= 1:
-        query = query.filter(
-            or_(Student.student_id.contains(q.strip()),
-                Student.full_name.contains(q.strip()))
-        )
-
-    students = query.order_by(Student.grade, Student.room, Student.student_id).limit(30).all()
-
-    result = []
-    for s in students:
-        result.append({
-            "db_id": s.id,
-            "student_id": s.student_id,
-            "full_name": s.full_name,
-            "grade": s.grade,
-            "room": s.room,
-            "already_checked_in": s.id in checked_in_ids,
-        })
-
-    return {"students": result, "session_name": session.name, "activity_name": session.activity.name}
+    return RedirectResponse(url=f"/admin/attendance?session_id={session_id}", status_code=303)
 
 
 # ─── Student Attendance History ───────────────────────────────────────
@@ -1013,10 +958,12 @@ async def export_attendance(
     activity_id: int = Query(0),
     grade: str = Query(""),
     room: str = Query(""),
+    lang: str = Query("th"),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
     """Export attendance to Excel."""
+    lang = request.cookies.get("app_language", lang)
     wb = Workbook()
     ws = wb.active
     ws.title = "Attendance Report"
@@ -1060,39 +1007,73 @@ async def export_attendance(
         ws.append([f"Session: {session.name} — {session.date}"])
         ws.append([])
 
-        # Headers
-        headers = ["Student ID", "Full Name", "Grade", "Room", "Status", "Check-in Time", "Method"]
-        ws.append(headers)
-        for col, cell in enumerate(ws[4], 1):
-            cell.font = header_font
-            cell.fill = header_fill
-            cell.alignment = Alignment(horizontal="center")
+        # 4-Table Separated Layout for Excel
+        if lang == "th":
+            headers = ["รหัสนักเรียน", "ชื่อ-นามสกุล", "ระดับชั้น", "ห้อง", "สถานะ", "เวลาเช็กชื่อ", "วิธีการเช็กชื่อ"]
+        else:
+            headers = ["Student ID", "Full Name", "Grade", "Room", "Status", "Check-in Time", "Method"]
 
-        present_count = 0
+        status_map_th = {"present": "มา", "leave": "ลา", "sick_leave": "ลาป่วย", "absent": "ไม่มา"}
+        status_map_en = {"present": "Present", "leave": "Leave", "sick_leave": "Sick Leave", "absent": "Absent"}
+        status_map = status_map_th if lang == "th" else status_map_en
+
+        stats = {"present": 0, "leave": 0, "sick_leave": 0, "absent": 0}
+        grouped_students = {"present": [], "leave": [], "sick_leave": [], "absent": []}
+        
         for student in students:
             rec = attendance_map.get(student.id)
             if rec:
-                status_text = "Present"
+                st_code = rec.status
                 checkin_time = rec.checked_in_at.strftime("%H:%M:%S") if rec.checked_in_at else "-"
                 method = rec.checked_in_method
                 if method in ("admin_manual", "qr"):
-                    method = "QR Scan" if request.cookies.get("app_language", "th") == "en" else "สแกน QR"
-                present_count += 1
+                    method = "QR Scan" if lang == "en" else "สแกน QR"
+                elif method == "manual":
+                    method = "Manual" if lang == "en" else "ปรับแก้โดยครู"
             else:
-                status_text = "Not Checked In"
+                st_code = "absent"
                 checkin_time = "-"
                 method = "-"
-            ws.append([student.student_id, student.full_name, student.grade, student.room,
-                       status_text, checkin_time, method])
+                
+            if st_code not in stats:
+                st_code = "absent"
+                
+            stats[st_code] += 1
+            status_text = status_map.get(st_code, st_code)
+            
+            grouped_students[st_code].append([
+                student.student_id, student.full_name, student.grade, student.room,
+                status_text, checkin_time, method
+            ])
+
+        for st_val in ["present", "leave", "sick_leave", "absent"]:
+            group_list = grouped_students[st_val]
+            if group_list:
+                ws.append([f"{status_map[st_val]} ({len(group_list)})"])
+                ws[ws.max_row][0].font = Font(bold=True, size=12)
+                
+                ws.append(headers)
+                header_row_idx = ws.max_row
+                for col, cell in enumerate(ws[header_row_idx], 1):
+                    cell.font = header_font
+                    cell.fill = header_fill
+                    cell.alignment = Alignment(horizontal="center")
+                
+                for row_data in group_list:
+                    ws.append(row_data)
+                    
+                ws.append([]) # empty row
 
         # Summary
         ws.append([])
-        ws.append(["Summary"])
-        ws.append(["Total Students", len(students)])
-        ws.append(["Present", present_count])
-        ws.append(["Not Checked In", len(students) - present_count])
-        pct = (present_count / len(students) * 100) if students else 0
-        ws.append(["Attendance %", f"{pct:.1f}%"])
+        ws.append(["ข้อมูลสรุป" if lang == "th" else "Summary"])
+        ws.append(["นักเรียนทั้งหมด" if lang == "th" else "Total Students", len(students)])
+        ws.append([status_map.get("present"), stats["present"]])
+        ws.append([status_map.get("leave"), stats["leave"]])
+        ws.append([status_map.get("sick_leave"), stats["sick_leave"]])
+        ws.append([status_map.get("absent"), stats["absent"]])
+        pct = (stats["present"] / len(students) * 100) if students else 0
+        ws.append(["อัตราการเข้าร่วม (%)" if lang == "th" else "Attendance %", f"{pct:.1f}%"])
 
     elif activity_id:
         activity = db.query(Activity).filter(Activity.id == activity_id).first()
@@ -1164,6 +1145,7 @@ async def generate_pdf_report(
     user: User = Depends(require_admin)
 ):
     """Generate attendance summary PDF report."""
+    lang = request.cookies.get("app_language", lang)
     from fpdf import FPDF
     import os
     import urllib.parse
@@ -1218,71 +1200,56 @@ async def generate_pdf_report(
         pdf.cell(0, 8, f"{rate:.1f}%", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(5)
         
-        # Present Table
-        pdf.set_font('Prompt', 'B', 14)
-        present_title = "รายชื่อนักเรียนที่มา" if lang == "th" else "Present Students"
-        pdf.cell(0, 10, present_title, new_x="LMARGIN", new_y="NEXT")
+        status_map_th = {"present": "มา", "leave": "ลา", "sick_leave": "ลาป่วย", "absent": "ไม่มา"}
+        status_map_en = {"present": "Present", "leave": "Leave", "sick_leave": "Sick Leave", "absent": "Absent"}
+        status_map = status_map_th if lang == "th" else status_map_en
         
-        pdf.set_font('Prompt', 'B', 10)
-        col_widths = [10, 25, 60, 20, 20, 25, 30]
-        headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "เวลาเช็กชื่อ", "วิธีการ"]
-        headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Time", "Method"]
+        col_widths = [10, 25, 60, 20, 20, 30, 25]
+        headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "สถานะ", "เวลา"]
+        headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Status", "Time"]
         headers = headers_th if lang == "th" else headers_en
         
-        for i in range(len(headers)):
-            pdf.cell(col_widths[i], 8, headers[i], border=1, align='C')
-        pdf.ln(8)
-        
-        pdf.set_font('Prompt', '', 10)
-        idx = 1
+        processed_students = []
         for st in students:
             if st.id in attendance_map:
                 rec = attendance_map[st.id]
-                pdf.cell(col_widths[0], 8, str(idx), border=1, align='C')
-                pdf.cell(col_widths[1], 8, st.student_id, border=1, align='C')
-                pdf.cell(col_widths[2], 8, st.full_name, border=1)
-                pdf.cell(col_widths[3], 8, st.grade, border=1, align='C')
-                pdf.cell(col_widths[4], 8, str(st.room), border=1, align='C')
-                pdf.cell(col_widths[5], 8, rec.checked_in_at.strftime("%H:%M:%S") if rec.checked_in_at else "-", border=1, align='C')
-                method = rec.checked_in_method
-                if method in ("admin_manual", "qr"):
-                    method = "สแกน QR" if lang == "th" else "QR Scan"
-                elif method == "manual":
-                    method = "ปรับแก้โดยครู" if lang == "th" else "Manual"
-                pdf.cell(col_widths[6], 8, method, border=1, align='C')
-                pdf.ln(8)
-                idx += 1
+                st_code = rec.status
+                time_str = rec.checked_in_at.strftime("%H:%M:%S") if rec.checked_in_at else "-"
+            else:
+                st_code = "absent"
+                time_str = "-"
+            processed_students.append({
+                "student_id": st.student_id,
+                "full_name": st.full_name,
+                "grade": st.grade,
+                "room": st.room,
+                "status": st_code,
+                "time": time_str
+            })
+            
+        for st_val in ["present", "leave", "sick_leave", "absent"]:
+            group_students = [s for s in processed_students if s["status"] == st_val]
+            if group_students:
+                pdf.set_font('Prompt', 'B', 14)
+                group_title = f"{status_map[st_val]} ({len(group_students)})"
+                pdf.cell(0, 10, group_title, new_x="LMARGIN", new_y="NEXT")
                 
-        pdf.ln(10)
-        
-        # Absent Table
-        pdf.set_font('Prompt', 'B', 14)
-        absent_title = "รายชื่อนักเรียนที่ไม่มา" if lang == "th" else "Not Checked In Students"
-        pdf.cell(0, 10, absent_title, new_x="LMARGIN", new_y="NEXT")
-        
-        pdf.set_font('Prompt', 'B', 10)
-        col_widths_absent = [10, 25, 70, 25, 25, 35]
-        headers_absent_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ระดับชั้น", "ห้อง", "สถานะ"]
-        headers_absent_en = ["No.", "Student ID", "Name", "Grade", "Room", "Status"]
-        headers_absent = headers_absent_th if lang == "th" else headers_absent_en
-        
-        for i in range(len(headers_absent)):
-            pdf.cell(col_widths_absent[i], 8, headers_absent[i], border=1, align='C')
-        pdf.ln(8)
-        
-        pdf.set_font('Prompt', '', 10)
-        status_text = "ยังไม่เช็กชื่อ" if lang == "th" else "Not Checked In"
-        idx = 1
-        for st in students:
-            if st.id not in attendance_map:
-                pdf.cell(col_widths_absent[0], 8, str(idx), border=1, align='C')
-                pdf.cell(col_widths_absent[1], 8, st.student_id, border=1, align='C')
-                pdf.cell(col_widths_absent[2], 8, st.full_name, border=1)
-                pdf.cell(col_widths_absent[3], 8, st.grade, border=1, align='C')
-                pdf.cell(col_widths_absent[4], 8, str(st.room), border=1, align='C')
-                pdf.cell(col_widths_absent[5], 8, status_text, border=1, align='C')
+                pdf.set_font('Prompt', 'B', 10)
+                for i in range(len(headers)):
+                    pdf.cell(col_widths[i], 8, headers[i], border=1, align='C')
                 pdf.ln(8)
-                idx += 1
+                
+                pdf.set_font('Prompt', '', 10)
+                for idx, row in enumerate(group_students, 1):
+                    pdf.cell(col_widths[0], 8, str(idx), border=1, align='C')
+                    pdf.cell(col_widths[1], 8, row["student_id"], border=1, align='C')
+                    pdf.cell(col_widths[2], 8, row["full_name"], border=1)
+                    pdf.cell(col_widths[3], 8, row["grade"], border=1, align='C')
+                    pdf.cell(col_widths[4], 8, str(row["room"]), border=1, align='C')
+                    pdf.cell(col_widths[5], 8, status_map.get(row["status"], row["status"]), border=1, align='C')
+                    pdf.cell(col_widths[6], 8, row["time"], border=1, align='C')
+                    pdf.ln(8)
+                pdf.ln(5)
                 
     # Build query similar to Excel export
     if session_id:
