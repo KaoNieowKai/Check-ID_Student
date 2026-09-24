@@ -1,0 +1,55 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# .dockerignore for Student Activity Attendance Management WebApp
+# Prevents secrets, local state, and build artifacts from entering the image
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Secrets & local environment ───────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Local SQLite database (production uses Supabase PostgreSQL) ───────
+*.db
+*.db-shm
+*.db-wal
+*.db.corrupt
+*.sqlite3
+dump.sql
+
+# ── Python virtual environment ────────────────────────────────────────
+venv/
+.venv/
+env/
+
+# ── Python bytecode and cache ─────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*$py.class
+*.so
+
+# ── Testing ───────────────────────────────────────────────────────────
+tests/
+.pytest_cache/
+htmlcov/
+.coverage
+pytest.ini
+setup.cfg
+
+# ── Git ───────────────────────────────────────────────────────────────
+.git/
+.gitignore
+
+# ── IDE & OS ─────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Documentation ─────────────────────────────────────────────────────
+*.md

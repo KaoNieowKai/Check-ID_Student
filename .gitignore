@@ -18,7 +18,11 @@ env/
 
 # Database
 *.db
+*.db-shm
+*.db-wal
+*.db.corrupt
 *.sqlite3
+dump.sql
 
 # IDE
 .vscode/
