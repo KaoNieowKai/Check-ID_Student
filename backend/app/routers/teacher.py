@@ -463,22 +463,6 @@ async def summary_pdf(
                 pdf.ln(8)
             pdf.ln(5)
     
-    pdf.set_font('Prompt', '', 10)
-    
-    status_map_th = {"present": "มา", "leave": "ลา", "sick_leave": "ลาป่วย", "absent": "ไม่มา"}
-    status_map_en = {"present": "Present", "leave": "Leave", "sick_leave": "Sick Leave", "absent": "Absent"}
-    status_map = status_map_th if lang == "th" else status_map_en
-    
-    for idx, row in enumerate(students_list, 1):
-        pdf.cell(col_widths[0], 8, str(idx), border=1, align='C')
-        pdf.cell(col_widths[1], 8, row["student_id"], border=1, align='C')
-        pdf.cell(col_widths[2], 8, row["full_name"], border=1)
-        pdf.cell(col_widths[3], 8, row["grade"], border=1, align='C')
-        pdf.cell(col_widths[4], 8, row["room"], border=1, align='C')
-        pdf.cell(col_widths[5], 8, status_map.get(row["status"], row["status"]), border=1, align='C')
-        pdf.cell(col_widths[6], 8, row["time"], border=1, align='C')
-        pdf.ln(8)
-        
 
     pdf_bytes = bytes(pdf.output())
     
