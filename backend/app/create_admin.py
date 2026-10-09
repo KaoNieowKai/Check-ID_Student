@@ -26,7 +26,7 @@ def create_admin():
             username=settings.ADMIN_USERNAME,
             password_hash=hash_password(settings.ADMIN_PASSWORD),
             display_name="Administrator",
-            role="admin",
+            role="super_admin",
             is_active=True,
         )
         db.add(admin)

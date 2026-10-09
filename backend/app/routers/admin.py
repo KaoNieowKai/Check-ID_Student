@@ -13,7 +13,7 @@ from sqlalchemy import func, or_, and_, desc, cast, Integer
 from openpyxl import Workbook, load_workbook
 from app.database import get_db
 from app.models import User, Student, Activity, ActivitySession, AttendanceRecord, AuditLog
-from app.auth import require_admin, hash_password
+from app.auth import require_admin, require_super_admin, hash_password, verify_password
 from app.config import get_bkk_time
 from app.templating import templates
 
@@ -1370,3 +1370,304 @@ async def api_get_sessions(activity_id: int, db: Session = Depends(get_db), user
         ActivitySession.activity_id == activity_id
     ).order_by(ActivitySession.date).all()
     return [{"id": s.id, "name": s.name, "date": str(s.date), "status": s.status} for s in sessions]
+
+
+# ─── Admin Account Management (Super Admin only) ─────────────────────
+
+def _is_last_active_super_admin(db: Session, user_id: int) -> bool:
+    """Check if the given user is the last active super_admin.
+    Uses FOR UPDATE on PostgreSQL to prevent TOCTOU races."""
+    from app.config import settings
+    query = db.query(func.count(User.id)).filter(
+        User.role == "super_admin",
+        User.is_active == True,
+        User.id != user_id
+    )
+    # Use row locking on PostgreSQL to prevent concurrent races
+    if not settings.DATABASE_URL.startswith("sqlite"):
+        query = query.with_for_update()
+    other_active_sa = query.scalar()
+    return other_active_sa == 0
+
+
+@router.get("/admin-accounts", response_class=HTMLResponse)
+async def admin_accounts_page(
+    request: Request,
+    search: str = Query("", alias="search"),
+    status_filter: str = Query("", alias="status"),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin),
+):
+    """Admin Account Management page — Super Admin only."""
+    query = db.query(User).filter(User.role == "admin")
+
+    if search:
+        search_term = search.strip()
+        query = query.filter(or_(
+            User.username.ilike(f"%{search_term}%"),
+            User.display_name.ilike(f"%{search_term}%"),
+        ))
+
+    if status_filter == "active":
+        query = query.filter(User.is_active == True)
+    elif status_filter == "suspended":
+        query = query.filter(User.is_active == False)
+
+    admins = query.order_by(User.username).all()
+
+    # Summary counts
+    total_admins = db.query(func.count(User.id)).filter(User.role == "admin").scalar()
+    active_admins = db.query(func.count(User.id)).filter(
+        User.role == "admin", User.is_active == True
+    ).scalar()
+    suspended_admins = db.query(func.count(User.id)).filter(
+        User.role == "admin", User.is_active == False
+    ).scalar()
+
+    return templates.TemplateResponse("admin/admin_accounts.html", {
+        "request": request, "user": user,
+        "admins": admins,
+        "search": search,
+        "status_filter": status_filter,
+        "total_admins": total_admins,
+        "active_admins": active_admins,
+        "suspended_admins": suspended_admins,
+        "error": request.query_params.get("error"),
+        "success": request.query_params.get("success"),
+    })
+
+
+@router.post("/admin-accounts/add", response_class=HTMLResponse)
+async def admin_account_add(
+    request: Request,
+    username: str = Form(...),
+    display_name: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin),
+):
+    """Create a new regular Admin account."""
+    username = username.strip().lower()
+    display_name = display_name.strip()
+
+    # Validation
+    errors = []
+    if not username or len(username) < 1 or len(username) > 50:
+        errors.append("username_invalid")
+    elif not re.match(r'^[a-zA-Z0-9._-]+$', username):
+        errors.append("username_invalid_chars")
+    if not display_name or len(display_name) < 1 or len(display_name) > 100:
+        errors.append("display_name_invalid")
+    if not password or len(password.strip()) < 6:
+        errors.append("password_too_short")
+
+    if errors:
+        return RedirectResponse(
+            url=f"/admin/admin-accounts?error={errors[0]}",
+            status_code=303
+        )
+
+    # Check uniqueness at application level (DB unique constraint is defense-in-depth)
+    existing = db.query(User).filter(User.username == username).first()
+    if existing:
+        return RedirectResponse(
+            url="/admin/admin-accounts?error=duplicate_username",
+            status_code=303
+        )
+
+    try:
+        new_admin = User(
+            username=username,
+            display_name=display_name,
+            password_hash=hash_password(password.strip()),
+            role="admin",  # Always admin — never accept from client
+            is_active=True,
+        )
+        db.add(new_admin)
+        db.flush()  # Get the ID before commit
+        admin_id = new_admin.id
+        db.commit()
+
+        create_audit_log(
+            db, user.id, "admin_account_created", "user", str(admin_id),
+            new_value=json.dumps({"username": username, "display_name": display_name})
+        )
+    except Exception:
+        db.rollback()
+        return RedirectResponse(
+            url="/admin/admin-accounts?error=duplicate_username",
+            status_code=303
+        )
+
+    return RedirectResponse(
+        url="/admin/admin-accounts?success=created",
+        status_code=303
+    )
+
+
+@router.post("/admin-accounts/{id}/edit")
+async def admin_account_edit(
+    id: int,
+    request: Request,
+    username: str = Form(...),
+    display_name: str = Form(...),
+    new_password: str = Form(None),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin),
+):
+    """Edit a regular Admin account's username, display name, and optionally password."""
+    target = db.query(User).filter(User.id == id, User.role == "admin").first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    username = username.strip().lower()
+    display_name = display_name.strip()
+
+    # Validate
+    if not username or len(username) < 1 or len(username) > 50:
+        return RedirectResponse(url="/admin/admin-accounts?error=username_invalid", status_code=303)
+    if not re.match(r'^[a-zA-Z0-9._-]+$', username):
+        return RedirectResponse(url="/admin/admin-accounts?error=username_invalid_chars", status_code=303)
+    if not display_name or len(display_name) < 1 or len(display_name) > 100:
+        return RedirectResponse(url="/admin/admin-accounts?error=display_name_invalid", status_code=303)
+
+    # Check uniqueness if username changed
+    if target.username != username:
+        existing = db.query(User).filter(User.username == username, User.id != id).first()
+        if existing:
+            return RedirectResponse(url="/admin/admin-accounts?error=duplicate_username", status_code=303)
+
+    prev = json.dumps({"username": target.username, "display_name": target.display_name})
+
+    # Explicit field assignment — role and is_active are NEVER modified here
+    target.username = username
+    target.display_name = display_name
+
+    password_changed = False
+    if new_password and len(new_password.strip()) >= 6:
+        target.password_hash = hash_password(new_password.strip())
+        password_changed = True
+    elif new_password and len(new_password.strip()) > 0 and len(new_password.strip()) < 6:
+        return RedirectResponse(url="/admin/admin-accounts?error=password_too_short", status_code=303)
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        return RedirectResponse(url="/admin/admin-accounts?error=duplicate_username", status_code=303)
+
+    new = json.dumps({"username": username, "display_name": display_name})
+    create_audit_log(
+        db, user.id, "admin_account_edited", "user", str(id),
+        previous_value=prev, new_value=new
+    )
+    if password_changed:
+        create_audit_log(
+            db, user.id, "admin_account_password_reset", "user", str(id)
+        )
+
+    return RedirectResponse(url="/admin/admin-accounts?success=edited", status_code=303)
+
+
+@router.post("/admin-accounts/{id}/suspend")
+async def admin_account_suspend(
+    id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin),
+):
+    """Suspend a regular Admin account."""
+    target = db.query(User).filter(User.id == id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    # Never allow managing Super Admin accounts through this interface
+    if target.role == "super_admin":
+        return RedirectResponse(url="/admin/admin-accounts?error=cannot_modify_super_admin", status_code=303)
+
+    if target.role != "admin":
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    if not target.is_active:
+        return RedirectResponse(url="/admin/admin-accounts?success=suspended", status_code=303)
+
+    target.is_active = False
+    db.commit()
+
+    create_audit_log(
+        db, user.id, "admin_account_suspended", "user", str(id),
+        previous_value="active", new_value="suspended"
+    )
+
+    return RedirectResponse(url="/admin/admin-accounts?success=suspended", status_code=303)
+
+
+@router.post("/admin-accounts/{id}/reactivate")
+async def admin_account_reactivate(
+    id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin),
+):
+    """Reactivate a suspended regular Admin account."""
+    target = db.query(User).filter(User.id == id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    if target.role == "super_admin":
+        return RedirectResponse(url="/admin/admin-accounts?error=cannot_modify_super_admin", status_code=303)
+
+    if target.role != "admin":
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    if target.is_active:
+        return RedirectResponse(url="/admin/admin-accounts?success=reactivated", status_code=303)
+
+    target.is_active = True
+    db.commit()
+
+    create_audit_log(
+        db, user.id, "admin_account_reactivated", "user", str(id),
+        previous_value="suspended", new_value="active"
+    )
+
+    return RedirectResponse(url="/admin/admin-accounts?success=reactivated", status_code=303)
+
+
+@router.post("/admin-accounts/{id}/delete")
+async def admin_account_delete(
+    id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin),
+):
+    """Permanently delete a regular Admin account."""
+    target = db.query(User).filter(User.id == id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    # Never allow deleting Super Admin through this interface
+    if target.role == "super_admin":
+        return RedirectResponse(url="/admin/admin-accounts?error=cannot_modify_super_admin", status_code=303)
+
+    if target.role != "admin":
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    # Cannot delete yourself
+    if target.id == user.id:
+        return RedirectResponse(url="/admin/admin-accounts?error=cannot_delete_self", status_code=303)
+
+    target_username = target.username
+    target_display = target.display_name
+    target_id_str = str(target.id)
+
+    # Record audit log BEFORE deletion (user_id will be SET NULL after delete)
+    create_audit_log(
+        db, user.id, "admin_account_deleted", "user", target_id_str,
+        previous_value=json.dumps({
+            "username": target_username,
+            "display_name": target_display,
+        })
+    )
+
+    db.delete(target)
+    db.commit()
+
+    return RedirectResponse(url="/admin/admin-accounts?success=deleted", status_code=303)

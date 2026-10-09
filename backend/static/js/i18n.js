@@ -385,7 +385,49 @@ const I18N_DICTIONARY = {
         'rpt_section_b_desc': 'รวมข้อมูลนักเรียนทุกชั้นและทุกห้องไว้ในไฟล์ PDF เดียว',
         'rpt_btn_download_all': 'ดาวน์โหลดทั้งหมด',
         'rpt_loading': 'กำลังสร้าง PDF...',
-        'rpt_err_download': 'เกิดข้อผิดพลาดในการดาวน์โหลด กรุณาลองใหม่'
+        'rpt_err_download': 'เกิดข้อผิดพลาดในการดาวน์โหลด กรุณาลองใหม่',
+        
+        // Admin Accounts
+        'title_admin_accounts': 'จัดการผู้ดูแลระบบ',
+        'subtitle_admin_accounts': 'จัดการบัญชีผู้ดูแลระบบ (Admin) ในระบบ',
+        'nav_admin_accounts': 'จัดการผู้ดูแลระบบ',
+        'btn_add_admin': 'เพิ่มผู้ดูแลระบบ',
+        'stat_total_admins': 'ผู้ดูแลระบบทั้งหมด',
+        'stat_active_admins': 'ใช้งานอยู่',
+        'stat_suspended_admins': 'ระงับการใช้งาน',
+        'filter_all_status': 'ทุกสถานะ',
+        'filter_suspended': 'ระงับการใช้งาน',
+        'btn_clear_filters': 'ล้างตัวกรอง',
+        'btn_suspend': 'ระงับการใช้งาน',
+        'btn_reactivate': 'เปิดใช้งาน',
+        'title_add_admin': 'เพิ่มผู้ดูแลระบบ',
+        'title_edit_admin': 'แก้ไขผู้ดูแลระบบ',
+        'title_confirm_delete_admin': 'ยืนยันการลบผู้ดูแลระบบ?',
+        'title_username_pattern': 'อนุญาตเฉพาะตัวอักษรภาษาอังกฤษ ตัวเลข จุด ขีดล่าง และขีดกลางเท่านั้น',
+        'ph_password_min6': 'อย่างน้อย 6 ตัวอักษร',
+        'lbl_new_password_optional': 'รหัสผ่านใหม่ (ไม่บังคับ)',
+        'ph_password_min6_optional': 'เว้นว่างไว้หากไม่ต้องการเปลี่ยน',
+        'msg_delete_admin_warning': 'คุณต้องการลบผู้ดูแลระบบ:',
+        'msg_delete_admin_irreversible': 'การดำเนินการนี้ไม่สามารถย้อนกลับได้',
+        'empty_admins': 'ยังไม่มีข้อมูลผู้ดูแลระบบ',
+        'confirm_suspend_admin': 'คุณแน่ใจหรือไม่ว่าต้องการระงับการใช้งานผู้ดูแลระบบนี้?',
+        
+        // Admin Account Errors
+        'err_username_invalid': 'ชื่อผู้ใช้ไม่ถูกต้อง (ต้องมีความยาว 1-50 ตัวอักษร)',
+        'err_username_invalid_chars': 'ชื่อผู้ใช้อนุญาตเฉพาะตัวอักษรภาษาอังกฤษ ตัวเลข จุด ขีดล่าง และขีดกลางเท่านั้น',
+        'err_display_name_invalid': 'ชื่อที่แสดงไม่ถูกต้อง (ต้องมีความยาว 1-100 ตัวอักษร)',
+        'err_password_too_short': 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร',
+        'err_duplicate_username': 'ชื่อผู้ใช้นี้มีในระบบแล้ว กรุณาใช้ชื่ออื่น',
+        'err_cannot_modify_super_admin': 'ไม่สามารถดำเนินการกับบัญชีผู้ดูแลระบบสูงสุดผ่านเมนูนี้ได้',
+        'err_cannot_delete_self': 'ไม่สามารถลบบัญชีที่กำลังใช้งานอยู่ได้',
+        
+        // Admin Account Success
+        'msg_admin_created': 'เพิ่มผู้ดูแลระบบเรียบร้อยแล้ว',
+        'msg_admin_edited': 'แก้ไขข้อมูลผู้ดูแลระบบเรียบร้อยแล้ว',
+        'msg_admin_suspended': 'ระงับการใช้งานผู้ดูแลระบบเรียบร้อยแล้ว',
+        'msg_admin_reactivated': 'เปิดใช้งานผู้ดูแลระบบเรียบร้อยแล้ว',
+        'msg_admin_deleted': 'ลบผู้ดูแลระบบเรียบร้อยแล้ว',
+        'role_super_admin': 'ผู้ดูแลระบบสูงสุด'
     },
     en: {
         // App / Brand
@@ -761,8 +803,49 @@ const I18N_DICTIONARY = {
         'rpt_section_b_desc': 'Combine attendance records from every grade and classroom into a single PDF file.',
         'rpt_btn_download_all': 'Download All',
         'rpt_loading': 'Generating PDF...',
-        'rpt_err_download': 'Download failed. Please try again.'
-    }
+        'rpt_err_download': 'Download failed. Please try again.',
+        
+        // Admin Accounts
+        'title_admin_accounts': 'Admin Accounts',
+        'subtitle_admin_accounts': 'Manage administrator accounts in the system',
+        'nav_admin_accounts': 'Admin Accounts',
+        'btn_add_admin': 'Add Admin',
+        'stat_total_admins': 'Total Admins',
+        'stat_active_admins': 'Active',
+        'stat_suspended_admins': 'Suspended',
+        'filter_all_status': 'All Status',
+        'filter_suspended': 'Suspended',
+        'btn_clear_filters': 'Clear Filters',
+        'btn_suspend': 'Suspend',
+        'btn_reactivate': 'Reactivate',
+        'title_add_admin': 'Add Admin',
+        'title_edit_admin': 'Edit Admin',
+        'title_confirm_delete_admin': 'Confirm Delete Admin?',
+        'title_username_pattern': 'Only English letters, numbers, dots, underscores, and dashes are allowed',
+        'ph_password_min6': 'At least 6 characters',
+        'lbl_new_password_optional': 'New Password (Optional)',
+        'ph_password_min6_optional': 'Leave blank to keep unchanged',
+        'msg_delete_admin_warning': 'Are you sure you want to delete admin:',
+        'msg_delete_admin_irreversible': 'This action cannot be undone.',
+        'empty_admins': 'No admin accounts found',
+        'confirm_suspend_admin': 'Are you sure you want to suspend this admin account?',
+        
+        // Admin Account Errors
+        'err_username_invalid': 'Invalid username (must be 1-50 characters)',
+        'err_username_invalid_chars': 'Username can only contain English letters, numbers, dots, underscores, and dashes',
+        'err_display_name_invalid': 'Invalid display name (must be 1-100 characters)',
+        'err_password_too_short': 'Password must be at least 6 characters',
+        'err_duplicate_username': 'This username is already taken. Please choose another one.',
+        'err_cannot_modify_super_admin': 'Cannot perform this operation on Super Admin accounts via this interface.',
+        'err_cannot_delete_self': 'You cannot delete your currently active account.',
+        
+        // Admin Account Success
+        'msg_admin_created': 'Admin account created successfully.',
+        'msg_admin_edited': 'Admin account updated successfully.',
+        'msg_admin_suspended': 'Admin account suspended successfully.',
+        'msg_admin_reactivated': 'Admin account reactivated successfully.',
+        'msg_admin_deleted': 'Admin account deleted successfully.',
+        'role_super_admin': 'Super Admin'
 };
 
 /** Build fast reverse-lookup map: text phrase -> translation key */
@@ -1003,6 +1086,7 @@ function applyTranslations() {
             .replace('จัดการกิจกรรม', 'Activity Management')
             .replace('จัดการข้อมูลนักเรียน', 'Student Management')
             .replace('จัดการข้อมูลครู', 'Teacher Management')
+            .replace('จัดการผู้ดูแลระบบ', 'Admin Accounts')
             .replace('จัดการการเช็กชื่อ', 'Attendance Management')
             .replace('รายงานและส่งออกข้อมูล', 'Reports & Export')
             .replace('บันทึกประวัติระบบ', 'Audit Logs')
@@ -1022,6 +1106,7 @@ function applyTranslations() {
             .replace('Activity Management', 'จัดการกิจกรรม')
             .replace('Student Management', 'จัดการข้อมูลนักเรียน')
             .replace('Teacher Management', 'จัดการข้อมูลครู')
+            .replace('Admin Accounts', 'จัดการผู้ดูแลระบบ')
             .replace('Attendance Management', 'จัดการการเช็กชื่อ')
             .replace('Reports & Export', 'รายงานและส่งออกข้อมูล')
             .replace('Audit Logs', 'บันทึกประวัติการใช้งานระบบ')

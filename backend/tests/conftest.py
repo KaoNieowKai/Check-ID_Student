@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 # Add backend to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -18,7 +19,11 @@ from app.main import app
 
 # Test database — in-memory SQLite
 TEST_DATABASE_URL = "sqlite:///:memory:"
-test_engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+test_engine = create_engine(
+    TEST_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 
 @event.listens_for(test_engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -59,7 +64,7 @@ def db():
 
 
 @pytest.fixture
-def client():
+def client(setup_database):
     """Provide a test HTTP client."""
     return TestClient(app)
 
@@ -72,6 +77,22 @@ def admin_user(db):
         password_hash=hash_password("admin123"),
         display_name="Test Admin",
         role="admin",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@pytest.fixture
+def super_admin_user(db):
+    """Create a super admin user and return it."""
+    user = User(
+        username="superadmin",
+        password_hash=hash_password("superadmin123"),
+        display_name="Test Super Admin",
+        role="super_admin",
         is_active=True,
     )
     db.add(user)
@@ -159,6 +180,14 @@ def sample_activity(db):
 def admin_client(client, admin_user):
     """Client logged in as admin."""
     response = client.post("/login", data={"username": "admin", "password": "admin123"}, follow_redirects=False)
+    client.cookies = response.cookies
+    return client
+
+
+@pytest.fixture
+def super_admin_client(client, super_admin_user):
+    """Client logged in as super admin."""
+    response = client.post("/login", data={"username": "superadmin", "password": "superadmin123"}, follow_redirects=False)
     client.cookies = response.cookies
     return client
 

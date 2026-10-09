@@ -16,7 +16,7 @@ async def login_page(request: Request, db: Session = Depends(get_db)):
     """Show login page. Redirect if already logged in."""
     user = get_current_user_from_cookie(request, db)
     if user:
-        if user.role == "admin":
+        if user.role in ("admin", "super_admin"):
             return RedirectResponse(url="/admin/dashboard", status_code=303)
         return RedirectResponse(url="/teacher/dashboard", status_code=303)
     return templates.TemplateResponse("login.html", {"request": request, "error": None})
@@ -43,7 +43,7 @@ async def login_submit(
         })
 
     token = create_access_token(data={"sub": user.username, "role": user.role})
-    if user.role == "admin":
+    if user.role in ("admin", "super_admin"):
         redirect_url = "/admin/dashboard"
     else:
         redirect_url = "/teacher/dashboard"

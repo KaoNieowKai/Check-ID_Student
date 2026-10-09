@@ -61,17 +61,33 @@ def require_login(request: Request, db: Session = Depends(get_db)) -> User:
 
 
 def require_admin(request: Request, db: Session = Depends(get_db)) -> User:
-    """FastAPI dependency: require admin role."""
+    """FastAPI dependency: require admin or super_admin role."""
     user = get_current_user_from_cookie(request, db)
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_303_SEE_OTHER,
             headers={"Location": "/login"}
         )
-    if user.role != "admin":
+    if user.role not in ("admin", "super_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
+        )
+    return user
+
+
+def require_super_admin(request: Request, db: Session = Depends(get_db)) -> User:
+    """FastAPI dependency: require super_admin role only."""
+    user = get_current_user_from_cookie(request, db)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_303_SEE_OTHER,
+            headers={"Location": "/login"}
+        )
+    if user.role != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Super Admin access required"
         )
     return user
 
@@ -84,7 +100,7 @@ def require_teacher(request: Request, db: Session = Depends(get_db)) -> User:
             status_code=status.HTTP_303_SEE_OTHER,
             headers={"Location": "/login"}
         )
-    if user.role not in ("teacher", "admin"):
+    if user.role not in ("teacher", "admin", "super_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Teacher access required"
