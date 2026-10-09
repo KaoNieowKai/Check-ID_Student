@@ -42,10 +42,32 @@ async def dashboard(request: Request, db: Session = Depends(get_db), user: User 
     total_students = db.query(func.count(Student.id)).filter(Student.is_active == True).scalar()
     total_teachers = db.query(func.count(User.id)).filter(User.role == "teacher").scalar()
     total_activities = db.query(func.count(Activity.id)).scalar()
-    active_sessions = db.query(func.count(ActivitySession.id)).filter(
-        ActivitySession.status == "active"
+    
+    today_date = get_bkk_time().date()
+    today_activities_count = db.query(func.count(ActivitySession.id)).filter(
+        ActivitySession.date == today_date
     ).scalar()
-    recent_activities = db.query(Activity).order_by(desc(Activity.updated_at)).limit(5).all()
+
+    today_sessions = db.query(ActivitySession).options(joinedload(ActivitySession.activity)).filter(ActivitySession.date == today_date).all()
+    today_session_ids = [s.id for s in today_sessions]
+    
+    today_attendance = 0
+    today_expected = 0
+    
+    if today_session_ids:
+        today_attendance = db.query(func.count(AttendanceRecord.id)).filter(
+            AttendanceRecord.session_id.in_(today_session_ids)
+        ).scalar()
+        
+        for session in today_sessions:
+            if session.activity and session.activity.eligible_grades:
+                grades = [g.strip() for g in session.activity.eligible_grades.split(",") if g.strip()]
+                expected = db.query(func.count(Student.id)).filter(Student.grade.in_(grades), Student.is_active == True).scalar()
+            else:
+                expected = total_students
+            today_expected += expected
+
+    recent_activities = db.query(ActivitySession).options(joinedload(ActivitySession.activity)).order_by(desc(ActivitySession.date), desc(ActivitySession.start_time)).limit(5).all()
     recent_logs = db.query(AuditLog).options(joinedload(AuditLog.user)).order_by(
         desc(AuditLog.created_at)
     ).limit(10).all()
@@ -53,7 +75,8 @@ async def dashboard(request: Request, db: Session = Depends(get_db), user: User 
     return templates.TemplateResponse("admin/dashboard.html", {
         "request": request, "user": user,
         "total_students": total_students, "total_teachers": total_teachers,
-        "total_activities": total_activities, "active_sessions": active_sessions,
+        "total_activities": total_activities, "today_activities_count": today_activities_count,
+        "today_attendance": today_attendance, "today_expected": today_expected,
         "recent_activities": recent_activities, "recent_logs": recent_logs,
     })
 

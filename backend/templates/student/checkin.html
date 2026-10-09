@@ -3,13 +3,14 @@
 {% block body_class %}student-page{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/student.css">
+<link rel="stylesheet" href="/static/css/student.css?v=3">
 {% endblock %}
 
 {% block body %}
 <div class="checkin-container">
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+    <div class="top-right-controls" style="position: fixed; top: 24px; right: 24px; display: flex; align-items: center; gap: 12px; z-index: 1000;">
         <div data-lang-switcher></div>
+        <div data-theme-switcher></div>
     </div>
     <div class="checkin-header">
         <div class="checkin-logo">
