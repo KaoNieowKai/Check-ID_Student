@@ -54,6 +54,16 @@ async def get_sessions(activity_id: int, db: Session = Depends(get_db), user: Us
              "end_time": str(s.end_time) if s.end_time else None} for s in sessions]
 
 
+@router.get("/api/activities_list")
+async def activities_list(db: Session = Depends(get_db), user: User = Depends(require_teacher)):
+    """Return all active/scheduled activities for report page dropdowns."""
+    activities = db.query(Activity).filter(
+        Activity.status.in_(["active", "scheduled"])
+    ).order_by(Activity.name).all()
+    return [{"id": a.id, "name": a.name} for a in activities]
+
+
+
 @router.get("/attendance/{session_id}", response_class=HTMLResponse)
 async def attendance_screen(
     session_id: int,
@@ -315,6 +325,289 @@ async def update_attendance_status(
     
     return {"success": True, "status": request.status}
 
+@router.get("/reports", response_class=HTMLResponse)
+async def teacher_reports(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_teacher)
+):
+    """PDF attendance report download page for teachers."""
+    return templates.TemplateResponse("teacher/reports.html", {
+        "request": request, "user": user,
+    })
+
+
+@router.get("/api/classrooms")
+async def get_classrooms(
+    grade: str = Query(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_teacher)
+):
+    """Return sorted list of distinct classrooms for a given grade."""
+    rooms = (
+        db.query(Student.room)
+        .filter(Student.grade == grade, Student.is_active == True)
+        .distinct()
+        .all()
+    )
+    room_list = sorted(
+        [r[0] for r in rooms],
+        key=lambda x: int(x) if str(x).isdigit() else 0
+    )
+    return {"grade": grade, "rooms": room_list}
+
+
+def _build_attendance_pdf(students_data: list, lang: str, report_title: str, report_subtitle: str, base_dir: str) -> bytes:
+    """Build a single combined attendance PDF from a list of student dicts.
+
+    Each dict must have: student_id, full_name, grade, room, status.
+    Returns raw PDF bytes.
+    """
+    status_map_th = {"present": "มา", "leave": "ลา", "sick_leave": "ลาป่วย", "absent": "ไม่มา"}
+    status_map_en = {"present": "Present", "leave": "Leave", "sick_leave": "Sick Leave", "absent": "Absent"}
+    status_map = status_map_th if lang == "th" else status_map_en
+
+    class PDF(FPDF):
+        def __init__(self, title, subtitle):
+            super().__init__()
+            self._report_title = title
+            self._report_subtitle = subtitle
+
+        def header(self):
+            self.set_font("Prompt", "B", 16)
+            self.cell(0, 10, self._report_title, align="C", new_x="LMARGIN", new_y="NEXT")
+            if self._report_subtitle:
+                self.set_font("Prompt", "", 11)
+                self.cell(0, 8, self._report_subtitle, align="C", new_x="LMARGIN", new_y="NEXT")
+            self.ln(4)
+
+        def footer(self):
+            self.set_y(-15)
+            self.set_font("Prompt", "", 8)
+            page_label = f"หน้า {self.page_no()}/{{nb}}" if lang == "th" else f"Page {self.page_no()}/{{nb}}"
+            self.cell(0, 10, page_label, align="C")
+
+    pdf = PDF(report_title, report_subtitle)
+
+    font_path_reg = os.path.join(base_dir, "static", "fonts", "Prompt-Regular.ttf")
+    font_path_med = os.path.join(base_dir, "static", "fonts", "Prompt-Medium.ttf")
+    pdf.add_font("Prompt", "", font_path_reg)
+    pdf.add_font("Prompt", "B", font_path_med)
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    # ── Summary stats ───────────────────────────────────────────────
+    stats = {"present": 0, "leave": 0, "sick_leave": 0, "absent": 0}
+    for s in students_data:
+        st = s.get("status", "absent")
+        if st not in stats:
+            st = "absent"
+        stats[st] += 1
+    total_count = len(students_data)
+
+    lbl_total   = "นักเรียนทั้งหมด:"  if lang == "th" else "Total Students:"
+    lbl_present = "มา:"               if lang == "th" else "Present:"
+    lbl_leave   = "ลา:"               if lang == "th" else "Leave:"
+    lbl_sick    = "ลาป่วย:"           if lang == "th" else "Sick Leave:"
+    lbl_absent  = "ไม่มา:"            if lang == "th" else "Absent:"
+    summary_title = "ข้อมูลสรุป"      if lang == "th" else "Summary"
+
+    pdf.set_font("Prompt", "B", 13)
+    pdf.cell(0, 9, summary_title, new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Prompt", "", 11)
+    for lbl, val in [
+        (lbl_total, total_count),
+        (lbl_present, stats["present"]),
+        (lbl_leave, stats["leave"]),
+        (lbl_sick, stats["sick_leave"]),
+        (lbl_absent, stats["absent"]),
+    ]:
+        pdf.cell(55, 8, lbl)
+        pdf.cell(0, 8, str(val), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(4)
+
+    # ── Student table grouped by status ────────────────────────────
+    headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "สถานะ"]
+    headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Status"]
+    headers = headers_th if lang == "th" else headers_en
+    col_widths = [10, 28, 68, 22, 18, 34]
+
+    for st_val in ["present", "leave", "sick_leave", "absent"]:
+        group = [s for s in students_data if s.get("status") == st_val]
+        if not group:
+            continue
+        pdf.set_font("Prompt", "B", 13)
+        pdf.cell(0, 9, f"{status_map[st_val]} ({len(group)})", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("Prompt", "B", 10)
+        for i, h in enumerate(headers):
+            pdf.cell(col_widths[i], 8, h, border=1, align="C")
+        pdf.ln(8)
+        pdf.set_font("Prompt", "", 10)
+        for idx, row in enumerate(group, 1):
+            pdf.cell(col_widths[0], 8, str(idx), border=1, align="C")
+            pdf.cell(col_widths[1], 8, str(row.get("student_id", "")), border=1, align="C")
+            pdf.cell(col_widths[2], 8, str(row.get("full_name", "")), border=1)
+            pdf.cell(col_widths[3], 8, str(row.get("grade", "")), border=1, align="C")
+            pdf.cell(col_widths[4], 8, str(row.get("room", "")), border=1, align="C")
+            pdf.cell(col_widths[5], 8, status_map.get(str(row.get("status", "absent")), str(row.get("status", ""))), border=1, align="C")
+            pdf.ln(8)
+        pdf.ln(4)
+
+    return bytes(pdf.output())
+
+
+@router.get("/api/attendance_pdf")
+async def attendance_pdf_by_grade_room(
+    session_id: int,
+    grade: str = Query(...),
+    room: str = Query("all"),
+    lang: str = Query("th"),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_teacher)
+):
+    """Generate PDF for a specific grade (and optionally a specific classroom)."""
+    from fastapi.responses import StreamingResponse
+    import urllib.parse
+
+    session = db.query(ActivitySession).options(
+        joinedload(ActivitySession.activity)
+    ).filter(ActivitySession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    # Build student query filtered server-side by grade (and optionally room)
+    student_query = db.query(Student).filter(
+        Student.is_active == True,
+        Student.grade == grade
+    )
+    if room != "all":
+        student_query = student_query.filter(Student.room == room)
+    eligible_students = student_query.all()
+
+    records = db.query(AttendanceRecord).options(
+        joinedload(AttendanceRecord.student)
+    ).filter(AttendanceRecord.session_id == session_id).all()
+    student_records = {rec.student_id: rec for rec in records}
+
+    students_data = []
+    for st in eligible_students:
+        rec = student_records.get(st.id)
+        status = rec.status if rec else "absent"
+        if status not in ("present", "leave", "sick_leave", "absent"):
+            status = "absent"
+        students_data.append({
+            "student_id": st.student_id,
+            "full_name": st.full_name,
+            "grade": st.grade,
+            "room": st.room,
+            "status": status,
+        })
+    students_data.sort(key=lambda x: (
+        int(x["room"]) if str(x["room"]).isdigit() else 999,
+        x["student_id"]
+    ))
+
+    # Grade label for the report
+    grade_num = grade.replace("M.", "").replace("ม.", "")
+    safe_activity_name = session.activity.name.replace("/", "-").replace("\\", "-")
+    
+    if lang == "th":
+        grade_label = f"ม.{grade_num}"
+        if room == "all":
+            subtitle = f"รายงานนักเรียนชั้น {grade_label} ทุกห้อง"
+            filename = f"สรุปเช็คชื่อ_{safe_activity_name}_{grade_label}_ทุกห้อง_{session.date}.pdf"
+        else:
+            subtitle = f"รายงานเฉพาะนักเรียนชั้น {grade_label} ห้อง {room}"
+            filename = f"สรุปเช็คชื่อ_{safe_activity_name}_{grade_label}_ห้อง{room}_{session.date}.pdf"
+        title = "สรุปการเข้าร่วมกิจกรรม"
+    else:
+        if room == "all":
+            subtitle = f"Report for all classrooms in Grade {grade_num}"
+            filename = f"Attendance_{safe_activity_name}_Grade{grade_num}_AllRooms_{session.date}.pdf"
+        else:
+            subtitle = f"Report for Grade {grade_num}, Classroom {room}"
+            filename = f"Attendance_{safe_activity_name}_Grade{grade_num}_Room{room}_{session.date}.pdf"
+        title = "Attendance Summary"
+
+    subtitle += f" — {session.activity.name} ({session.date})"
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    pdf_bytes = _build_attendance_pdf(students_data, lang, title, subtitle, base_dir)
+
+    encoded = urllib.parse.quote(filename)
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename*=utf-8''{encoded}"}
+    )
+
+
+@router.get("/api/attendance_pdf_all")
+async def attendance_pdf_all_students(
+    session_id: int,
+    lang: str = Query("th"),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_teacher)
+):
+    """Generate PDF containing all active students across every grade and classroom."""
+    from fastapi.responses import StreamingResponse
+    import urllib.parse
+
+    session = db.query(ActivitySession).options(
+        joinedload(ActivitySession.activity)
+    ).filter(ActivitySession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    eligible_students = db.query(Student).filter(Student.is_active == True).all()
+
+    records = db.query(AttendanceRecord).options(
+        joinedload(AttendanceRecord.student)
+    ).filter(AttendanceRecord.session_id == session_id).all()
+    student_records = {rec.student_id: rec for rec in records}
+
+    students_data = []
+    for st in eligible_students:
+        rec = student_records.get(st.id)
+        status = rec.status if rec else "absent"
+        if status not in ("present", "leave", "sick_leave", "absent"):
+            status = "absent"
+        students_data.append({
+            "student_id": st.student_id,
+            "full_name": st.full_name,
+            "grade": st.grade,
+            "room": st.room,
+            "status": status,
+        })
+    # Sort by grade number → room number → student_id
+    students_data.sort(key=lambda x: (
+        int(str(x["grade"]).replace("M.", "").replace("ม.", "")) if str(x["grade"]).replace("M.", "").replace("ม.", "").isdigit() else 999,
+        int(x["room"]) if str(x["room"]).isdigit() else 999,
+        x["student_id"]
+    ))
+
+    safe_activity_name = session.activity.name.replace("/", "-").replace("\\", "-")
+
+    if lang == "th":
+        title = "สรุปการเข้าร่วมกิจกรรม"
+        subtitle = f"รายงานนักเรียนทุกชั้นและทุกห้อง — {session.activity.name} ({session.date})"
+        filename = f"สรุปเช็คชื่อ_{safe_activity_name}_รวมทุกชั้น_{session.date}.pdf"
+    else:
+        title = "Attendance Summary"
+        subtitle = f"All grades and classrooms — {session.activity.name} ({session.date})"
+        filename = f"Attendance_{safe_activity_name}_AllStudents_{session.date}.pdf"
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    pdf_bytes = _build_attendance_pdf(students_data, lang, title, subtitle, base_dir)
+
+    encoded = urllib.parse.quote(filename)
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename*=utf-8''{encoded}"}
+    )
+
+
 @router.get("/api/summary_pdf/{session_id}")
 async def summary_pdf(
     session_id: int,
@@ -463,22 +756,6 @@ async def summary_pdf(
                 pdf.ln(8)
             pdf.ln(5)
     
-    pdf.set_font('Prompt', '', 10)
-    
-    status_map_th = {"present": "มา", "leave": "ลา", "sick_leave": "ลาป่วย", "absent": "ไม่มา"}
-    status_map_en = {"present": "Present", "leave": "Leave", "sick_leave": "Sick Leave", "absent": "Absent"}
-    status_map = status_map_th if lang == "th" else status_map_en
-    
-    for idx, row in enumerate(students_list, 1):
-        pdf.cell(col_widths[0], 8, str(idx), border=1, align='C')
-        pdf.cell(col_widths[1], 8, row["student_id"], border=1, align='C')
-        pdf.cell(col_widths[2], 8, row["full_name"], border=1)
-        pdf.cell(col_widths[3], 8, row["grade"], border=1, align='C')
-        pdf.cell(col_widths[4], 8, row["room"], border=1, align='C')
-        pdf.cell(col_widths[5], 8, status_map.get(row["status"], row["status"]), border=1, align='C')
-        pdf.cell(col_widths[6], 8, row["time"], border=1, align='C')
-        pdf.ln(8)
-        
 
     pdf_bytes = bytes(pdf.output())
     

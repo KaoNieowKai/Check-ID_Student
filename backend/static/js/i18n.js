@@ -362,7 +362,30 @@ const I18N_DICTIONARY = {
         'attendance_confirm_status_change': 'ยืนยันการเปลี่ยนสถานะ',
         'attendance_cancel': 'ยกเลิก',
         'attendance_status_update_success': 'เปลี่ยนสถานะเรียบร้อยแล้ว',
-        'attendance_status_update_confirm': 'คุณต้องการเปลี่ยนสถานะนักเรียนคนนี้เป็น "{status}" ใช่หรือไม่?'
+        'attendance_status_update_confirm': 'คุณต้องการเปลี่ยนสถานะนักเรียนคนนี้เป็น "{status}" ใช่หรือไม่?',
+
+        // Teacher PDF Reports page
+        'rpt_title': 'รายงานและส่งออกข้อมูล',
+        'rpt_subtitle': 'ดาวน์โหลดสรุปการเช็คชื่อเป็นไฟล์ PDF',
+        'rpt_back_dashboard': '← แดชบอร์ด',
+        'rpt_select_session': 'เลือกกิจกรรมและรอบกิจกรรม',
+        'rpt_lbl_activity': 'กิจกรรม',
+        'rpt_lbl_session': 'รอบกิจกรรม',
+        'rpt_opt_select_activity': 'เลือกกิจกรรม',
+        'rpt_opt_select_session': 'เลือกรอบกิจกรรม',
+        'rpt_hint_select_session': 'กรุณาเลือกกิจกรรมและรอบกิจกรรมก่อนดาวน์โหลด PDF',
+        'rpt_section_a_title': '1. ดาวน์โหลดตามชั้นและห้อง',
+        'rpt_section_a_desc': 'เลือกระดับชั้นและห้องที่ต้องการ แล้วกดดาวน์โหลดเพื่อรับไฟล์ PDF รายงานการเช็คชื่อ',
+        'rpt_lbl_grade': 'เลือกชั้น',
+        'rpt_lbl_room': 'เลือกห้อง',
+        'rpt_opt_select_grade': '— เลือกระดับชั้น —',
+        'rpt_opt_all_rooms_in_grade': 'ทุกห้องในชั้นนี้',
+        'rpt_btn_download_room': 'ดาวน์โหลด PDF ห้องนี้',
+        'rpt_section_b_title': '2. ดาวน์โหลดข้อมูลทั้งหมด',
+        'rpt_section_b_desc': 'รวมข้อมูลนักเรียนทุกชั้นและทุกห้องไว้ในไฟล์ PDF เดียว',
+        'rpt_btn_download_all': 'ดาวน์โหลดทั้งหมด',
+        'rpt_loading': 'กำลังสร้าง PDF...',
+        'rpt_err_download': 'เกิดข้อผิดพลาดในการดาวน์โหลด กรุณาลองใหม่'
     },
     en: {
         // App / Brand
@@ -715,7 +738,30 @@ const I18N_DICTIONARY = {
         'attendance_confirm_status_change': 'Confirm Status Change',
         'attendance_cancel': 'Cancel',
         'attendance_status_update_success': 'Attendance status updated successfully.',
-        'attendance_status_update_confirm': 'Are you sure you want to change this student\'s status to "{status}"?'
+        'attendance_status_update_confirm': 'Are you sure you want to change this student\'s status to "{status}"?',
+
+        // Teacher PDF Reports page
+        'rpt_title': 'Reports & Data Export',
+        'rpt_subtitle': 'Download attendance summary reports as PDF files',
+        'rpt_back_dashboard': '← Dashboard',
+        'rpt_select_session': 'Select Activity and Session',
+        'rpt_lbl_activity': 'Activity',
+        'rpt_lbl_session': 'Session',
+        'rpt_opt_select_activity': 'Select Activity',
+        'rpt_opt_select_session': 'Select Session',
+        'rpt_hint_select_session': 'Please select an activity and session before downloading PDF',
+        'rpt_section_a_title': '1. Download by Grade and Classroom',
+        'rpt_section_a_desc': 'Select a grade and classroom, then click download to receive a PDF attendance report.',
+        'rpt_lbl_grade': 'Select Grade',
+        'rpt_lbl_room': 'Select Classroom',
+        'rpt_opt_select_grade': '— Select Grade —',
+        'rpt_opt_all_rooms_in_grade': 'All Classrooms in This Grade',
+        'rpt_btn_download_room': 'Download PDF',
+        'rpt_section_b_title': '2. Download All Students',
+        'rpt_section_b_desc': 'Combine attendance records from every grade and classroom into a single PDF file.',
+        'rpt_btn_download_all': 'Download All',
+        'rpt_loading': 'Generating PDF...',
+        'rpt_err_download': 'Download failed. Please try again.'
     }
 };
 

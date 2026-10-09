@@ -24,13 +24,16 @@
             <h2 data-i18n="select_activity">1. เลือกกิจกรรม</h2>
             <div class="activity-buttons" id="activityList">
                 {% for activity in activities %}
-                <button class="activity-btn" onclick="selectActivity({{ activity.id }}, '{{ activity.name|escape }}')" data-id="{{ activity.id }}">
+                <button class="activity-btn" onclick="selectActivity({{ activity.id }}, '{{ activity.name|escape }}')"
+                    data-id="{{ activity.id }}">
                     <span class="activity-name">{{ activity.name }}</span>
-                    <span class="activity-status status-{{ activity.status }}" data-i18n="status_{{ activity.status }}">{{ activity.status|thai_status }}</span>
+                    <span class="activity-status status-{{ activity.status }}"
+                        data-i18n="status_{{ activity.status }}">{{ activity.status|thai_status }}</span>
                 </button>
                 {% endfor %}
                 {% if not activities %}
-                <p class="empty-state" data-i18n="empty_teacher_activities">ไม่มีกิจกรรมที่เปิดใช้งานในขณะนี้ กรุณาติดต่อผู้ดูแลระบบ</p>
+                <p class="empty-state" data-i18n="empty_teacher_activities">ไม่มีกิจกรรมที่เปิดใช้งานในขณะนี้
+                    กรุณาติดต่อผู้ดูแลระบบ</p>
                 {% endif %}
             </div>
         </div>
@@ -45,7 +48,7 @@
         <div class="start-section" id="startSection" style="display:none">
             <a href="#" id="startBtn" class="btn btn-primary btn-xl">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32">
-                    <polygon points="5 3 19 12 5 21 5 3"/>
+                    <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
                 <span data-i18n="start_attendance">เริ่มการเช็กชื่อ</span>
             </a>
@@ -56,48 +59,48 @@
 
 {% block extra_js %}
 <script>
-let selectedActivity = null;
-let selectedSession = null;
+    let selectedActivity = null;
+    let selectedSession = null;
 
-function selectActivity(id, name) {
-    selectedActivity = id;
-    document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('selected'));
-    document.querySelector(`.activity-btn[data-id="${id}"]`).classList.add('selected');
+    function selectActivity(id, name) {
+        selectedActivity = id;
+        document.querySelectorAll('.activity-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelector(`.activity-btn[data-id="${id}"]`).classList.add('selected');
 
-    document.getElementById('sessionSection').style.display = 'block';
-    document.getElementById('startSection').style.display = 'none';
+        document.getElementById('sessionSection').style.display = 'block';
+        document.getElementById('startSection').style.display = 'none';
 
-    fetch(`/teacher/api/sessions/${id}`)
-        .then(r => r.json())
-        .then(sessions => {
-            const list = document.getElementById('sessionList');
-            list.innerHTML = '';
-            if (sessions.length === 0) {
-                list.innerHTML = '<p class="empty-state" data-i18n="empty_teacher_sessions">' + t('empty_teacher_sessions', 'ไม่มีรอบกิจกรรมสำหรับกิจกรรมนี้') + '</p>';
-                return;
-            }
-            sessions.forEach(s => {
-                const btn = document.createElement('button');
-                btn.className = 'session-btn';
-                btn.dataset.id = s.id;
-                btn.onclick = () => selectSession(s.id);
-                btn.innerHTML = `
+        fetch(`/teacher/api/sessions/${id}`)
+            .then(r => r.json())
+            .then(sessions => {
+                const list = document.getElementById('sessionList');
+                list.innerHTML = '';
+                if (sessions.length === 0) {
+                    list.innerHTML = '<p class="empty-state" data-i18n="empty_teacher_sessions">' + t('empty_teacher_sessions', 'ไม่มีรอบกิจกรรมสำหรับกิจกรรมนี้') + '</p>';
+                    return;
+                }
+                sessions.forEach(s => {
+                    const btn = document.createElement('button');
+                    btn.className = 'session-btn';
+                    btn.dataset.id = s.id;
+                    btn.onclick = () => selectSession(s.id);
+                    btn.innerHTML = `
                     <span class="session-name">${s.name}</span>
-                    <span class="session-date">${s.date}${s.start_time ? ' · ' + s.start_time.substring(0,5) : ''}${s.end_time ? '–' + s.end_time.substring(0,5) : ''}</span>
+                    <span class="session-date">${s.date}${s.start_time ? ' · ' + s.start_time.substring(0, 5) : ''}${s.end_time ? '–' + s.end_time.substring(0, 5) : ''}</span>
                 `;
-                list.appendChild(btn);
+                    list.appendChild(btn);
+                });
+                if (typeof applyTranslations === 'function') applyTranslations();
             });
-            if (typeof applyTranslations === 'function') applyTranslations();
-        });
-}
+    }
 
-function selectSession(id) {
-    selectedSession = id;
-    document.querySelectorAll('.session-btn').forEach(b => b.classList.remove('selected'));
-    document.querySelector(`.session-btn[data-id="${id}"]`).classList.add('selected');
+    function selectSession(id) {
+        selectedSession = id;
+        document.querySelectorAll('.session-btn').forEach(b => b.classList.remove('selected'));
+        document.querySelector(`.session-btn[data-id="${id}"]`).classList.add('selected');
 
-    document.getElementById('startSection').style.display = 'flex';
-    document.getElementById('startBtn').href = `/teacher/attendance/${id}`;
-}
+        document.getElementById('startSection').style.display = 'flex';
+        document.getElementById('startBtn').href = `/teacher/attendance/${id}`;
+    }
 </script>
 {% endblock %}
