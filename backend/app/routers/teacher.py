@@ -54,6 +54,16 @@ async def get_sessions(activity_id: int, db: Session = Depends(get_db), user: Us
              "end_time": str(s.end_time) if s.end_time else None} for s in sessions]
 
 
+@router.get("/api/activities_list")
+async def activities_list(db: Session = Depends(get_db), user: User = Depends(require_teacher)):
+    """Return all active/scheduled activities for report page dropdowns."""
+    activities = db.query(Activity).filter(
+        Activity.status.in_(["active", "scheduled"])
+    ).order_by(Activity.name).all()
+    return [{"id": a.id, "name": a.name} for a in activities]
+
+
+
 @router.get("/attendance/{session_id}", response_class=HTMLResponse)
 async def attendance_screen(
     session_id: int,
@@ -499,22 +509,24 @@ async def attendance_pdf_by_grade_room(
 
     # Grade label for the report
     grade_num = grade.replace("M.", "").replace("ม.", "")
+    safe_activity_name = session.activity.name.replace("/", "-").replace("\\", "-")
+    
     if lang == "th":
         grade_label = f"ม.{grade_num}"
         if room == "all":
             subtitle = f"รายงานนักเรียนชั้น {grade_label} ทุกห้อง"
-            filename = f"attendance_M{grade_num}_all_classrooms.pdf"
+            filename = f"สรุปเช็คชื่อ_{safe_activity_name}_{grade_label}_ทุกห้อง_{session.date}.pdf"
         else:
             subtitle = f"รายงานเฉพาะนักเรียนชั้น {grade_label} ห้อง {room}"
-            filename = f"attendance_M{grade_num}_room_{room}.pdf"
+            filename = f"สรุปเช็คชื่อ_{safe_activity_name}_{grade_label}_ห้อง{room}_{session.date}.pdf"
         title = "สรุปการเข้าร่วมกิจกรรม"
     else:
         if room == "all":
             subtitle = f"Report for all classrooms in Grade {grade_num}"
-            filename = f"attendance_M{grade_num}_all_classrooms.pdf"
+            filename = f"Attendance_{safe_activity_name}_Grade{grade_num}_AllRooms_{session.date}.pdf"
         else:
             subtitle = f"Report for Grade {grade_num}, Classroom {room}"
-            filename = f"attendance_M{grade_num}_room_{room}.pdf"
+            filename = f"Attendance_{safe_activity_name}_Grade{grade_num}_Room{room}_{session.date}.pdf"
         title = "Attendance Summary"
 
     subtitle += f" — {session.activity.name} ({session.date})"
@@ -574,14 +586,16 @@ async def attendance_pdf_all_students(
         x["student_id"]
     ))
 
+    safe_activity_name = session.activity.name.replace("/", "-").replace("\\", "-")
+
     if lang == "th":
         title = "สรุปการเข้าร่วมกิจกรรม"
         subtitle = f"รายงานนักเรียนทุกชั้นและทุกห้อง — {session.activity.name} ({session.date})"
-        filename = "attendance_all_students.pdf"
+        filename = f"สรุปเช็คชื่อ_{safe_activity_name}_รวมทุกชั้น_{session.date}.pdf"
     else:
         title = "Attendance Summary"
         subtitle = f"All grades and classrooms — {session.activity.name} ({session.date})"
-        filename = "attendance_all_students.pdf"
+        filename = f"Attendance_{safe_activity_name}_AllStudents_{session.date}.pdf"
 
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     pdf_bytes = _build_attendance_pdf(students_data, lang, title, subtitle, base_dir)
