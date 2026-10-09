@@ -68,7 +68,7 @@ def require_admin(request: Request, db: Session = Depends(get_db)) -> User:
             status_code=status.HTTP_303_SEE_OTHER,
             headers={"Location": "/login"}
         )
-    if user.role != "admin":
+    if user.role not in ("admin", "super_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
@@ -84,7 +84,7 @@ def require_teacher(request: Request, db: Session = Depends(get_db)) -> User:
             status_code=status.HTTP_303_SEE_OTHER,
             headers={"Location": "/login"}
         )
-    if user.role not in ("teacher", "admin"):
+    if user.role not in ("teacher", "admin", "super_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Teacher access required"
