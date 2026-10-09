@@ -3,7 +3,7 @@
 {% block body_class %}teacher-page{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/teacher.css">
+<link rel="stylesheet" href="/static/css/teacher.css?v=2">
 {% endblock %}
 
 {% block body %}
@@ -15,6 +15,7 @@
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <div data-lang-switcher></div>
+            <div data-theme-switcher></div>
             <a href="/logout" class="btn btn-danger-solid" data-i18n="nav_logout">ออกจากระบบ</a>
         </div>
     </header>

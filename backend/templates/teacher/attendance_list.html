@@ -3,16 +3,16 @@
 {% block body_class %}teacher-page{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/teacher.css">
+<link rel="stylesheet" href="/static/css/teacher.css?v=2">
 <style>
     /* Custom page colors as requested */
     body.teacher-page {
-        background-color: #F5F7FA !important;
+        background-color: var(--bg) !important;
     }
 
     .teacher-header {
-        background-color: #FFFFFF !important;
-        border-bottom: 1px solid #CBD5E1 !important;
+        background-color: var(--surface) !important;
+        border-bottom: 1px solid var(--border) !important;
     }
 
     .summary-cards {
@@ -23,10 +23,10 @@
     }
 
     .summary-card {
-        background: #FFFFFF;
+        background: var(--surface);
         padding: 20px 15px;
         border-radius: 12px;
-        border: 1px solid #CBD5E1;
+        border: 1px solid var(--border);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
         text-align: center;
     }
@@ -34,17 +34,17 @@
     .summary-card .value {
         font-size: 2rem;
         font-weight: 700;
-        color: #2563EB;
+        color: var(--primary);
     }
     
-    #countTotal { color: #2563EB !important; }
-    #countPresent { color: #16A34A !important; }
-    #countLeave { color: #F59E0B !important; }
-    #countSick { color: #EAB308 !important; }
-    #countAbsent { color: #DC2626 !important; }
+    #countTotal { color: var(--primary) !important; }
+    #countPresent { color: var(--success) !important; }
+    #countLeave { color: var(--warning) !important; }
+    #countSick { color: var(--warning) !important; }
+    #countAbsent { color: var(--danger) !important; }
 
     .summary-card .label {
-        color: #64748B;
+        color: var(--text-secondary);
         font-size: 0.95rem;
         font-weight: 500;
         margin-top: 8px;
@@ -53,42 +53,42 @@
     .section-title {
         font-size: 1.25rem;
         font-weight: 600;
-        color: #1E293B;
+        color: var(--text);
         margin-bottom: 16px;
         margin-top: 32px;
-        border-bottom: 2px solid #EFF6FF;
+        border-bottom: 2px solid var(--border);
         padding-bottom: 8px;
     }
 
     .table-container {
-        background: #FFFFFF;
-        border: 1px solid #CBD5E1;
+        background: var(--surface);
+        border: 1px solid var(--border);
         border-radius: 12px;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
         overflow: hidden;
     }
 
     .data-table th {
-        background: #F5F7FA !important;
-        color: #64748B !important;
-        border-bottom: 1px solid #CBD5E1 !important;
+        background: var(--bg) !important;
+        color: var(--text-secondary) !important;
+        border-bottom: 1px solid var(--border) !important;
         font-weight: 600;
     }
 
     .data-table td {
-        border-bottom: 1px solid #CBD5E1 !important;
-        color: #1E293B !important;
+        border-bottom: 1px solid var(--border) !important;
+        color: var(--text) !important;
     }
 
     .data-table tbody tr:hover td {
-        background-color: #EFF6FF !important;
+        background-color: var(--bg) !important;
     }
 
     .empty-state {
         text-align: center;
         padding: 40px !important;
         font-size: 1.1rem;
-        color: #64748B !important;
+        color: var(--text-secondary) !important;
     }
 
     .search-container {
@@ -301,6 +301,7 @@
         </div>
         <div style="display: flex; align-items: center; gap: 12px;">
             <div data-lang-switcher></div>
+            <div data-theme-switcher></div>
             <a href="/teacher/attendance/{{ session.id }}" class="btn btn-primary btn-lg"
                 data-i18n="back_to_attendance">← กลับไปหน้าระบบเช็กชื่อ</a>
         </div>

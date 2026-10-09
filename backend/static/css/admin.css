@@ -16,8 +16,8 @@
 /* ─── Sidebar ─────────────────────────────────── */
 .sidebar {
     width: 260px;
-    background: #0F172A;
-    color: white;
+    background: var(--surface);
+    color: var(--text);
     display: flex;
     flex-direction: column;
     position: fixed;
@@ -26,11 +26,12 @@
     bottom: 0;
     z-index: 100;
     transition: transform var(--transition-slow);
+    border-right: 1px solid var(--border);
 }
 
 .sidebar-header {
     padding: 24px 20px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid var(--border);
 }
 
 .sidebar-logo {
@@ -39,7 +40,7 @@
     gap: 12px;
     font-size: 18px;
     font-weight: 700;
-    color: white;
+    color: var(--text);
 }
 
 .sidebar-nav {
@@ -55,7 +56,7 @@
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1.2px;
-    color: rgba(255,255,255,0.35);
+    color: var(--text-muted);
     padding: 16px 16px 6px;
     margin-top: 4px;
 }
@@ -71,15 +72,15 @@
     padding: 9px 16px;
     margin-bottom: 1px;
     border-radius: var(--radius-sm);
-    color: rgba(255,255,255,0.6);
+    color: var(--text-secondary);
     font-size: 14px;
     font-weight: 500;
     transition: all var(--transition);
     text-decoration: none;
 }
 .nav-item:hover {
-    color: white;
-    background: rgba(255,255,255,0.08);
+    color: var(--primary);
+    background: var(--primary-bg);
 }
 .nav-item.active {
     color: white;
@@ -89,7 +90,7 @@
 
 .sidebar-footer {
     padding: 16px;
-    border-top: 1px solid rgba(255,255,255,0.08);
+    border-top: 1px solid var(--border);
 }
 
 .user-info {
@@ -98,8 +99,8 @@
     padding: 8px 16px;
     margin-bottom: 8px;
 }
-.user-name { font-size: 14px; font-weight: 600; color: white; }
-.user-role { font-size: 12px; color: rgba(255,255,255,0.4); letter-spacing: 1px; }
+.user-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.user-role { font-size: 12px; color: var(--text-muted); letter-spacing: 1px; }
 
 .logout-link { color: #F87171 !important; background: rgba(248, 113, 113, 0.1) !important; }
 .logout-link:hover { color: white !important; background: #DC2626 !important; }

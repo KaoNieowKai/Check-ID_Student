@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/admin.css">
+<link rel="stylesheet" href="/static/css/admin.css?v=2">
 {% endblock %}
 
 {% block body %}
@@ -132,6 +132,7 @@
             <h2 class="page-title">{% block page_title %}{% endblock %}</h2>
             <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
                 <div data-lang-switcher></div>
+                <div data-theme-switcher></div>
             </div>
         </header>
         <div class="admin-content">
