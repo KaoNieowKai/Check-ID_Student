@@ -6,6 +6,7 @@ import re
 import secrets
 from datetime import datetime, date, time, timedelta
 from typing import Optional
+from urllib.parse import urlencode
 from fastapi import APIRouter, Depends, Request, Form, UploadFile, File, Query, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from sqlalchemy.orm import Session, joinedload
@@ -824,25 +825,32 @@ async def session_delete(
 @router.get("/attendance", response_class=HTMLResponse)
 async def attendance_list(
     request: Request,
-    activity_id: int = Query(0),
-    session_id: int = Query(0),
+    activity_id: Optional[str] = Query(None),
+    session_id: Optional[str] = Query(None),
     grade: str = Query(""),
     room: str = Query(""),
     search: str = Query(""),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
+    activity_id = int(activity_id) if activity_id and str(activity_id).isdigit() else 0
+    session_id = int(session_id) if session_id and str(session_id).isdigit() else 0
     activities = db.query(Activity).order_by(desc(Activity.updated_at)).all()
     sessions = []
     records = []
     selected_session = None
+
+    if session_id and not activity_id:
+        selected_session = db.query(ActivitySession).filter(ActivitySession.id == session_id).first()
+        if selected_session:
+            activity_id = selected_session.activity_id
 
     if activity_id:
         sessions = db.query(ActivitySession).filter(
             ActivitySession.activity_id == activity_id
         ).order_by(ActivitySession.date).all()
 
-    if session_id:
+    if session_id and not selected_session:
         selected_session = db.query(ActivitySession).filter(ActivitySession.id == session_id).first()
         
         # Get all eligible students
@@ -860,7 +868,8 @@ async def attendance_list(
                 or_(Student.student_id.contains(search), Student.full_name.contains(search))
             )
             
-        students = student_query.order_by(Student.grade, Student.room, Student.student_id).all()
+        students = student_query.order_by(Student.grade, cast(Student.room, Integer), Student.student_id).all()
+        students.sort(key=lambda s: (str(s.grade), int(s.room) if str(s.room).isdigit() else 999, str(s.student_id)))
         
         # Get attendance records for these students
         db_records = db.query(AttendanceRecord).options(
@@ -902,13 +911,19 @@ async def attendance_list(
 
 @router.post("/attendance/session/{session_id}/student/{student_id}/correct")
 async def attendance_correct(
+    request: Request,
     session_id: int,
     student_id: int,
     status: str = Form(...),
-    reason: str = Form(...),
+    reason: Optional[str] = Form(""),
+    activity_id: Optional[int] = Form(None),
+    grade: Optional[str] = Form(None),
+    room: Optional[str] = Form(None),
+    search: Optional[str] = Form(None),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
+    clean_reason = reason.strip() if reason and reason.strip() else "ไม่ได้ระบุเหตุผล"
     record = db.query(AttendanceRecord).filter(
         AttendanceRecord.session_id == session_id,
         AttendanceRecord.student_id == student_id
@@ -920,7 +935,7 @@ async def attendance_correct(
         record.checked_in_method = "manual"
         db.commit()
         create_audit_log(db, user.id, "attendance_corrected", "attendance", str(record.id),
-                         previous_value=prev_status, new_value=status, reason=reason)
+                         previous_value=prev_status, new_value=status, reason=clean_reason)
     else:
         # Create new record
         if status != "absent":
@@ -934,9 +949,30 @@ async def attendance_correct(
             db.add(record)
             db.commit()
             create_audit_log(db, user.id, "attendance_manual_add", "attendance", str(record.id),
-                             previous_value="absent", new_value=status, reason=reason)
+                             previous_value="absent", new_value=status, reason=clean_reason)
 
-    return RedirectResponse(url=f"/admin/attendance?session_id={session_id}", status_code=303)
+    act_id = activity_id or request.query_params.get("activity_id")
+    gr = grade if grade is not None else request.query_params.get("grade", "")
+    rm = room if room is not None else request.query_params.get("room", "")
+    srch = search if search is not None else request.query_params.get("search", "")
+
+    if not act_id:
+        sess = db.query(ActivitySession).filter(ActivitySession.id == session_id).first()
+        if sess:
+            act_id = sess.activity_id
+
+    params = {"session_id": session_id}
+    if act_id:
+        params["activity_id"] = act_id
+    if gr:
+        params["grade"] = gr
+    if rm:
+        params["room"] = rm
+    if srch:
+        params["search"] = srch
+
+    redirect_url = f"/admin/attendance?{urlencode(params)}"
+    return RedirectResponse(url=redirect_url, status_code=303)
 
 
 # ─── Student Attendance History ───────────────────────────────────────
@@ -979,8 +1015,8 @@ async def reports_page(
 @router.get("/reports/export")
 async def export_attendance(
     request: Request,
-    session_id: int = Query(0),
-    activity_id: int = Query(0),
+    session_id: Optional[str] = Query(None),
+    activity_id: Optional[str] = Query(None),
     grade: str = Query(""),
     room: str = Query(""),
     lang: str = Query("th"),
@@ -988,6 +1024,8 @@ async def export_attendance(
     user: User = Depends(require_admin)
 ):
     """Export attendance to Excel."""
+    session_id = int(session_id) if session_id and str(session_id).isdigit() else 0
+    activity_id = int(activity_id) if activity_id and str(activity_id).isdigit() else 0
     lang = request.cookies.get("app_language", lang)
     wb = Workbook()
     ws = wb.active
@@ -1020,7 +1058,8 @@ async def export_attendance(
         if room:
             student_query = student_query.filter(Student.room == room)
 
-        students = student_query.order_by(Student.grade, Student.room, Student.student_id).all()
+        students = student_query.order_by(Student.grade, cast(Student.room, Integer), Student.student_id).all()
+        students.sort(key=lambda s: (str(s.grade), int(s.room) if str(s.room).isdigit() else 999, str(s.student_id)))
 
         # Get attendance records
         attendance_map = {}
@@ -1125,7 +1164,8 @@ async def export_attendance(
             student_query = student_query.filter(Student.grade.in_(grades_list))
         if grade:
             student_query = student_query.filter(Student.grade == grade)
-        students = student_query.order_by(Student.grade, Student.room, Student.student_id).all()
+        students = student_query.order_by(Student.grade, cast(Student.room, Integer), Student.student_id).all()
+        students.sort(key=lambda s: (str(s.grade), int(s.room) if str(s.room).isdigit() else 999, str(s.student_id)))
 
         # Build attendance map: {student_id: {session_id: record}}
         all_records = db.query(AttendanceRecord).filter(
@@ -1141,6 +1181,8 @@ async def export_attendance(
                 rec = att_map.get(student.id, {}).get(sess.id)
                 row.append("✓" if rec else "✗")
             ws.append(row)
+    else:
+        raise HTTPException(status_code=400, detail="Must provide session_id or activity_id")
 
     # Set column widths
     for col in ws.columns:
@@ -1161,8 +1203,8 @@ async def export_attendance(
 @router.get("/reports/pdf")
 async def generate_pdf_report(
     request: Request,
-    session_id: int = Query(0),
-    activity_id: int = Query(0),
+    session_id: Optional[str] = Query(None),
+    activity_id: Optional[str] = Query(None),
     grade: str = Query(""),
     room: str = Query(""),
     lang: str = Query("th"),
@@ -1170,6 +1212,8 @@ async def generate_pdf_report(
     user: User = Depends(require_admin)
 ):
     """Generate attendance summary PDF report."""
+    session_id = int(session_id) if session_id and str(session_id).isdigit() else 0
+    activity_id = int(activity_id) if activity_id and str(activity_id).isdigit() else 0
     lang = request.cookies.get("app_language", lang)
     from fpdf import FPDF
     import os
@@ -1293,10 +1337,9 @@ async def generate_pdf_report(
         if room:
             student_query = student_query.filter(Student.room == room)
             
-        # Ensure sorting by grade, room, student_id
-        students = student_query.order_by(Student.grade, Student.room, Student.student_id).all()
-        # Custom sort logic for room as integer if possible
-        students.sort(key=lambda s: (s.grade, int(s.room) if str(s.room).isdigit() else 999, s.student_id))
+        # Ensure sorting by grade, room (as int), student_id
+        students = student_query.order_by(Student.grade, cast(Student.room, Integer), Student.student_id).all()
+        students.sort(key=lambda s: (str(s.grade), int(s.room) if str(s.room).isdigit() else 999, str(s.student_id)))
         
         attendance_map = {}
         for rec in db.query(AttendanceRecord).filter(AttendanceRecord.session_id == session_id).all():
@@ -1324,8 +1367,8 @@ async def generate_pdf_report(
         if room:
             student_query = student_query.filter(Student.room == room)
             
-        students = student_query.order_by(Student.grade, Student.room, Student.student_id).all()
-        students.sort(key=lambda s: (s.grade, int(s.room) if str(s.room).isdigit() else 999, s.student_id))
+        students = student_query.order_by(Student.grade, cast(Student.room, Integer), Student.student_id).all()
+        students.sort(key=lambda s: (str(s.grade), int(s.room) if str(s.room).isdigit() else 999, str(s.student_id)))
         
         all_records = db.query(AttendanceRecord).filter(
             AttendanceRecord.session_id.in_([s.id for s in sessions])
