@@ -9,11 +9,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Request, Form, UploadFile, File, Query, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, or_, and_, desc, cast, Integer
+from sqlalchemy import func, or_, and_, desc, cast, Integer, text
+from sqlalchemy.exc import IntegrityError
 from openpyxl import Workbook, load_workbook
 from app.database import get_db
 from app.models import User, Student, Activity, ActivitySession, AttendanceRecord, AuditLog
-from app.auth import require_admin, hash_password
+from app.auth import require_admin, require_super_admin, hash_password
+from app.config import settings
 from app.config import get_bkk_time
 from app.templating import templates
 
@@ -1393,3 +1395,269 @@ async def api_get_sessions(activity_id: int, db: Session = Depends(get_db), user
         ActivitySession.activity_id == activity_id
     ).order_by(ActivitySession.date).all()
     return [{"id": s.id, "name": s.name, "date": str(s.date), "status": s.status} for s in sessions]
+
+
+# ─── Admin Account Management (Super Admin Only) ─────────────────────
+
+SUPER_ADMIN_LOCK_ID = 7777777001  # Advisory lock ID for last-SA protection
+
+
+def _acquire_super_admin_lock(db: Session) -> None:
+    """Acquire an exclusive advisory lock for super admin operations.
+
+    No-op on SQLite (single-writer provides sufficient protection).
+    """
+    bind_url = str(db.bind.url) if db.bind else str(settings.DATABASE_URL)
+    if "postgresql" in bind_url:
+        db.execute(text("SELECT pg_advisory_xact_lock(:lock_id)"), {"lock_id": SUPER_ADMIN_LOCK_ID})
+
+
+def ensure_not_last_super_admin(db: Session, target_user: User) -> None:
+    """Prevent operations that would remove the last active Super Admin.
+
+    Must be called within a transaction. Raises HTTPException 409 on violation.
+    """
+    _acquire_super_admin_lock(db)
+
+    active_count = db.query(func.count(User.id)).filter(
+        User.role == "super_admin",
+        User.is_active == True
+    ).scalar()
+
+    is_target_active_super = (
+        target_user.role == "super_admin" and target_user.is_active
+    )
+
+    if active_count <= 1 and is_target_active_super:
+        raise HTTPException(
+            status_code=409,
+            detail="ไม่สามารถดำเนินการได้ เนื่องจากเป็น Super Admin คนสุดท้ายในระบบ / "
+                   "Cannot perform this operation on the last active Super Admin."
+        )
+
+
+@router.get("/admin-accounts", response_class=HTMLResponse)
+async def admin_accounts_list(
+    request: Request,
+    search: str = Query(""),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin)
+):
+    """List admin accounts. Only shows role='admin' users."""
+    query = db.query(User).filter(User.role == "admin")
+    if search:
+        query = query.filter(or_(
+            User.username.contains(search),
+            User.display_name.contains(search)
+        ))
+    admins = query.order_by(User.username).all()
+    return templates.TemplateResponse("admin/admin_accounts.html", {
+        "request": request, "user": user,
+        "admins": admins, "search": search,
+        "error": None, "success": None,
+    })
+
+
+@router.post("/admin-accounts/add", response_class=HTMLResponse)
+async def admin_account_add(
+    request: Request,
+    username: str = Form(...),
+    display_name: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin)
+):
+    """Create a new admin account. Role is always hardcoded to 'admin'."""
+    # Validate inputs
+    username = username.strip()
+    display_name = display_name.strip()
+
+    if not username or len(username) > 50:
+        return _render_admin_accounts(request, db, user, error="Username is required (max 50 characters).")
+    if not display_name or len(display_name) > 100:
+        return _render_admin_accounts(request, db, user, error="Display name is required (max 100 characters).")
+    if not password or len(password) < 6:
+        return _render_admin_accounts(request, db, user, error="Password must be at least 6 characters.")
+
+    # Check for duplicate username
+    existing = db.query(User).filter(User.username == username).first()
+    if existing:
+        return _render_admin_accounts(
+            request, db, user,
+            error=f"ชื่อผู้ใช้ '{username}' มีอยู่แล้ว / Username '{username}' already exists."
+        )
+
+    new_admin = User(
+        username=username,
+        display_name=display_name,
+        password_hash=hash_password(password),
+        role="admin",  # Hardcoded — never from client
+        is_active=True,
+    )
+
+    try:
+        db.add(new_admin)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return _render_admin_accounts(
+            request, db, user,
+            error=f"ชื่อผู้ใช้ '{username}' มีอยู่แล้ว / Username '{username}' already exists."
+        )
+
+    create_audit_log(
+        db, user.id, "admin_account_created", "user", username,
+        new_value=json.dumps({"username": username, "display_name": display_name})
+    )
+    return RedirectResponse(url="/admin/admin-accounts?success=created", status_code=303)
+
+
+@router.post("/admin-accounts/{id}/edit", response_class=HTMLResponse)
+async def admin_account_edit(
+    id: int,
+    request: Request,
+    username: str = Form(...),
+    display_name: str = Form(...),
+    new_password: str = Form(None),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin)
+):
+    """Edit an admin account. Cannot edit super_admin accounts."""
+    target = db.query(User).filter(User.id == id, User.role == "admin").first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    username = username.strip()
+    display_name = display_name.strip()
+
+    if not username or len(username) > 50:
+        return _render_admin_accounts(request, db, user, error="Username is required (max 50 characters).")
+    if not display_name or len(display_name) > 100:
+        return _render_admin_accounts(request, db, user, error="Display name is required (max 100 characters).")
+
+    # Check duplicate username if changed
+    if target.username != username:
+        existing = db.query(User).filter(User.username == username).first()
+        if existing:
+            return _render_admin_accounts(
+                request, db, user,
+                error=f"ชื่อผู้ใช้ '{username}' มีอยู่แล้ว / Username '{username}' already exists."
+            )
+
+    prev = json.dumps({"username": target.username, "display_name": target.display_name})
+
+    # Explicit field assignment — never use dict.update or **kwargs
+    target.username = username
+    target.display_name = display_name
+    # role and is_active are NEVER set from request data
+
+    if new_password and len(new_password.strip()) > 0:
+        if len(new_password.strip()) < 6:
+            return _render_admin_accounts(request, db, user, error="Password must be at least 6 characters.")
+        target.password_hash = hash_password(new_password.strip())
+        create_audit_log(db, user.id, "admin_account_password_reset", "user", target.username)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        return _render_admin_accounts(
+            request, db, user,
+            error=f"ชื่อผู้ใช้ '{username}' มีอยู่แล้ว / Username '{username}' already exists."
+        )
+
+    new = json.dumps({"username": username, "display_name": display_name})
+    create_audit_log(
+        db, user.id, "admin_account_edited", "user", target.username,
+        previous_value=prev, new_value=new
+    )
+    return RedirectResponse(url="/admin/admin-accounts?success=edited", status_code=303)
+
+
+@router.post("/admin-accounts/{id}/suspend")
+async def admin_account_suspend(
+    id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin)
+):
+    """Suspend an admin account."""
+    target = db.query(User).filter(User.id == id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    # Protect last super admin
+    ensure_not_last_super_admin(db, target)
+
+    # Only allow suspending admin accounts through this interface
+    if target.role not in ("admin",):
+        raise HTTPException(status_code=403, detail="Cannot suspend this account type")
+
+    target.is_active = False
+    db.commit()
+    create_audit_log(
+        db, user.id, "admin_account_suspended", "user", target.username,
+        previous_value="active", new_value="suspended"
+    )
+    return RedirectResponse(url="/admin/admin-accounts?success=suspended", status_code=303)
+
+
+@router.post("/admin-accounts/{id}/reactivate")
+async def admin_account_reactivate(
+    id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin)
+):
+    """Reactivate a suspended admin account."""
+    target = db.query(User).filter(User.id == id, User.role == "admin").first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Admin account not found")
+
+    target.is_active = True
+    db.commit()
+    create_audit_log(
+        db, user.id, "admin_account_reactivated", "user", target.username,
+        previous_value="suspended", new_value="active"
+    )
+    return RedirectResponse(url="/admin/admin-accounts?success=reactivated", status_code=303)
+
+
+@router.post("/admin-accounts/{id}/delete")
+async def admin_account_delete(
+    id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(require_super_admin)
+):
+    """Permanently delete an admin account."""
+    target = db.query(User).filter(User.id == id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    # Protect last super admin
+    ensure_not_last_super_admin(db, target)
+
+    # Only allow deleting admin accounts through this interface
+    if target.role not in ("admin",):
+        raise HTTPException(status_code=403, detail="Cannot delete this account type")
+
+    target_username = target.username
+    target_display = target.display_name
+
+    # Log BEFORE delete so we capture the acting user and target details
+    create_audit_log(
+        db, user.id, "admin_account_deleted", "user", target_username,
+        previous_value=json.dumps({"username": target_username, "display_name": target_display})
+    )
+
+    db.delete(target)
+    db.commit()
+    return RedirectResponse(url="/admin/admin-accounts?success=deleted", status_code=303)
+
+
+def _render_admin_accounts(request, db, user, error=None, success=None):
+    """Helper to re-render the admin accounts page with error/success."""
+    admins = db.query(User).filter(User.role == "admin").order_by(User.username).all()
+    return templates.TemplateResponse("admin/admin_accounts.html", {
+        "request": request, "user": user,
+        "admins": admins, "search": "",
+        "error": error, "success": success,
+    })

@@ -33,8 +33,10 @@ const I18N_DICTIONARY = {
         'nav_reports': 'ส่งออก Excel & PDF',
         'sec_system': 'ระบบ',
         'nav_audit_logs': 'บันทึกการใช้งาน',
+        'nav_admin_accounts': 'จัดการบัญชี Admin',
         'nav_logout': 'ออกจากระบบ',
         'role_admin': 'ผู้ดูแลระบบ',
+        'role_super_admin': 'ผู้ดูแลระบบสูงสุด',
         'role_teacher': 'ครู',
 
         // Page Titles & Headings
@@ -395,7 +397,34 @@ const I18N_DICTIONARY = {
         'rpt_section_b_desc': 'รวมข้อมูลนักเรียนทุกชั้นและทุกห้องไว้ในไฟล์ PDF เดียว',
         'rpt_btn_download_all': 'ดาวน์โหลดทั้งหมด',
         'rpt_loading': 'กำลังสร้าง PDF...',
-        'rpt_err_download': 'เกิดข้อผิดพลาดในการดาวน์โหลด กรุณาลองใหม่'
+        'rpt_err_download': 'เกิดข้อผิดพลาดในการดาวน์โหลด กรุณาลองใหม่',
+
+        // Admin Accounts Management
+        'admin_accounts_title': 'จัดการบัญชี Admin',
+        'admin_accounts_subtitle': 'สร้าง แก้ไข ระงับ หรือลบบัญชีผู้ดูแลระบบ',
+        'admin_accounts_add': 'เพิ่มบัญชี Admin',
+        'admin_accounts_add_title': 'เพิ่มบัญชี Admin ใหม่',
+        'admin_accounts_edit_title': 'แก้ไขบัญชี Admin',
+        'admin_accounts_empty': 'ยังไม่มีบัญชี Admin',
+        'admin_accounts_search_placeholder': 'ค้นหาชื่อผู้ใช้ / ชื่อแสดง...',
+        'admin_accounts_col_username': 'ชื่อผู้ใช้',
+        'admin_accounts_col_display_name': 'ชื่อแสดง',
+        'admin_accounts_col_status': 'สถานะ',
+        'admin_accounts_col_created': 'สร้างเมื่อ',
+        'admin_accounts_col_actions': 'จัดการ',
+        'admin_accounts_success_created': 'สร้างบัญชีสำเร็จ',
+        'admin_accounts_success_edited': 'แก้ไขบัญชีสำเร็จ',
+        'admin_accounts_success_suspended': 'ระงับบัญชีสำเร็จ',
+        'admin_accounts_success_reactivated': 'เปิดใช้งานบัญชีสำเร็จ',
+        'admin_accounts_success_deleted': 'ลบบัญชีสำเร็จ',
+        'status_suspended': 'ระงับ',
+        'btn_suspend': 'ระงับ',
+        'btn_reactivate': 'เปิดใช้งาน',
+        'btn_save': 'บันทึก',
+        'label_username': 'ชื่อผู้ใช้',
+        'label_display_name': 'ชื่อแสดง',
+        'label_password': 'รหัสผ่าน',
+        'label_new_password': 'รหัสผ่านใหม่ (เว้นว่างถ้าไม่ต้องการเปลี่ยน)'
     },
     en: {
         // App / Brand
@@ -419,8 +448,10 @@ const I18N_DICTIONARY = {
         'nav_reports': 'Export Excel & PDF',
         'sec_system': 'System',
         'nav_audit_logs': 'Audit Logs',
+        'nav_admin_accounts': 'Manage Admin Accounts',
         'nav_logout': 'Logout',
         'role_admin': 'Administrator',
+        'role_super_admin': 'Super Administrator',
         'role_teacher': 'Teacher',
 
         // Page Titles & Headings
@@ -782,7 +813,34 @@ const I18N_DICTIONARY = {
         'rpt_section_b_desc': 'Combine attendance records from every grade and classroom into a single PDF file.',
         'rpt_btn_download_all': 'Download All',
         'rpt_loading': 'Generating PDF...',
-        'rpt_err_download': 'Download failed. Please try again.'
+        'rpt_err_download': 'Download failed. Please try again.',
+
+        // Admin Accounts Management
+        'admin_accounts_title': 'Manage Admin Accounts',
+        'admin_accounts_subtitle': 'Create, edit, suspend, or delete administrator accounts',
+        'admin_accounts_add': 'Add Admin Account',
+        'admin_accounts_add_title': 'Add New Admin Account',
+        'admin_accounts_edit_title': 'Edit Admin Account',
+        'admin_accounts_empty': 'No admin accounts found',
+        'admin_accounts_search_placeholder': 'Search username / display name...',
+        'admin_accounts_col_username': 'Username',
+        'admin_accounts_col_display_name': 'Display Name',
+        'admin_accounts_col_status': 'Status',
+        'admin_accounts_col_created': 'Created At',
+        'admin_accounts_col_actions': 'Actions',
+        'admin_accounts_success_created': 'Account created successfully',
+        'admin_accounts_success_edited': 'Account updated successfully',
+        'admin_accounts_success_suspended': 'Account suspended successfully',
+        'admin_accounts_success_reactivated': 'Account reactivated successfully',
+        'admin_accounts_success_deleted': 'Account deleted successfully',
+        'status_suspended': 'Suspended',
+        'btn_suspend': 'Suspend',
+        'btn_reactivate': 'Reactivate',
+        'btn_save': 'Save',
+        'label_username': 'Username',
+        'label_display_name': 'Display Name',
+        'label_password': 'Password',
+        'label_new_password': 'New Password (leave blank to keep unchanged)'
     }
 };
 
