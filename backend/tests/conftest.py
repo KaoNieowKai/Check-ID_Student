@@ -6,10 +6,12 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 # Add backend to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from app.config import settings
 from app.database import Base, get_db
 from app.models import User, Student, Activity, ActivitySession
 from app.auth import hash_password
@@ -18,7 +20,12 @@ from app.main import app
 
 # Test database — in-memory SQLite
 TEST_DATABASE_URL = "sqlite:///:memory:"
-test_engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+settings.DATABASE_URL = TEST_DATABASE_URL
+test_engine = create_engine(
+    TEST_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 
 @event.listens_for(test_engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
@@ -156,16 +163,60 @@ def sample_activity(db):
 
 
 @pytest.fixture
-def admin_client(client, admin_user):
+def admin_client(admin_user):
     """Client logged in as admin."""
-    response = client.post("/login", data={"username": "admin", "password": "admin123"}, follow_redirects=False)
-    client.cookies = response.cookies
-    return client
+    c = TestClient(app)
+    response = c.post("/login", data={"username": "admin", "password": "admin123"}, follow_redirects=False)
+    c.cookies = response.cookies
+    return c
 
 
 @pytest.fixture
-def teacher_client(client, teacher_user):
+def teacher_client(teacher_user):
     """Client logged in as teacher."""
-    response = client.post("/login", data={"username": "teacher1", "password": "teacher123"}, follow_redirects=False)
-    client.cookies = response.cookies
-    return client
+    c = TestClient(app)
+    response = c.post("/login", data={"username": "teacher1", "password": "teacher123"}, follow_redirects=False)
+    c.cookies = response.cookies
+    return c
+
+
+@pytest.fixture
+def super_admin_user(db):
+    """Create a super_admin user."""
+    user = User(
+        username="superadmin",
+        password_hash=hash_password("super123"),
+        display_name="Super Admin",
+        role="super_admin",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+@pytest.fixture
+def super_admin_client(super_admin_user):
+    """Client logged in as super_admin."""
+    c = TestClient(app)
+    response = c.post("/login", data={"username": "superadmin", "password": "super123"}, follow_redirects=False)
+    c.cookies = response.cookies
+    return c
+
+
+@pytest.fixture
+def regular_admin_user(db):
+    """Create a regular admin (distinct from bootstrap admin)."""
+    user = User(
+        username="admin2",
+        password_hash=hash_password("admin456"),
+        display_name="Regular Admin",
+        role="admin",
+        is_active=True,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+

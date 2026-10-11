@@ -33,8 +33,10 @@ const I18N_DICTIONARY = {
         'nav_reports': 'ส่งออก Excel & PDF',
         'sec_system': 'ระบบ',
         'nav_audit_logs': 'บันทึกการใช้งาน',
+        'nav_admin_accounts': 'จัดการบัญชี Admin',
         'nav_logout': 'ออกจากระบบ',
         'role_admin': 'ผู้ดูแลระบบ',
+        'role_super_admin': 'ผู้ดูแลระบบสูงสุด',
         'role_teacher': 'ครู',
 
         // Page Titles & Headings
@@ -54,7 +56,8 @@ const I18N_DICTIONARY = {
         'title_audit_logs': 'บันทึกประวัติการใช้งานระบบ',
 
         // Dashboard Stat Cards & Sections
-        'welcome_admin': 'ยินดีต้อนรับ Admin',
+        'welcome_admin': 'ยินดีต้อนรับกลับ',
+        'welcome_back': 'ยินดีต้อนรับกลับ',
         'welcome_admin_subtitle': 'ระบบจัดการการเช็กชื่อกิจกรรมนักเรียน',
         'total_registered_students': 'จำนวนนักเรียนทั้งหมด',
         'activities_today': 'กิจกรรมวันนี้',
@@ -265,9 +268,17 @@ const I18N_DICTIONARY = {
         'modal_correct_title': 'แก้ไขสถานะการเช็กชื่อ',
         'lbl_new_status': 'สถานะใหม่',
         'lbl_reason_required': 'เหตุผลในการแก้ไข',
-        'ph_correction_reason': 'เช่น นักเรียนเข้าร่วมกิจกรรมแต่สแกน QR ไม่สำเร็จ',
+        'lbl_reason_correction': 'เหตุผลในการแก้ไข',
+        'opt_optional': '(ไม่บังคับ)',
+        'ph_correction_reason': 'ระบุเหตุผล (ไม่บังคับ) เช่น นักเรียนเข้าร่วมกิจกรรมแต่สแกน QR ไม่สำเร็จ',
         'opt_status_present': 'มา (Present)',
         'opt_status_manual': 'ปรับแก้โดยครู (Manual)',
+        'alert_filter_incomplete': 'กรุณาเลือกตัวกรองให้ครบถ้วน',
+        'alert_select_activity': 'กรุณาเลือกกิจกรรมและรอบกิจกรรมก่อนทำการกรองข้อมูล',
+        'alert_select_session': 'กรุณาเลือกรอบกิจกรรมก่อนทำการกรองข้อมูล',
+        'alert_select_activity_report': 'กรุณาเลือกกิจกรรมก่อนส่งออกไฟล์ Excel',
+        'alert_select_activity_report_pdf': 'กรุณาเลือกกิจกรรมก่อนสร้างรายงาน PDF',
+        'btn_got_it': 'เข้าใจแล้ว',
 
         // Reports
         'export_excel_heading': 'ส่งออกข้อมูลการเช็กชื่อเป็นไฟล์ Excel & PDF',
@@ -351,7 +362,7 @@ const I18N_DICTIONARY = {
         'checkin_time_label': 'เวลาเช็กชื่อ: ',
         'err_conn': 'เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่',
         'err_enter_id': 'กรุณากรอกรหัสนักเรียน',
-        
+
         // Delete All Students
         'btn_delete_all': 'ลบนักเรียนทั้งหมด',
         'modal_delete_all_title': 'ยืนยันการลบนักเรียนทั้งหมด?',
@@ -360,7 +371,7 @@ const I18N_DICTIONARY = {
         'ph_delete_all_confirm': 'ลบนักเรียนทั้งหมด',
         'msg_delete_all_success': 'ลบข้อมูลนักเรียนทั้งหมดสำเร็จ',
         'msg_delete_all_error': 'เกิดข้อผิดพลาดในการลบข้อมูล',
-        
+
         // Attendance Status Management
         'attendance_present': 'มา',
         'attendance_leave': 'ลา',
@@ -395,7 +406,34 @@ const I18N_DICTIONARY = {
         'rpt_section_b_desc': 'รวมข้อมูลนักเรียนทุกชั้นและทุกห้องไว้ในไฟล์ PDF เดียว',
         'rpt_btn_download_all': 'ดาวน์โหลดทั้งหมด',
         'rpt_loading': 'กำลังสร้าง PDF...',
-        'rpt_err_download': 'เกิดข้อผิดพลาดในการดาวน์โหลด กรุณาลองใหม่'
+        'rpt_err_download': 'เกิดข้อผิดพลาดในการดาวน์โหลด กรุณาลองใหม่',
+
+        // Admin Accounts Management
+        'admin_accounts_title': 'จัดการบัญชี Admin',
+        'admin_accounts_subtitle': 'สร้าง แก้ไข ระงับ หรือลบบัญชีผู้ดูแลระบบ',
+        'admin_accounts_add': 'เพิ่มบัญชี Admin',
+        'admin_accounts_add_title': 'เพิ่มบัญชี Admin ใหม่',
+        'admin_accounts_edit_title': 'แก้ไขบัญชี Admin',
+        'admin_accounts_empty': 'ยังไม่มีบัญชี Admin',
+        'admin_accounts_search_placeholder': 'ค้นหาชื่อผู้ใช้ / ชื่อแสดง...',
+        'admin_accounts_col_username': 'ชื่อผู้ใช้',
+        'admin_accounts_col_display_name': 'ชื่อแสดง',
+        'admin_accounts_col_status': 'สถานะ',
+        'admin_accounts_col_created': 'สร้างเมื่อ',
+        'admin_accounts_col_actions': 'จัดการ',
+        'admin_accounts_success_created': 'สร้างบัญชีสำเร็จ',
+        'admin_accounts_success_edited': 'แก้ไขบัญชีสำเร็จ',
+        'admin_accounts_success_suspended': 'ระงับบัญชีสำเร็จ',
+        'admin_accounts_success_reactivated': 'เปิดใช้งานบัญชีสำเร็จ',
+        'admin_accounts_success_deleted': 'ลบบัญชีสำเร็จ',
+        'status_suspended': 'ระงับ',
+        'btn_suspend': 'ระงับ',
+        'btn_reactivate': 'เปิดใช้งาน',
+        'btn_save': 'บันทึก',
+        'label_username': 'ชื่อผู้ใช้',
+        'label_display_name': 'ชื่อแสดง',
+        'label_password': 'รหัสผ่าน',
+        'label_new_password': 'รหัสผ่านใหม่ (เว้นว่างถ้าไม่ต้องการเปลี่ยน)'
     },
     en: {
         // App / Brand
@@ -419,8 +457,10 @@ const I18N_DICTIONARY = {
         'nav_reports': 'Export Excel & PDF',
         'sec_system': 'System',
         'nav_audit_logs': 'Audit Logs',
+        'nav_admin_accounts': 'Manage Admin Accounts',
         'nav_logout': 'Logout',
         'role_admin': 'Administrator',
+        'role_super_admin': 'Super Administrator',
         'role_teacher': 'Teacher',
 
         // Page Titles & Headings
@@ -440,7 +480,8 @@ const I18N_DICTIONARY = {
         'title_audit_logs': 'Audit Logs',
 
         // Dashboard Stat Cards & Sections
-        'welcome_admin': 'Welcome Admin',
+        'welcome_admin': 'Welcome back,',
+        'welcome_back': 'Welcome back,',
         'welcome_admin_subtitle': 'Student Activity Attendance System',
         'total_registered_students': 'Total students',
         'activities_today': 'Activities today',
@@ -651,10 +692,18 @@ const I18N_DICTIONARY = {
         'btn_add_student': 'Add Student',
         'modal_correct_title': 'Correct Attendance Status',
         'lbl_new_status': 'New Status',
-        'lbl_reason_required': 'Reason (required)',
-        'ph_correction_reason': 'e.g. Student attended but QR check-in failed',
+        'lbl_reason_required': 'Reason for correction',
+        'lbl_reason_correction': 'Reason for correction',
+        'opt_optional': '(Optional)',
+        'ph_correction_reason': 'Enter reason (optional), e.g. Student attended but QR check-in failed',
         'opt_status_present': 'Present',
         'opt_status_manual': 'Manual',
+        'alert_filter_incomplete': 'Incomplete Filter Selection',
+        'alert_select_activity': 'Please select an activity and session before filtering.',
+        'alert_select_session': 'Please select an activity session before filtering.',
+        'alert_select_activity_report': 'Please select an activity before exporting to Excel.',
+        'alert_select_activity_report_pdf': 'Please select an activity before generating PDF report.',
+        'btn_got_it': 'Understood',
 
         // Reports
         'export_excel_heading': 'Export Attendance to Excel & PDF',
@@ -738,7 +787,7 @@ const I18N_DICTIONARY = {
         'checkin_time_label': 'Check-in Time: ',
         'err_conn': 'Connection error. Please try again.',
         'err_enter_id': 'Please enter your Student ID.',
-        
+
         // Delete All Students
         'btn_delete_all': 'Delete All Students',
         'modal_delete_all_title': 'Confirm Delete All Students?',
@@ -747,7 +796,7 @@ const I18N_DICTIONARY = {
         'ph_delete_all_confirm': 'DELETE ALL STUDENTS',
         'msg_delete_all_success': 'All student records have been deleted successfully.',
         'msg_delete_all_error': 'An error occurred while deleting.',
-        
+
         // Attendance Status Management
         'attendance_present': 'Present',
         'attendance_leave': 'Leave',
@@ -782,7 +831,34 @@ const I18N_DICTIONARY = {
         'rpt_section_b_desc': 'Combine attendance records from every grade and classroom into a single PDF file.',
         'rpt_btn_download_all': 'Download All',
         'rpt_loading': 'Generating PDF...',
-        'rpt_err_download': 'Download failed. Please try again.'
+        'rpt_err_download': 'Download failed. Please try again.',
+
+        // Admin Accounts Management
+        'admin_accounts_title': 'Manage Admin Accounts',
+        'admin_accounts_subtitle': 'Create, edit, suspend, or delete administrator accounts',
+        'admin_accounts_add': 'Add Admin Account',
+        'admin_accounts_add_title': 'Add New Admin Account',
+        'admin_accounts_edit_title': 'Edit Admin Account',
+        'admin_accounts_empty': 'No admin accounts found',
+        'admin_accounts_search_placeholder': 'Search username / display name...',
+        'admin_accounts_col_username': 'Username',
+        'admin_accounts_col_display_name': 'Display Name',
+        'admin_accounts_col_status': 'Status',
+        'admin_accounts_col_created': 'Created At',
+        'admin_accounts_col_actions': 'Actions',
+        'admin_accounts_success_created': 'Account created successfully',
+        'admin_accounts_success_edited': 'Account updated successfully',
+        'admin_accounts_success_suspended': 'Account suspended successfully',
+        'admin_accounts_success_reactivated': 'Account reactivated successfully',
+        'admin_accounts_success_deleted': 'Account deleted successfully',
+        'status_suspended': 'Suspended',
+        'btn_suspend': 'Suspend',
+        'btn_reactivate': 'Reactivate',
+        'btn_save': 'Save',
+        'label_username': 'Username',
+        'label_display_name': 'Display Name',
+        'label_password': 'Password',
+        'label_new_password': 'New Password (leave blank to keep unchanged)'
     }
 };
 
@@ -834,7 +910,7 @@ function setLanguage(lang) {
     try {
         localStorage.setItem('app_language', lang);
         document.cookie = 'app_language=' + lang + ';path=/;max-age=31536000';
-    } catch (e) {}
+    } catch (e) { }
 
     document.documentElement.lang = lang;
     if (lang === 'th') {
@@ -848,7 +924,7 @@ function setLanguage(lang) {
 
     try {
         window.dispatchEvent(new CustomEvent('languagechange', { detail: { lang } }));
-    } catch (e) {}
+    } catch (e) { }
 }
 
 /**
@@ -934,129 +1010,129 @@ function applyTranslations() {
     if (_domObserver) _domObserver.disconnect();
 
     try {
-    // 1. Elements with explicit data-i18n
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-        const key = el.getAttribute('data-i18n');
-        const translated = t(key);
-        if (translated !== null && translated !== undefined) {
-            el.textContent = translated;
-        }
-    });
-
-    // 2. Elements with data-i18n-placeholder
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
-        const key = el.getAttribute('data-i18n-placeholder');
-        const translated = t(key);
-        if (translated !== null && translated !== undefined) {
-            el.placeholder = translated;
-        }
-    });
-
-    // 3. Elements with data-i18n-title
-    document.querySelectorAll('[data-i18n-title]').forEach(el => {
-        const key = el.getAttribute('data-i18n-title');
-        const translated = t(key);
-        if (translated !== null && translated !== undefined) {
-            el.title = translated;
-        }
-    });
-
-    // 4. Input placeholders without explicit data-i18n-placeholder
-    document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
-        if (el.hasAttribute('data-i18n-placeholder')) return;
-        const ph = el.placeholder.trim();
-        if (!el.__i18n_ph_key && PHRASE_TO_KEY[ph.toLowerCase()]) {
-            el.__i18n_ph_key = PHRASE_TO_KEY[ph.toLowerCase()];
-        }
-        if (el.__i18n_ph_key) {
-            const tr = t(el.__i18n_ph_key);
-            if (tr) el.placeholder = tr;
-        }
-    });
-
-    // 5. Select dropdown options: Handle dynamic rooms and statuses
-    document.querySelectorAll('select option').forEach(opt => {
-        if (opt.hasAttribute('data-i18n')) return;
-        const txt = opt.textContent.trim();
-        const translated = translateDynamicPatterns(txt);
-        if (translated !== txt) {
-            opt.textContent = translated;
-        } else if (PHRASE_TO_KEY[txt.toLowerCase()]) {
-            const tr = t(PHRASE_TO_KEY[txt.toLowerCase()]);
-            if (tr) opt.textContent = tr;
-        }
-    });
-
-    // 6. Dynamic pattern replacement across text containers
-    document.querySelectorAll('.table-info, .page-info, .activity-meta, .session-meta, .empty-state, .preview-stats span, .header-meta, .breadcrumb, p, h1, h2, h3, h4, th, span, div, strong, button').forEach(el => {
-        if (el.closest('.lang-switcher') || el.hasAttribute('data-i18n')) return;
-        el.childNodes.forEach(node => {
-            if (node.nodeType === Node.TEXT_NODE) {
-                const text = node.textContent;
-                const trimmed = text.trim();
-                if (!trimmed) return;
-
-                let key = node.__i18n_key;
-                if (!key && PHRASE_TO_KEY[trimmed.toLowerCase()]) {
-                    key = PHRASE_TO_KEY[trimmed.toLowerCase()];
-                    node.__i18n_key = key;
-                }
-
-                if (key) {
-                    const translated = t(key);
-                    if (translated && translated !== trimmed) {
-                        node.textContent = text.replace(trimmed, translated);
-                    }
-                } else {
-                    const patternTranslated = translateDynamicPatterns(trimmed);
-                    if (patternTranslated !== trimmed) {
-                        node.textContent = text.replace(trimmed, patternTranslated);
-                    }
-                }
+        // 1. Elements with explicit data-i18n
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            const translated = t(key);
+            if (translated !== null && translated !== undefined) {
+                el.textContent = translated;
             }
         });
-    });
 
-    // 7. Translate document title
-    const docTitle = document.title;
-    if (currentLang === 'en') {
-        document.title = docTitle
-            .replace('จัดการกิจกรรม', 'Activity Management')
-            .replace('จัดการข้อมูลนักเรียน', 'Student Management')
-            .replace('จัดการข้อมูลครู', 'Teacher Management')
-            .replace('จัดการการเช็กชื่อ', 'Attendance Management')
-            .replace('รายงานและส่งออกข้อมูล', 'Reports & Export')
-            .replace('บันทึกประวัติระบบ', 'Audit Logs')
-            .replace('บันทึกประวัติการใช้งานระบบ', 'Audit Logs')
-            .replace('แดชบอร์ดคุณครู — ระบบเช็กชื่อกิจกรรม', 'Teacher Dashboard — Attendance System')
-            .replace('แดชบอร์ด', 'Dashboard')
-            .replace('รอบกิจกรรม', 'Sessions')
-            .replace('แก้ไขกิจกรรม', 'Edit Activity')
-            .replace('สร้างกิจกรรมใหม่', 'New Activity')
-            .replace('เข้าสู่ระบบ', 'Sign In')
-            .replace('ผู้ดูแลระบบ', 'Admin')
-            .replace('ระบบเช็กชื่อกิจกรรมนักเรียน', 'Student Attendance System')
-            .replace('ระบบเช็กชื่อ', 'Attendance System')
-            .replace('รายชื่อที่ยังไม่เช็กชื่อ', 'Not Checked In');
-    } else {
-        document.title = docTitle
-            .replace('Activity Management', 'จัดการกิจกรรม')
-            .replace('Student Management', 'จัดการข้อมูลนักเรียน')
-            .replace('Teacher Management', 'จัดการข้อมูลครู')
-            .replace('Attendance Management', 'จัดการการเช็กชื่อ')
-            .replace('Reports & Export', 'รายงานและส่งออกข้อมูล')
-            .replace('Audit Logs', 'บันทึกประวัติการใช้งานระบบ')
-            .replace('Teacher Dashboard — Attendance System', 'แดชบอร์ดคุณครู — ระบบเช็กชื่อกิจกรรม')
-            .replace('Dashboard', 'แดชบอร์ด')
-            .replace('Sessions', 'รอบกิจกรรม')
-            .replace('Edit Activity', 'แก้ไขกิจกรรม')
-            .replace('New Activity', 'สร้างกิจกรรมใหม่')
-            .replace('Sign In', 'เข้าสู่ระบบ')
-            .replace('Admin', 'ผู้ดูแลระบบ')
-            .replace('Student Attendance System', 'ระบบเช็กชื่อกิจกรรมนักเรียน')
-            .replace('Attendance System', 'ระบบเช็กชื่อ')
-            .replace('Not Checked In', 'รายชื่อที่ยังไม่เช็กชื่อ');
-    }
+        // 2. Elements with data-i18n-placeholder
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            const translated = t(key);
+            if (translated !== null && translated !== undefined) {
+                el.placeholder = translated;
+            }
+        });
+
+        // 3. Elements with data-i18n-title
+        document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            const key = el.getAttribute('data-i18n-title');
+            const translated = t(key);
+            if (translated !== null && translated !== undefined) {
+                el.title = translated;
+            }
+        });
+
+        // 4. Input placeholders without explicit data-i18n-placeholder
+        document.querySelectorAll('input[placeholder], textarea[placeholder]').forEach(el => {
+            if (el.hasAttribute('data-i18n-placeholder')) return;
+            const ph = el.placeholder.trim();
+            if (!el.__i18n_ph_key && PHRASE_TO_KEY[ph.toLowerCase()]) {
+                el.__i18n_ph_key = PHRASE_TO_KEY[ph.toLowerCase()];
+            }
+            if (el.__i18n_ph_key) {
+                const tr = t(el.__i18n_ph_key);
+                if (tr) el.placeholder = tr;
+            }
+        });
+
+        // 5. Select dropdown options: Handle dynamic rooms and statuses
+        document.querySelectorAll('select option').forEach(opt => {
+            if (opt.hasAttribute('data-i18n')) return;
+            const txt = opt.textContent.trim();
+            const translated = translateDynamicPatterns(txt);
+            if (translated !== txt) {
+                opt.textContent = translated;
+            } else if (PHRASE_TO_KEY[txt.toLowerCase()]) {
+                const tr = t(PHRASE_TO_KEY[txt.toLowerCase()]);
+                if (tr) opt.textContent = tr;
+            }
+        });
+
+        // 6. Dynamic pattern replacement across text containers
+        document.querySelectorAll('.table-info, .page-info, .activity-meta, .session-meta, .empty-state, .preview-stats span, .header-meta, .breadcrumb, p, h1, h2, h3, h4, th, span, div, strong, button').forEach(el => {
+            if (el.closest('.lang-switcher') || el.hasAttribute('data-i18n')) return;
+            el.childNodes.forEach(node => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent;
+                    const trimmed = text.trim();
+                    if (!trimmed) return;
+
+                    let key = node.__i18n_key;
+                    if (!key && PHRASE_TO_KEY[trimmed.toLowerCase()]) {
+                        key = PHRASE_TO_KEY[trimmed.toLowerCase()];
+                        node.__i18n_key = key;
+                    }
+
+                    if (key) {
+                        const translated = t(key);
+                        if (translated && translated !== trimmed) {
+                            node.textContent = text.replace(trimmed, translated);
+                        }
+                    } else {
+                        const patternTranslated = translateDynamicPatterns(trimmed);
+                        if (patternTranslated !== trimmed) {
+                            node.textContent = text.replace(trimmed, patternTranslated);
+                        }
+                    }
+                }
+            });
+        });
+
+        // 7. Translate document title
+        const docTitle = document.title;
+        if (currentLang === 'en') {
+            document.title = docTitle
+                .replace('จัดการกิจกรรม', 'Activity Management')
+                .replace('จัดการข้อมูลนักเรียน', 'Student Management')
+                .replace('จัดการข้อมูลครู', 'Teacher Management')
+                .replace('จัดการการเช็กชื่อ', 'Attendance Management')
+                .replace('รายงานและส่งออกข้อมูล', 'Reports & Export')
+                .replace('บันทึกประวัติระบบ', 'Audit Logs')
+                .replace('บันทึกประวัติการใช้งานระบบ', 'Audit Logs')
+                .replace('แดชบอร์ดคุณครู — ระบบเช็กชื่อกิจกรรม', 'Teacher Dashboard — Attendance System')
+                .replace('แดชบอร์ด', 'Dashboard')
+                .replace('รอบกิจกรรม', 'Sessions')
+                .replace('แก้ไขกิจกรรม', 'Edit Activity')
+                .replace('สร้างกิจกรรมใหม่', 'New Activity')
+                .replace('เข้าสู่ระบบ', 'Sign In')
+                .replace('ผู้ดูแลระบบ', 'Admin')
+                .replace('ระบบเช็กชื่อกิจกรรมนักเรียน', 'Student Attendance System')
+                .replace('ระบบเช็กชื่อ', 'Attendance System')
+                .replace('รายชื่อที่ยังไม่เช็กชื่อ', 'Not Checked In');
+        } else {
+            document.title = docTitle
+                .replace('Activity Management', 'จัดการกิจกรรม')
+                .replace('Student Management', 'จัดการข้อมูลนักเรียน')
+                .replace('Teacher Management', 'จัดการข้อมูลครู')
+                .replace('Attendance Management', 'จัดการการเช็กชื่อ')
+                .replace('Reports & Export', 'รายงานและส่งออกข้อมูล')
+                .replace('Audit Logs', 'บันทึกประวัติการใช้งานระบบ')
+                .replace('Teacher Dashboard — Attendance System', 'แดชบอร์ดคุณครู — ระบบเช็กชื่อกิจกรรม')
+                .replace('Dashboard', 'แดชบอร์ด')
+                .replace('Sessions', 'รอบกิจกรรม')
+                .replace('Edit Activity', 'แก้ไขกิจกรรม')
+                .replace('New Activity', 'สร้างกิจกรรมใหม่')
+                .replace('Sign In', 'เข้าสู่ระบบ')
+                .replace('Admin', 'ผู้ดูแลระบบ')
+                .replace('Student Attendance System', 'ระบบเช็กชื่อกิจกรรมนักเรียน')
+                .replace('Attendance System', 'ระบบเช็กชื่อ')
+                .replace('Not Checked In', 'รายชื่อที่ยังไม่เช็กชื่อ');
+        }
     } finally {
         // Always restore observer and clear guard — even if translation threw
         _isTranslating = false;

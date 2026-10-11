@@ -12,10 +12,13 @@ from app.auth import hash_password
 from app.config import settings
 
 
-def create_admin():
+def create_admin(db=None):
     """Create the initial admin user if it doesn't exist."""
-    init_db()
-    db = SessionLocal()
+    close_db = False
+    if db is None:
+        init_db()
+        db = SessionLocal()
+        close_db = True
     try:
         existing = db.query(User).filter(User.username == settings.ADMIN_USERNAME).first()
         if existing:
@@ -26,7 +29,7 @@ def create_admin():
             username=settings.ADMIN_USERNAME,
             password_hash=hash_password(settings.ADMIN_PASSWORD),
             display_name="Administrator",
-            role="admin",
+            role="super_admin",
             is_active=True,
         )
         db.add(admin)
@@ -36,7 +39,8 @@ def create_admin():
         print(f"Password: {settings.ADMIN_PASSWORD}")
         print("\nIMPORTANT: Change the default password after first login!")
     finally:
-        db.close()
+        if close_db:
+            db.close()
 
 
 if __name__ == "__main__":

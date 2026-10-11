@@ -101,6 +101,17 @@
                 </svg>
                 <span data-i18n="nav_audit_logs">บันทึกการใช้งาน</span>
             </a>
+            {% if user and user.role == 'super_admin' %}
+            <a href="/admin/admin-accounts" class="nav-item {% if '/admin/admin-accounts' in request.url.path %}active{% endif %}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                <span data-i18n="nav_admin_accounts">จัดการบัญชี Admin</span>
+            </a>
+            {% endif %}
         </nav>
     </aside>
 
@@ -140,7 +151,7 @@
                     <div class="profile-dropdown-menu">
                         <div class="profile-header">
                             <span class="profile-name">{{ user.display_name }}</span>
-                            <span class="profile-role" data-i18n="role_{{ user.role }}">{% if user.role == 'admin' %}ผู้ดูแลระบบ{% else %}ครู{% endif %}</span>
+                            <span class="profile-role" data-i18n="role_{{ user.role }}">{% if user.role == 'super_admin' %}ผู้ดูแลระบบสูงสุด{% elif user.role == 'admin' %}ผู้ดูแลระบบ{% else %}ครู{% endif %}</span>
                         </div>
                         <a href="/logout" class="dropdown-item logout">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
