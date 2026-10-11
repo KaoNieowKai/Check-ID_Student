@@ -116,6 +116,10 @@
     <div class="modal-card">
         <h3 data-i18n="modal_correct_title">แก้ไขสถานะการเช็กชื่อ</h3>
         <form method="POST" id="correctForm">
+            <input type="hidden" name="activity_id" value="{{ activity_id }}">
+            <input type="hidden" name="grade" value="{{ grade }}">
+            <input type="hidden" name="room" value="{{ room_filter }}">
+            <input type="hidden" name="search" value="{{ search }}">
             <div class="form-group">
                 <label data-i18n="th_status">สถานะ</label>
                 <select name="status" class="form-select" id="correctStatus">
@@ -126,8 +130,8 @@
                 </select>
             </div>
             <div class="form-group">
-                <label><span data-i18n="lbl_reason_required">เหตุผลในการแก้ไข</span> <span style="color: var(--danger);">*</span></label>
-                <textarea name="reason" required rows="3" placeholder="เช่น นักเรียนเข้าร่วมกิจกรรมแต่สแกน QR ไม่สำเร็จ" data-i18n-placeholder="ph_correction_reason"></textarea>
+                <label><span data-i18n="lbl_reason_correction">เหตุผลในการแก้ไข</span> <span style="color: var(--text-muted); font-size: 13px;" data-i18n="opt_optional">(ไม่บังคับ)</span></label>
+                <textarea name="reason" rows="3" placeholder="ระบุเหตุผล (ไม่บังคับ) เช่น นักเรียนเข้าร่วมกิจกรรมแต่สแกน QR ไม่สำเร็จ" data-i18n-placeholder="ph_correction_reason"></textarea>
             </div>
             <div class="form-actions">
                 <button type="button" class="btn btn-outline" onclick="document.getElementById('correctModal').style.display='none'" data-i18n="btn_cancel">ยกเลิก</button>
@@ -137,10 +141,79 @@
     </div>
 </div>
 
+<!-- ── Filter Alert Modal ─────────────────────────── -->
+<div class="modal-overlay" id="filterAlertModal" style="display:none; z-index: 1100;">
+    <div class="modal-card" style="max-width: 420px; text-align: center; padding: 28px;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(245, 158, 11, 0.15); color: #F59E0B; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 16px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="30" height="30">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+        </div>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px; color: var(--text);" id="filterAlertTitle" data-i18n="alert_filter_incomplete">
+            กรุณาเลือกตัวกรองให้ครบถ้วน
+        </h3>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.5;" id="filterAlertMsg">
+            กรุณาเลือกกิจกรรมและรอบกิจกรรมก่อนทำการกรองข้อมูล
+        </p>
+        <button type="button" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 10px 16px; font-size: 15px;" onclick="closeFilterAlert()" data-i18n="btn_got_it">
+            เข้าใจแล้ว
+        </button>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script>
+let filterFocusTargetId = null;
+
+function showFilterAlert(title, message, targetInputId) {
+    document.getElementById('filterAlertTitle').textContent = title;
+    document.getElementById('filterAlertMsg').textContent = message;
+    filterFocusTargetId = targetInputId;
+    document.getElementById('filterAlertModal').style.display = 'flex';
+}
+
+function closeFilterAlert() {
+    document.getElementById('filterAlertModal').style.display = 'none';
+    if (filterFocusTargetId) {
+        const el = document.getElementById(filterFocusTargetId);
+        if (el) el.focus();
+        filterFocusTargetId = null;
+    }
+}
+
+document.getElementById('filterAlertModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeFilterAlert();
+});
+
+document.getElementById('attendanceFilter')?.addEventListener('submit', function(e) {
+    const act = document.getElementById('activitySelect')?.value;
+    const sess = document.getElementById('sessionSelect')?.value;
+    
+    if (!act) {
+        e.preventDefault();
+        showFilterAlert(
+            (typeof t === 'function' ? t('alert_filter_incomplete', 'กรุณาเลือกตัวกรองให้ครบถ้วน') : 'กรุณาเลือกตัวกรองให้ครบถ้วน'),
+            (typeof t === 'function' ? t('alert_select_activity', 'กรุณาเลือกกิจกรรมและรอบกิจกรรมก่อนทำการกรองข้อมูล') : 'กรุณาเลือกกิจกรรมและรอบกิจกรรมก่อนทำการกรองข้อมูล'),
+            'activitySelect'
+        );
+        return false;
+    }
+    
+    if (!sess) {
+        e.preventDefault();
+        showFilterAlert(
+            (typeof t === 'function' ? t('alert_filter_incomplete', 'กรุณาเลือกตัวกรองให้ครบถ้วน') : 'กรุณาเลือกตัวกรองให้ครบถ้วน'),
+            (typeof t === 'function' ? t('alert_select_session', 'กรุณาเลือกรอบกิจกรรมก่อนทำการกรองข้อมูล') : 'กรุณาเลือกรอบกิจกรรมก่อนทำการกรองข้อมูล'),
+            'sessionSelect'
+        );
+        return false;
+    }
+});
+
 function loadSessions(activityId) {
     if (!activityId) return;
     fetch('/admin/api/sessions/' + activityId)

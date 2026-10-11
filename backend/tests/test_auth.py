@@ -9,7 +9,7 @@ def test_login_page_loads(client):
     """Login page should render successfully."""
     response = client.get("/login")
     assert response.status_code == 200
-    assert "Sign In" in response.text
+    assert "เข้าสู่ระบบ" in response.text or "Sign In" in response.text
 
 
 def test_login_success_admin(client, admin_user):
@@ -31,14 +31,14 @@ def test_login_invalid_password(client, admin_user):
     """Invalid password should show error."""
     response = client.post("/login", data={"username": "admin", "password": "wrong"})
     assert response.status_code == 200
-    assert "Invalid username or password" in response.text
+    assert "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" in response.text or "Invalid username or password" in response.text
 
 
 def test_login_nonexistent_user(client):
     """Non-existent user should show error."""
     response = client.post("/login", data={"username": "nobody", "password": "test"})
     assert response.status_code == 200
-    assert "Invalid username or password" in response.text
+    assert "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง" in response.text or "Invalid username or password" in response.text
 
 
 def test_login_disabled_user(client, db):
@@ -48,7 +48,7 @@ def test_login_disabled_user(client, db):
     db.add(user)
     db.commit()
     response = client.post("/login", data={"username": "disabled", "password": "test123"})
-    assert "disabled" in response.text.lower() or "contact admin" in response.text.lower()
+    assert "ปิดใช้งาน" in response.text or "disabled" in response.text.lower() or "contact admin" in response.text.lower()
 
 
 def test_admin_dashboard_requires_auth(client):

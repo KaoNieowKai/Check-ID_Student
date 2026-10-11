@@ -23,6 +23,7 @@ STATUS_THAI = {
 
 ROLE_THAI = {
     "admin": "ผู้ดูแลระบบ",
+    "super_admin": "ผู้ดูแลระบบสูงสุด",
     "teacher": "ครู",
     "student": "นักเรียน",
 }
