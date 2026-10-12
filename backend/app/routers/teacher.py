@@ -360,7 +360,7 @@ async def get_classrooms(
 def _build_attendance_pdf(students_data: list, lang: str, report_title: str, report_subtitle: str, base_dir: str) -> bytes:
     """Build a single combined attendance PDF from a list of student dicts.
 
-    Each dict must have: student_id, full_name, grade, room, status.
+    Each dict must have: student_id, full_name, grade, room, status, time (optional).
     Returns raw PDF bytes.
     """
     status_map_th = {"present": "มา", "leave": "ลา", "sick_leave": "ลาป่วย", "absent": "ไม่มา"}
@@ -427,10 +427,10 @@ def _build_attendance_pdf(students_data: list, lang: str, report_title: str, rep
     pdf.ln(4)
 
     # ── Student table grouped by status ────────────────────────────
-    headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "สถานะ"]
-    headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Status"]
+    headers_th = ["ที่", "รหัสนักเรียน", "ชื่อ-นามสกุล", "ชั้น", "ห้อง", "สถานะ", "เวลา"]
+    headers_en = ["No.", "Student ID", "Name", "Grade", "Room", "Status", "Time"]
     headers = headers_th if lang == "th" else headers_en
-    col_widths = [10, 28, 68, 22, 18, 34]
+    col_widths = [10, 25, 60, 20, 20, 30, 25]
 
     for st_val in ["present", "leave", "sick_leave", "absent"]:
         group = [s for s in students_data if s.get("status") == st_val]
@@ -450,6 +450,7 @@ def _build_attendance_pdf(students_data: list, lang: str, report_title: str, rep
             pdf.cell(col_widths[3], 8, str(row.get("grade", "")), border=1, align="C")
             pdf.cell(col_widths[4], 8, str(row.get("room", "")), border=1, align="C")
             pdf.cell(col_widths[5], 8, status_map.get(str(row.get("status", "absent")), str(row.get("status", ""))), border=1, align="C")
+            pdf.cell(col_widths[6], 8, str(row.get("time") or "-"), border=1, align="C")
             pdf.ln(8)
         pdf.ln(4)
 
@@ -495,12 +496,14 @@ async def attendance_pdf_by_grade_room(
         status = rec.status if rec else "absent"
         if status not in ("present", "leave", "sick_leave", "absent"):
             status = "absent"
+        time_str = rec.checked_in_at.strftime("%H:%M:%S") if (rec and rec.checked_in_at and status != "absent") else "-"
         students_data.append({
             "student_id": st.student_id,
             "full_name": st.full_name,
             "grade": st.grade,
             "room": st.room,
             "status": status,
+            "time": time_str,
         })
     students_data.sort(key=lambda x: (
         int(x["room"]) if str(x["room"]).isdigit() else 999,
@@ -572,12 +575,14 @@ async def attendance_pdf_all_students(
         status = rec.status if rec else "absent"
         if status not in ("present", "leave", "sick_leave", "absent"):
             status = "absent"
+        time_str = rec.checked_in_at.strftime("%H:%M:%S") if (rec and rec.checked_in_at and status != "absent") else "-"
         students_data.append({
             "student_id": st.student_id,
             "full_name": st.full_name,
             "grade": st.grade,
             "room": st.room,
             "status": status,
+            "time": time_str,
         })
     # Sort by grade number → room number → student_id
     students_data.sort(key=lambda x: (
@@ -649,7 +654,7 @@ async def summary_pdf(
         if rec:
             status = rec.status
             method = rec.checked_in_method
-            time_str = rec.checked_in_at.strftime("%H:%M:%S")
+            time_str = rec.checked_in_at.strftime("%H:%M:%S") if (rec.checked_in_at and status != "absent") else "-"
         else:
             status = "absent"
             method = "-"
