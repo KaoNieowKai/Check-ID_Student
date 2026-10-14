@@ -2,12 +2,80 @@
 {% block title %}จัดการข้อมูลครู — ผู้ดูแลระบบ{% endblock %}
 {% block page_title %}<span data-i18n="title_teachers">จัดการข้อมูลครู</span>{% endblock %}
 
+{% block extra_css %}
+{{ super() }}
+<link rel="stylesheet" href="/static/css/activities.css?v=20261014_2">
+<style>
+/* ─── Collapsible Teacher Form Styles ─────────────────── */
+#teacherLayout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    transition: all 0.2s ease;
+}
+
+#teacherLayout.has-form {
+    grid-template-columns: 1fr 380px;
+}
+
+#teacherFormColumn {
+    display: none;
+}
+
+#teacherLayout.has-form #teacherFormColumn {
+    display: block !important;
+    animation: teacherSideFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes teacherSideFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 1024px) {
+    #teacherLayout,
+    #teacherLayout.has-form {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
+<div class="sess-activity-header" style="margin-bottom: 24px;">
+    <div>
+        <h2 class="sess-activity-title" style="display: flex; align-items: center; gap: 10px; margin: 0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="26" height="26" style="color: var(--primary);">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+            </svg>
+            <span data-i18n="title_teachers">รายชื่อครู</span>
+            <span class="sess-count-badge" style="font-size: 13px; font-weight: 600;">{{ teachers|length }} <span data-i18n="person_unit">คน</span></span>
+        </h2>
+        <p style="font-size: 14px; color: var(--text-muted); margin: 4px 0 0 36px;" data-i18n="teachers_subtitle">
+            จัดการรายชื่อครูและบัญชีผู้สอนในระบบ
+        </p>
+    </div>
+    <button type="button" class="act-btn-create btn" id="toggleTeacherFormBtn" onclick="toggleTeacherForm()" style="padding: 9px 18px; font-size: 13px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <span data-i18n="btn_add_teacher">เพิ่มครู</span>
+    </button>
+</div>
+
 {% if error %}
 <div class="alert alert-error" style="margin-bottom: 20px;">{{ error }}</div>
 {% endif %}
 
-<div class="two-column-layout">
+<div class="two-column-layout collapsible-side" id="teacherLayout">
     <div class="column-main">
         <div class="table-container">
             <table class="data-table">
@@ -46,7 +114,15 @@
                     {% endfor %}
                     {% if not teachers %}
                     <tr>
-                        <td colspan="5" class="empty-state" style="text-align: center; padding: 30px;" data-i18n="empty_teachers">ยังไม่มีข้อมูลครูในระบบ</td>
+                        <td colspan="5" class="empty-state" style="text-align: center; padding: 40px;">
+                            <p style="color: var(--text-muted); margin-bottom: 14px;" data-i18n="empty_teachers">ยังไม่มีข้อมูลครูในระบบ</p>
+                            <button type="button" class="act-btn-create btn" onclick="openTeacherForm()" style="display: inline-flex;" data-i18n="btn_add_teacher">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+                                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                </svg>
+                                <span>เพิ่มครู</span>
+                            </button>
+                        </td>
                     </tr>
                     {% endif %}
                 </tbody>
@@ -54,10 +130,14 @@
         </div>
     </div>
 
-    <div class="column-side">
-        <div class="form-card">
-            <h3 data-i18n="add_new_teacher_title">เพิ่มครูใหม่</h3>
-            <form method="POST" action="/admin/teachers/add">
+    <!-- ─── Right Column: Add Teacher Form (Collapsible) ────────────── -->
+    <div class="column-side" id="teacherFormColumn" style="display: none;">
+        <div class="form-card" id="teacherFormCard">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="margin: 0;" data-i18n="add_new_teacher_title">เพิ่มครูใหม่</h3>
+                <button type="button" class="act-modal-close" onclick="closeTeacherForm()" title="ปิด" style="width: 28px; height: 28px; font-size: 16px; cursor: pointer; border: none; background: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--text-muted);">&times;</button>
+            </div>
+            <form method="POST" id="addTeacherForm" action="/admin/teachers/add">
                 <div class="form-group">
                     <label for="username"><span data-i18n="lbl_teacher_username">ชื่อผู้ใช้</span> <span style="color: var(--danger);">*</span></label>
                     <input type="text" id="username" name="username" required placeholder="เช่น teacher01" data-i18n-placeholder="ph_teacher_username">
@@ -78,7 +158,10 @@
                         </button>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block" data-i18n="btn_add_teacher">เพิ่มครู</button>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="button" class="btn btn-outline" onclick="closeTeacherForm()" style="flex: 1;" data-i18n="btn_cancel">ยกเลิก</button>
+                    <button type="submit" class="act-btn-create btn" style="flex: 1; justify-content: center;" data-i18n="btn_add_teacher">เพิ่มครู</button>
+                </div>
             </form>
         </div>
     </div>
@@ -133,6 +216,26 @@
         </form>
     </div>
 </div>
+
+<!-- Success Notification PopUp Modal -->
+<div class="modal-overlay" id="successModal" style="display: none;" onclick="if(event.target === this) closeSuccessModal()">
+    <div class="modal-card" style="text-align: center; max-width: 420px; padding: 32px 28px; animation: modalPopIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div style="width: 68px; height: 68px; border-radius: 50%; background: #ECFDF5; color: #059669; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 18px; box-shadow: 0 6px 16px rgba(5, 150, 105, 0.25);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" width="34" height="34">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+        <h3 id="successModalTitle" style="font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 8px;">
+            ลบข้อมูลครูสำเร็จ
+        </h3>
+        <p id="successModalMessage" style="color: var(--text-muted); font-size: 14px; line-height: 1.6; margin-bottom: 24px;">
+            ระบบได้ทำการลบข้อมูลครูออกจากระบบเรียบร้อยแล้ว
+        </p>
+        <button type="button" class="act-btn-create btn" onclick="closeSuccessModal()" style="width: 100%; justify-content: center; padding: 12px; font-size: 15px;">
+            <span id="successModalOkBtn" data-i18n="btn_ok">ตกลง</span>
+        </button>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -140,11 +243,17 @@
 document.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('success') === 'deleted') {
-        alert(t('msg_delete_teacher_success', 'ลบข้อมูลครูสำเร็จ'));
+        showSuccessModal(
+            t('msg_delete_teacher_success', 'ลบข้อมูลครูสำเร็จ'),
+            t('msg_delete_teacher_desc', 'ระบบได้ทำการลบข้อมูลครูออกจากระบบเรียบร้อยแล้ว')
+        );
         const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({path:newUrl}, '', newUrl);
     } else if (urlParams.get('success') === 'edited') {
-        alert(t('msg_edit_teacher_success', 'แก้ไขข้อมูลครูสำเร็จ'));
+        showSuccessModal(
+            t('msg_edit_teacher_success', 'แก้ไขข้อมูลครูสำเร็จ'),
+            t('msg_edit_teacher_desc', 'ระบบได้บันทึกการแก้ไขข้อมูลครูเรียบร้อยแล้ว')
+        );
         const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({path:newUrl}, '', newUrl);
     } else if (urlParams.get('error') === 'duplicate_username') {
@@ -153,6 +262,54 @@ document.addEventListener('DOMContentLoaded', () => {
         window.history.replaceState({path:newUrl}, '', newUrl);
     }
 });
+
+function showSuccessModal(title, message) {
+    document.getElementById('successModalTitle').textContent = title;
+    document.getElementById('successModalMessage').textContent = message;
+    const okBtn = document.getElementById('successModalOkBtn');
+    if (okBtn) {
+        okBtn.textContent = (typeof t === 'function' ? t('btn_ok', (typeof currentLang !== 'undefined' && currentLang === 'en') ? 'OK' : 'ตกลง') : 'ตกลง');
+    }
+    document.getElementById('successModal').style.display = 'flex';
+}
+
+function closeSuccessModal() {
+    const m = document.getElementById('successModal');
+    if (m) m.style.display = 'none';
+}
+
+function toggleTeacherForm() {
+    const layout = document.getElementById('teacherLayout');
+    if (layout.classList.contains('has-form')) {
+        closeTeacherForm();
+    } else {
+        openTeacherForm();
+    }
+}
+
+function openTeacherForm() {
+    const layout = document.getElementById('teacherLayout');
+    const col = document.getElementById('teacherFormColumn');
+    layout.classList.add('has-form');
+    if (col) col.style.display = 'block';
+    const card = document.getElementById('teacherFormCard');
+    if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    setTimeout(() => {
+        const u = document.getElementById('username');
+        if (u) u.focus();
+    }, 120);
+}
+
+function closeTeacherForm() {
+    const layout = document.getElementById('teacherLayout');
+    const col = document.getElementById('teacherFormColumn');
+    layout.classList.remove('has-form');
+    if (col) col.style.display = 'none';
+    const f = document.getElementById('addTeacherForm');
+    if (f) f.reset();
+}
 
 function showEditModal(id, username, displayName) {
     document.getElementById('editModal').style.display = 'flex';
@@ -195,6 +352,11 @@ function showDeleteModal(id, username) {
 
 window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+        closeSuccessModal();
+        const layout = document.getElementById('teacherLayout');
+        if (layout && layout.classList.contains('has-form')) {
+            closeTeacherForm();
+        }
         document.getElementById('editModal').style.display = 'none';
         document.getElementById('deleteModal').style.display = 'none';
     }

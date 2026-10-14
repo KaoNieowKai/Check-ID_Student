@@ -60,6 +60,7 @@ class Activity(Base):
     status = Column(String(20), nullable=False, default="draft")
     # draft | scheduled | active | completed | cancelled
     eligible_grades = Column(String(100), nullable=True)  # comma-separated: "M.1,M.2,M.3"
+    eligible_rooms = Column(String(100), nullable=True)   # comma-separated: "1,2,3"
     created_at = Column(DateTime, default=get_bkk_time, nullable=False)
     updated_at = Column(DateTime, default=get_bkk_time, onupdate=get_bkk_time, nullable=False)
 

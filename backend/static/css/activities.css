@@ -1,0 +1,1244 @@
+/* ══════════════════════════════════════════════
+   ACTIVITY MANAGEMENT — Redesigned UI Styles
+   Blue + Pink Theme — Light & Dark compatible
+   ══════════════════════════════════════════════ */
+
+/* ─── Page Header ──────────────────────────────── */
+.act-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+}
+
+.act-page-header-text h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.act-page-header-text h1 svg {
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.act-page-header-text p {
+    color: var(--text-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.act-btn-create {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 700;
+    border-radius: var(--radius);
+    box-shadow: 0 4px 14px rgba(236, 72, 153, 0.3);
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+
+.act-btn-create:hover {
+    background: var(--accent-dark);
+    border-color: var(--accent-dark);
+    color: white;
+    box-shadow: 0 6px 20px rgba(219, 39, 119, 0.4);
+    transform: translateY(-1px);
+}
+
+.act-btn-create:active {
+    transform: translateY(0) scale(0.97);
+}
+
+/* ─── Status Filter Tabs ──────────────────────── */
+.act-filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow-sm);
+}
+
+.act-filter-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+    text-decoration: none;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.act-filter-tab:hover {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.act-filter-tab.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+}
+
+.act-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    background: rgba(0, 0, 0, 0.08);
+    color: inherit;
+}
+
+.act-filter-tab.active .act-filter-count {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* ─── Search & Sort Toolbar ───────────────────── */
+.act-search-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.act-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    flex: 1;
+    min-width: 200px;
+    max-width: 400px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.act-search-box:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.act-search-box svg {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.act-search-box input {
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    width: 100%;
+    padding: 0;
+    background: transparent;
+    color: var(--text);
+}
+
+.act-search-box input::placeholder {
+    color: var(--text-muted);
+}
+
+.act-sort-select {
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    min-width: 160px;
+    transition: border-color var(--transition);
+}
+
+.act-sort-select:focus {
+    border-color: var(--primary);
+    outline: none;
+}
+
+/* ─── Activity Cards Grid ─────────────────────── */
+.act-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.act-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    padding: 0;
+    transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    position: relative;
+    outline: none;
+}
+
+.act-card:hover {
+    box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-3px);
+    border-color: rgba(225, 29, 72, 0.35);
+}
+
+.act-card:hover .act-card-title {
+    color: var(--primary);
+    transition: color var(--transition);
+}
+
+.act-card:focus-visible {
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25);
+    border-color: var(--primary);
+}
+
+.act-card-status-strip {
+    height: 4px;
+    width: 100%;
+}
+
+.act-card-status-strip.status-draft { background: #94A3B8; }
+.act-card-status-strip.status-scheduled { background: #3B82F6; }
+.act-card-status-strip.status-active { background: #10B981; }
+.act-card-status-strip.status-completed { background: #6366F1; }
+.act-card-status-strip.status-cancelled { background: #EF4444; }
+
+.act-card-body {
+    padding: 20px 24px 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.act-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.act-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 22px;
+}
+
+.act-card-icon.status-draft { background: #F1F5F9; color: #64748B; }
+.act-card-icon.status-scheduled { background: #DBEAFE; color: #2563EB; }
+.act-card-icon.status-active { background: #D1FAE5; color: #059669; }
+.act-card-icon.status-completed { background: #E0E7FF; color: #4F46E5; }
+.act-card-icon.status-cancelled { background: #FEE2E2; color: #DC2626; }
+
+.act-card-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+    line-height: 1.4;
+    flex: 1;
+}
+
+.act-card-desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    line-height: 1.5;
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.act-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 14px;
+}
+
+.act-card-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.act-card-meta-row svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.act-card-grades {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 2px;
+}
+
+.act-grade-tag {
+    display: inline-flex;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 6px;
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.act-grade-tag.act-room-tag {
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+[data-theme="dark"] .act-grade-tag.act-room-tag {
+    background: rgba(255, 255, 255, 0.08);
+    color: #94A3B8;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.act-card-stats {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    margin-top: auto;
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.act-card-stat {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.act-card-stat svg {
+    opacity: 0.6;
+}
+
+.act-card-stat strong {
+    color: var(--text);
+    font-weight: 700;
+}
+
+/* ─── Card Actions ────────────────────────────── */
+.act-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 24px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+}
+
+.act-card-actions .btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 12px;
+    padding: 7px 10px;
+}
+
+.act-card-actions .btn svg {
+    flex-shrink: 0;
+}
+
+/* More actions dropdown */
+.act-more-wrapper {
+    position: relative;
+}
+
+.act-more-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+    padding: 0;
+    flex-shrink: 0;
+}
+
+.act-more-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-bg);
+}
+
+.act-more-menu {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    min-width: 180px;
+    z-index: 50;
+    display: none;
+    flex-direction: column;
+    padding: 6px;
+    animation: act-fadeIn 0.15s ease;
+}
+
+.act-more-menu.show {
+    display: flex;
+}
+
+@keyframes act-fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.act-more-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all var(--transition);
+    font-family: inherit;
+    width: 100%;
+    text-align: left;
+    text-decoration: none;
+}
+
+.act-more-menu-item:hover {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.act-more-menu-item.danger {
+    color: var(--danger);
+}
+
+.act-more-menu-item.danger:hover {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.act-more-menu-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+/* ─── Empty State ─────────────────────────────── */
+.act-empty-state {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 2px dashed var(--border);
+    padding: 60px 40px;
+    text-align: center;
+    grid-column: 1 / -1;
+}
+
+.act-empty-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.act-empty-state h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+}
+
+.act-empty-state p {
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* ─── Pagination ──────────────────────────────── */
+.act-pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+}
+
+.act-pagination-info {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.act-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.act-page-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    font-family: inherit;
+}
+
+.act-page-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-bg);
+}
+
+.act-page-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+/* ─── Workflow Guide ──────────────────────────── */
+.act-guide {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+    margin-bottom: 8px;
+}
+
+.act-guide-step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    transition: box-shadow var(--transition);
+}
+
+.act-guide-step:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.act-guide-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.act-guide-step:nth-child(1) .act-guide-number {
+    background: var(--accent-bg);
+    color: var(--accent);
+}
+
+.act-guide-step:nth-child(2) .act-guide-number {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.act-guide-step:nth-child(3) .act-guide-number {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.act-guide-step h4 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.act-guide-step p {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.act-guide-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 8px 0;
+    margin-top: 24px;
+    transition: color var(--transition);
+}
+
+.act-guide-toggle:hover {
+    color: var(--primary);
+}
+
+.act-guide-toggle svg {
+    transition: transform var(--transition);
+}
+
+.act-guide-toggle.collapsed svg {
+    transform: rotate(-90deg);
+}
+
+/* ─── Delete Confirmation Modal (Redesigned) ──── */
+.act-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+.act-modal.show {
+    display: flex;
+}
+
+.act-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.act-modal-card {
+    position: relative;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: var(--shadow-xl);
+    animation: act-modalIn 0.2s ease;
+    margin: 20px;
+}
+
+@keyframes act-modalIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.act-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.act-modal-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.act-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    transition: all var(--transition);
+}
+
+.act-modal-close:hover {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.act-modal-warning {
+    background: var(--danger-bg);
+    border: 1px solid #FCA5A5;
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    color: var(--danger);
+    font-size: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.act-modal-warning svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.act-modal-info {
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.act-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* ─── Activity Form (Redesigned) ──────────────── */
+.act-form-container {
+    max-width: 720px;
+}
+
+.act-form-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.act-form-section {
+    padding: 24px 28px;
+    border-bottom: 1px solid var(--border);
+}
+
+.act-form-section:last-of-type {
+    border-bottom: none;
+}
+
+.act-form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 18px;
+}
+
+.act-form-section-title svg {
+    color: var(--accent);
+}
+
+.act-form-section-title .section-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.act-form-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 10px 14px;
+    background: var(--info-bg);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--info);
+    margin-top: -6px;
+    margin-bottom: 16px;
+}
+
+.act-form-hint svg {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.act-form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 20px 28px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+}
+
+/* Grade checkboxes enhanced */
+.act-grade-checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.act-grade-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+    transition: all var(--transition);
+    font-size: 14px;
+    user-select: none;
+}
+
+.act-grade-checkbox:hover {
+    border-color: var(--primary-light);
+    background: var(--primary-bg);
+}
+
+.act-grade-checkbox:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+    color: var(--accent-dark);
+}
+
+.act-grade-checkbox input[type="checkbox"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* Status select enhanced */
+.act-status-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
+}
+
+.act-status-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.act-status-option:hover {
+    border-color: var(--primary-light);
+}
+
+.act-status-option:has(input:checked) {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+}
+
+.act-status-option input[type="radio"] {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+/* ─── Session Management Layout ───────────────── */
+.sess-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    transition: all var(--transition);
+}
+
+.sess-layout.has-form {
+    grid-template-columns: 1fr 380px;
+}
+
+.sess-form-column {
+    display: none;
+}
+
+.sess-layout.has-form .sess-form-column {
+    display: block;
+    animation: sessFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sessFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sess-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+.sess-breadcrumb a {
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.sess-breadcrumb svg {
+    flex-shrink: 0;
+    opacity: 0.5;
+}
+
+.sess-activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.sess-activity-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+}
+
+.sess-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: var(--primary-bg);
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Session list */
+.sess-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.sess-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    transition: box-shadow var(--transition), border-color var(--transition);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.sess-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border-hover);
+}
+
+.sess-card-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.sess-card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.sess-card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.sess-card-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.sess-card-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.sess-card-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* Session form */
+.sess-form-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 100px;
+}
+
+.sess-form-header {
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sess-form-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.sess-form-header svg {
+    color: var(--accent);
+}
+
+.sess-form-body {
+    padding: 20px 24px;
+}
+
+.sess-form-actions {
+    display: flex;
+    gap: 10px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.sess-form-actions .btn {
+    flex: 1;
+}
+
+/* Session empty state */
+.sess-empty {
+    background: var(--surface);
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 48px 24px;
+    text-align: center;
+}
+
+.sess-empty svg {
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    opacity: 0.4;
+}
+
+.sess-empty p {
+    color: var(--text-muted);
+    font-size: 14px;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+/* ─── Unsaved Changes Warning ─────────────────── */
+.act-unsaved-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--warning-bg);
+    border-top: 2px solid var(--warning);
+    padding: 12px 24px;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 500;
+    font-size: 14px;
+    color: var(--warning);
+    font-weight: 600;
+}
+
+.act-unsaved-bar.show {
+    display: flex;
+}
+
+/* ─── Dark Theme Overrides ────────────────────── */
+:root[data-theme="dark"] .act-card-icon.status-draft { background: rgba(100, 116, 139, 0.2); }
+:root[data-theme="dark"] .act-card-icon.status-scheduled { background: rgba(59, 130, 246, 0.2); }
+:root[data-theme="dark"] .act-card-icon.status-active { background: rgba(16, 185, 129, 0.2); }
+:root[data-theme="dark"] .act-card-icon.status-completed { background: rgba(99, 102, 241, 0.2); }
+:root[data-theme="dark"] .act-card-icon.status-cancelled { background: rgba(239, 68, 68, 0.2); }
+
+:root[data-theme="dark"] .act-grade-tag {
+    background: rgba(236, 72, 153, 0.15);
+    color: var(--primary-light);
+}
+
+:root[data-theme="dark"] .act-filter-bar {
+    background: var(--surface);
+}
+
+:root[data-theme="dark"] .act-card-actions {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme="dark"] .act-form-actions,
+:root[data-theme="dark"] .sess-form-actions {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+:root[data-theme="dark"] .act-filter-count {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .act-guide-step:nth-child(1) .act-guide-number {
+    background: rgba(236, 72, 153, 0.2);
+}
+
+:root[data-theme="dark"] .act-guide-step:nth-child(2) .act-guide-number {
+    background: rgba(236, 72, 153, 0.2);
+}
+
+:root[data-theme="dark"] .act-guide-step:nth-child(3) .act-guide-number {
+    background: rgba(52, 211, 153, 0.2);
+}
+
+:root[data-theme="dark"] .nav-item.active {
+    color: var(--primary);
+    background: rgba(236, 72, 153, 0.15);
+}
+
+/* ─── Responsive ──────────────────────────────── */
+@media (max-width: 1024px) {
+    .sess-layout,
+    .sess-layout.has-form {
+        grid-template-columns: 1fr;
+    }
+
+    .sess-form-card {
+        position: static;
+    }
+
+    .act-guide {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .act-page-header {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .act-btn-create {
+        width: 100%;
+    }
+
+    .act-cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .act-search-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .act-search-box {
+        max-width: 100%;
+    }
+
+    .act-filter-bar {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .act-card-actions {
+        flex-wrap: wrap;
+    }
+
+    .act-card-actions .btn {
+        min-width: calc(50% - 4px);
+    }
+
+    .sess-card {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .sess-card-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .act-form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .act-pagination {
+        flex-direction: column;
+        gap: 12px;
+    }
+}

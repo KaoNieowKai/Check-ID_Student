@@ -1,60 +1,225 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}{% if activity %}แก้ไขกิจกรรม{% else %}สร้างกิจกรรมใหม่{% endif %} — ผู้ดูแลระบบ{% endblock %}
+{% block title %}{% if activity %}แก้ไขกิจกรรม — {{ activity.name }}{% else %}สร้างกิจกรรมใหม่{% endif %} — ผู้ดูแลระบบ{% endblock %}
 {% block page_title %}{% if activity %}<span data-i18n="title_activity_edit">แก้ไขกิจกรรม</span>{% else %}<span data-i18n="title_activity_new">สร้างกิจกรรมใหม่</span>{% endif %}{% endblock %}
 
+{% block extra_css %}
+{{ super() }}
+<link rel="stylesheet" href="/static/css/activities.css?v=20261014">
+{% endblock %}
+
 {% block content %}
-<div class="form-container">
+<div class="sess-breadcrumb" style="margin-bottom: 20px;">
+    <a href="/admin/activities" data-i18n="nav_activities">รายการกิจกรรม</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <polyline points="9 18 15 12 9 6"/>
+    </svg>
+    <span>{% if activity %}{{ activity.name }}{% else %}<span data-i18n="title_activity_new">สร้างกิจกรรมใหม่</span>{% endif %}</span>
+</div>
+
+<div class="act-form-container">
     {% if error %}
-    <div class="alert alert-error">{{ error }}</div>
+    <div class="alert alert-error" style="margin-bottom: 20px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        <span>{{ error }}</span>
+    </div>
     {% endif %}
 
-    <form method="POST" action="{% if activity %}/admin/activities/{{ activity.id }}/edit{% else %}/admin/activities/add{% endif %}" class="form-card">
-        <div class="form-group">
-            <label for="name"><span data-i18n="lbl_activity_name">ชื่อกิจกรรม</span> <span style="color: var(--danger);">*</span></label>
-            <input type="text" id="name" name="name" value="{{ activity.name if activity else '' }}" required placeholder="เช่น วันกีฬาสี ประจำปี 2026" data-i18n-placeholder="ph_activity_name">
-        </div>
-        <div class="form-group">
-            <label for="description" data-i18n="lbl_activity_desc">รายละเอียดกิจกรรม</label>
-            <textarea id="description" name="description" rows="3" placeholder="กรอกรายละเอียดสั้นๆ เกี่ยวกับกิจกรรม..." data-i18n-placeholder="ph_activity_desc">{{ activity.description if activity else '' }}</textarea>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="start_date" data-i18n="lbl_start_date">วันที่เริ่มต้น</label>
-                <input type="date" id="start_date" name="start_date" value="{{ activity.start_date if activity and activity.start_date else '' }}">
+    <div class="act-form-card">
+        <form method="POST" id="activityForm" action="{% if activity %}/admin/activities/{{ activity.id }}/edit{% else %}/admin/activities/add{% endif %}">
+            <!-- Header Section -->
+            <div class="act-form-section" style="background: linear-gradient(135deg, rgba(37,99,235,0.03) 0%, rgba(236,72,153,0.04) 100%);">
+                <div style="display: flex; align-items: center; gap: 14px;">
+                    <div style="width: 48px; height: 48px; border-radius: 12px; background: var(--accent-bg); color: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 2px;">
+                            {% if activity %}
+                            <span data-i18n="title_activity_edit">แก้ไขกิจกรรม</span>: {{ activity.name }}
+                            {% else %}
+                            <span data-i18n="title_activity_new">สร้างกิจกรรมใหม่</span>
+                            {% endif %}
+                        </h3>
+                        <p style="font-size: 13px; color: var(--text-muted); margin: 0;">
+                            กรอกข้อมูลกิจกรรมให้ครบถ้วน แล้วกดบันทึก
+                        </p>
+                    </div>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="end_date" data-i18n="lbl_end_date">วันที่สิ้นสุด</label>
-                <input type="date" id="end_date" name="end_date" value="{{ activity.end_date if activity and activity.end_date else '' }}">
+
+            <!-- Form Content Section -->
+            <div class="act-form-section">
+                <!-- Activity Name -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="name" style="font-weight: 600; font-size: 14px; margin-bottom: 6px; display: block;">
+                        <span data-i18n="lbl_activity_name">ชื่อกิจกรรม</span>
+                        <span style="color: var(--accent);">*</span>
+                    </label>
+                    <input type="text" id="name" name="name" value="{{ activity.name if activity else '' }}" required
+                           placeholder="เช่น งานกีฬาสีภายในโรงเรียน" data-i18n-placeholder="ph_activity_name"
+                           style="width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 15px; background: var(--surface); color: var(--text); font-family: inherit;">
+                </div>
+
+                <!-- Description -->
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="description" style="font-weight: 600; font-size: 14px; margin-bottom: 6px; display: block;" data-i18n="lbl_activity_desc">
+                        รายละเอียดกิจกรรม
+                    </label>
+                    <textarea id="description" name="description" rows="3"
+                              placeholder="รายละเอียดเพิ่มเติมของกิจกรรม..." data-i18n-placeholder="ph_activity_desc"
+                              style="width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit; resize: vertical;">{{ activity.description if activity else '' }}</textarea>
+                </div>
+
+                <!-- Dates & Status in Grid -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label for="start_date" style="font-weight: 600; font-size: 14px; margin-bottom: 6px; display: block;">
+                            <span data-i18n="lbl_start_date">วันที่เริ่มต้น</span>
+                            <span style="color: var(--accent);">*</span>
+                        </label>
+                        <input type="date" id="start_date" name="start_date" value="{{ activity.start_date if activity and activity.start_date else '' }}" required
+                               style="width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit;">
+                    </div>
+                    <div class="form-group">
+                        <label for="end_date" style="font-weight: 600; font-size: 14px; margin-bottom: 6px; display: block;">
+                            <span data-i18n="lbl_end_date">วันที่สิ้นสุด</span>
+                            <span style="color: var(--accent);">*</span>
+                        </label>
+                        <input type="date" id="end_date" name="end_date" value="{{ activity.end_date if activity and activity.end_date else '' }}" required
+                               style="width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit;">
+                    </div>
+                    <div class="form-group">
+                        <label for="status" style="font-weight: 600; font-size: 14px; margin-bottom: 6px; display: block;">
+                            <span data-i18n="lbl_status">สถานะ</span>
+                            <span style="color: var(--accent);">*</span>
+                        </label>
+                        <select id="status" name="status" class="form-select"
+                                style="width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius); font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit;">
+                            <option value="draft" {% if activity and activity.status == 'draft' %}selected{% endif %} data-i18n="status_draft">แบบร่าง</option>
+                            <option value="scheduled" {% if activity and activity.status == 'scheduled' %}selected{% endif %} data-i18n="status_scheduled">กำหนดการแล้ว</option>
+                            <option value="active" {% if (activity and activity.status == 'active') or (not activity) %}selected{% endif %} data-i18n="status_active">กำลังใช้งาน</option>
+                            <option value="completed" {% if activity and activity.status == 'completed' %}selected{% endif %} data-i18n="status_completed">เสร็จสิ้น</option>
+                            <option value="cancelled" {% if activity and activity.status == 'cancelled' %}selected{% endif %} data-i18n="status_cancelled">ยกเลิก</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Eligible Grades & Rooms -->
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-weight: 600; font-size: 14px; margin-bottom: 10px; display: block;" data-i18n="lbl_eligible_grades">
+                        ระดับชั้นและห้องที่เข้าร่วม
+                    </label>
+
+                    <!-- Grades Sub-group -->
+                    <div style="margin-bottom: 14px;">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="lbl_grades_sub">
+                            เลือกระดับชั้น (เว้นว่างไว้หากเข้าร่วมได้ทุกระดับชั้น)
+                        </div>
+                        <div class="act-grade-checkbox-group">
+                            {% set selected_grades = activity.eligible_grades.split(',') if activity and activity.eligible_grades else [] %}
+                            {% for g in grades %}
+                            <label class="act-grade-checkbox">
+                                <input type="checkbox" name="eligible_grades" value="{{ g }}" {% if g in selected_grades %}checked{% endif %}>
+                                <span>{{ g|replace('M.', 'ม.') }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px; margin-bottom: 0;" data-i18n="eligible_grades_hint">
+                            * หากไม่เลือก จะหมายถึงทุกระดับชั้น
+                        </p>
+                    </div>
+
+                    <!-- Rooms Sub-group -->
+                    <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary);" data-i18n="lbl_rooms_sub">
+                                เลือกห้อง (กำหนดห้องเฉพาะหรือไม่)
+                            </div>
+                            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; color: var(--primary); font-weight: 600; user-select: none;">
+                                <input type="checkbox" id="toggleSpecifyRooms" onchange="toggleRoomsSection()" {% if activity and activity.eligible_rooms %}checked{% endif %}>
+                                <span data-i18n="lbl_specify_rooms">กำหนดห้องเฉพาะ</span>
+                            </label>
+                        </div>
+
+                        <div id="roomsContainer" style="{% if not activity or not activity.eligible_rooms %}display: none;{% endif %} margin-top: 10px;">
+                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                                <button type="button" class="btn btn-outline" onclick="selectAllRooms(true)" style="padding: 4px 10px; font-size: 12px; line-height: 1;" data-i18n="btn_select_all_rooms">เลือกทุกห้อง</button>
+                                <button type="button" class="btn btn-outline" onclick="selectAllRooms(false)" style="padding: 4px 10px; font-size: 12px; line-height: 1;" data-i18n="btn_clear_rooms">ล้างห้อง</button>
+                            </div>
+                            <div class="act-grade-checkbox-group">
+                                {% set selected_rooms = activity.eligible_rooms.split(',') if activity and activity.eligible_rooms else [] %}
+                                {% for r in rooms %}
+                                <label class="act-grade-checkbox">
+                                    <input type="checkbox" name="eligible_rooms" class="room-checkbox" value="{{ r }}" {% if r in selected_rooms %}checked{% endif %}>
+                                    <span>ห้อง {{ r }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px; margin-bottom: 0;" data-i18n="eligible_rooms_hint">
+                                * หากไม่เลือกห้องใดเลย จะหมายถึงทุกห้องของระดับชั้นที่เลือก
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="form-group">
-            <label for="status" data-i18n="lbl_status">สถานะ</label>
-            <select id="status" name="status" class="form-select">
-                <option value="draft" {% if activity and activity.status == 'draft' %}selected{% endif %} data-i18n="status_draft">แบบร่าง</option>
-                <option value="scheduled" {% if activity and activity.status == 'scheduled' %}selected{% endif %} data-i18n="status_scheduled">กำหนดการแล้ว</option>
-                <option value="active" {% if (activity and activity.status == 'active') or (not activity) %}selected{% endif %} data-i18n="status_active">กำลังใช้งาน</option>
-                <option value="completed" {% if activity and activity.status == 'completed' %}selected{% endif %} data-i18n="status_completed">เสร็จสิ้น</option>
-                <option value="cancelled" {% if activity and activity.status == 'cancelled' %}selected{% endif %} data-i18n="status_cancelled">ยกเลิก</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label data-i18n="lbl_eligible_grades">ระดับชั้นที่เข้าร่วม (เว้นว่างไว้หากเข้าร่วมได้ทุกระดับชั้น)</label>
-            <div class="checkbox-group">
-                {% set selected_grades = activity.eligible_grades.split(',') if activity and activity.eligible_grades else [] %}
-                {% for g in grades %}
-                <label class="checkbox-label">
-                    <input type="checkbox" name="eligible_grades" value="{{ g }}" {% if g in selected_grades %}checked{% endif %}>
-                    <span>{{ g }}</span>
-                </label>
-                {% endfor %}
+
+            <!-- Form Actions -->
+            <div class="act-form-actions">
+                <a href="/admin/activities" class="btn btn-outline" data-i18n="btn_cancel">ยกเลิก</a>
+                {% if not activity %}
+                <button type="button" class="btn btn-outline" onclick="saveAsDraft()" data-i18n="btn_save_draft">
+                    บันทึกแบบร่าง
+                </button>
+                <button type="submit" class="act-btn-create btn" data-i18n="btn_save_activity">
+                    บันทึกกิจกรรม
+                </button>
+                {% else %}
+                <button type="submit" class="act-btn-create btn" data-i18n="btn_save_changes">
+                    บันทึกการเปลี่ยนแปลง
+                </button>
+                {% endif %}
             </div>
-        </div>
-        <div class="form-actions">
-            <a href="/admin/activities" class="btn btn-outline" data-i18n="btn_cancel">ยกเลิก</a>
-            <button type="submit" class="btn btn-primary">
-                <span data-i18n="{% if activity %}btn_save_changes{% else %}btn_create{% endif %}">{% if activity %}บันทึกการเปลี่ยนแปลง{% else %}สร้างกิจกรรม{% endif %}</span>
-            </button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleRoomsSection() {
+    const isChecked = document.getElementById('toggleSpecifyRooms').checked;
+    const container = document.getElementById('roomsContainer');
+    if (isChecked) {
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+        document.querySelectorAll('.room-checkbox').forEach(cb => cb.checked = false);
+    }
+}
+
+function selectAllRooms(select) {
+    document.querySelectorAll('.room-checkbox').forEach(cb => cb.checked = select);
+}
+
+function saveAsDraft() {
+    document.getElementById('status').value = 'draft';
+    document.getElementById('activityForm').submit();
+}
+
+document.getElementById('activityForm')?.addEventListener('submit', function() {
+    const isChecked = document.getElementById('toggleSpecifyRooms')?.checked;
+    if (!isChecked) {
+        document.querySelectorAll('.room-checkbox').forEach(cb => cb.checked = false);
+    }
+});
+</script>
 {% endblock %}
