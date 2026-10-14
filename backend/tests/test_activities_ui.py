@@ -147,3 +147,49 @@ def test_delete_activity_restrictions(admin_client, sample_activity, db):
     del_res2 = admin_client.post(f"/admin/activities/{activity.id}/delete", follow_redirects=True)
     assert del_res2.status_code == 200
     assert db.query(Activity).filter(Activity.id == activity.id).first() is None
+
+
+def test_activity_create_and_edit_with_rooms(admin_client, db):
+    # Test GET form contains room toggle and inputs
+    res = admin_client.get("/admin/activities/add")
+    assert res.status_code == 200
+    assert "toggleSpecifyRooms" in res.text
+    assert "eligible_rooms" in res.text
+
+    # Test POST add with specific grades and rooms
+    post_res = admin_client.post("/admin/activities/add", data={
+        "name": "Robotics Camp 2026",
+        "description": "Robotics coding camp",
+        "start_date": "2026-12-01",
+        "end_date": "2026-12-03",
+        "status": "active",
+        "eligible_grades": ["M.4", "M.5"],
+        "eligible_rooms": ["1", "2", "3"],
+    }, follow_redirects=True)
+    assert post_res.status_code == 200
+
+    act = db.query(Activity).filter(Activity.name == "Robotics Camp 2026").first()
+    assert act is not None
+    assert act.eligible_grades == "M.4,M.5"
+    assert act.eligible_rooms == "1,2,3"
+
+    # Test GET edit form loads selected rooms and toggle checked
+    edit_get = admin_client.get(f"/admin/activities/{act.id}/edit")
+    assert edit_get.status_code == 200
+    assert 'checked' in edit_get.text
+
+    # Test POST edit to update rooms
+    edit_post = admin_client.post(f"/admin/activities/{act.id}/edit", data={
+        "name": "Robotics Camp 2026",
+        "description": "Updated robotics camp",
+        "start_date": "2026-12-01",
+        "end_date": "2026-12-03",
+        "status": "active",
+        "eligible_grades": ["M.4"],
+        "eligible_rooms": ["1"],
+    }, follow_redirects=True)
+    assert edit_post.status_code == 200
+
+    db.refresh(act)
+    assert act.eligible_grades == "M.4"
+    assert act.eligible_rooms == "1"

@@ -83,6 +83,9 @@ async def attendance_screen(
     if session.activity.eligible_grades:
         grades = [g.strip() for g in session.activity.eligible_grades.split(",")]
         student_query = student_query.filter(Student.grade.in_(grades))
+    if session.activity.eligible_rooms:
+        rooms = [r.strip() for r in session.activity.eligible_rooms.split(",")]
+        student_query = student_query.filter(Student.room.in_(rooms))
     total_students = student_query.scalar()
 
     present_count = db.query(func.count(AttendanceRecord.id)).filter(
@@ -157,6 +160,9 @@ async def attendance_stats(session_id: int, db: Session = Depends(get_db), user:
     if session.activity.eligible_grades:
         grades = [g.strip() for g in session.activity.eligible_grades.split(",")]
         student_query = student_query.filter(Student.grade.in_(grades))
+    if session.activity.eligible_rooms:
+        rooms = [r.strip() for r in session.activity.eligible_rooms.split(",")]
+        student_query = student_query.filter(Student.room.in_(rooms))
     total = student_query.scalar()
 
     present = db.query(func.count(AttendanceRecord.id)).filter(
@@ -229,6 +235,9 @@ async def monitoring_data(
     if session.activity.eligible_grades:
         grades = [g.strip() for g in session.activity.eligible_grades.split(",")]
         student_query = student_query.filter(Student.grade.in_(grades))
+    if session.activity.eligible_rooms:
+        rooms = [r.strip() for r in session.activity.eligible_rooms.split(",")]
+        student_query = student_query.filter(Student.room.in_(rooms))
     
     eligible_students = student_query.all()
     total_count = len(eligible_students)
@@ -634,6 +643,9 @@ async def summary_pdf(
     if session.activity.eligible_grades:
         grades = [g.strip() for g in session.activity.eligible_grades.split(",")]
         student_query = student_query.filter(Student.grade.in_(grades))
+    if session.activity.eligible_rooms:
+        rooms = [r.strip() for r in session.activity.eligible_rooms.split(",")]
+        student_query = student_query.filter(Student.room.in_(rooms))
     
     eligible_students = student_query.all()
     total_count = len(eligible_students)

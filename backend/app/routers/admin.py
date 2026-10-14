@@ -23,6 +23,18 @@ from app.templating import templates
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 VALID_GRADES = ["M.1", "M.2", "M.3", "M.4", "M.5", "M.6"]
+DEFAULT_ROOMS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]
+
+
+def get_available_rooms(db: Session) -> list:
+    """Get list of available rooms from existing students, merged with defaults."""
+    try:
+        db_rooms = [r[0] for r in db.query(Student.room).distinct().all() if r[0]]
+        all_rooms = list(dict.fromkeys(DEFAULT_ROOMS + [str(r) for r in db_rooms]))
+        all_rooms.sort(key=lambda x: (0, int(x)) if str(x).isdigit() else (1, str(x)))
+        return all_rooms
+    except Exception:
+        return DEFAULT_ROOMS
 
 
 def create_audit_log(db: Session, user_id: int, action: str, target_type: str = None,
@@ -63,9 +75,15 @@ async def dashboard(request: Request, db: Session = Depends(get_db), user: User 
         ).scalar()
         
         for session in today_sessions:
-            if session.activity and session.activity.eligible_grades:
-                grades = [g.strip() for g in session.activity.eligible_grades.split(",") if g.strip()]
-                expected = db.query(func.count(Student.id)).filter(Student.grade.in_(grades), Student.is_active == True).scalar()
+            if session.activity:
+                query = db.query(func.count(Student.id)).filter(Student.is_active == True)
+                if session.activity.eligible_grades:
+                    grades = [g.strip() for g in session.activity.eligible_grades.split(",") if g.strip()]
+                    query = query.filter(Student.grade.in_(grades))
+                if session.activity.eligible_rooms:
+                    rooms = [r.strip() for r in session.activity.eligible_rooms.split(",") if r.strip()]
+                    query = query.filter(Student.room.in_(rooms))
+                expected = query.scalar() or 0
             else:
                 expected = total_students
             today_expected += expected
@@ -648,15 +666,16 @@ async def activities_list(
         for aid, cnt in att_rows:
             activity_attendance_stats[aid] = cnt
 
-        # Expected students per activity (based on eligible grades)
+        # Expected students per activity (based on eligible grades and rooms)
         for act in activities:
+            query = db.query(func.count(Student.id)).filter(Student.is_active == True)
             if act.eligible_grades:
                 grades = [g.strip() for g in act.eligible_grades.split(",") if g.strip()]
-                expected = db.query(func.count(Student.id)).filter(
-                    Student.grade.in_(grades), Student.is_active == True
-                ).scalar()
-            else:
-                expected = db.query(func.count(Student.id)).filter(Student.is_active == True).scalar()
+                query = query.filter(Student.grade.in_(grades))
+            if act.eligible_rooms:
+                rooms = [r.strip() for r in act.eligible_rooms.split(",") if r.strip()]
+                query = query.filter(Student.room.in_(rooms))
+            expected = query.scalar() or 0
             n_sessions = activity_session_counts.get(act.id, 0)
             activity_attendance_stats.setdefault(act.id, 0)
             activity_attendance_stats[act.id] = {
@@ -674,10 +693,10 @@ async def activities_list(
 
 
 @router.get("/activities/add", response_class=HTMLResponse)
-async def activity_add_form(request: Request, user: User = Depends(require_admin)):
+async def activity_add_form(request: Request, db: Session = Depends(get_db), user: User = Depends(require_admin)):
     return templates.TemplateResponse("admin/activity_form.html", {
         "request": request, "user": user, "activity": None,
-        "grades": VALID_GRADES, "error": None,
+        "grades": VALID_GRADES, "rooms": get_available_rooms(db), "error": None,
     })
 
 
@@ -690,6 +709,7 @@ async def activity_add_submit(
     end_date: str = Form(""),
     status: str = Form("draft"),
     eligible_grades: list = Form(None, alias="eligible_grades"),
+    eligible_rooms: list = Form(None, alias="eligible_rooms"),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
@@ -699,6 +719,7 @@ async def activity_add_submit(
         end_date=date.fromisoformat(end_date) if end_date else None,
         status=status,
         eligible_grades=",".join(eligible_grades) if eligible_grades else None,
+        eligible_rooms=",".join(eligible_rooms) if eligible_rooms else None,
     )
     db.add(activity)
     db.commit()
@@ -717,7 +738,7 @@ async def activity_edit_form(
         raise HTTPException(status_code=404)
     return templates.TemplateResponse("admin/activity_form.html", {
         "request": request, "user": user, "activity": activity,
-        "grades": VALID_GRADES, "error": None,
+        "grades": VALID_GRADES, "rooms": get_available_rooms(db), "error": None,
     })
 
 
@@ -730,6 +751,7 @@ async def activity_edit_submit(
     end_date: str = Form(""),
     status: str = Form("draft"),
     eligible_grades: list = Form(None, alias="eligible_grades"),
+    eligible_rooms: list = Form(None, alias="eligible_rooms"),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
@@ -744,6 +766,7 @@ async def activity_edit_submit(
     activity.end_date = date.fromisoformat(end_date) if end_date else None
     activity.status = status
     activity.eligible_grades = ",".join(eligible_grades) if eligible_grades else None
+    activity.eligible_rooms = ",".join(eligible_rooms) if eligible_rooms else None
     db.commit()
     create_audit_log(db, user.id, "activity_edited", "activity", str(id),
                      previous_value=prev, new_value=json.dumps({"name": name, "status": status}))
@@ -800,13 +823,14 @@ async def sessions_list(
         session_stats[sess.id] = count
 
     # Expected students
+    query = db.query(func.count(Student.id)).filter(Student.is_active == True)
     if activity.eligible_grades:
         grades = [g.strip() for g in activity.eligible_grades.split(",") if g.strip()]
-        expected_students = db.query(func.count(Student.id)).filter(
-            Student.grade.in_(grades), Student.is_active == True
-        ).scalar() or 0
-    else:
-        expected_students = db.query(func.count(Student.id)).filter(Student.is_active == True).scalar() or 0
+        query = query.filter(Student.grade.in_(grades))
+    if activity.eligible_rooms:
+        rooms = [r.strip() for r in activity.eligible_rooms.split(",") if r.strip()]
+        query = query.filter(Student.room.in_(rooms))
+    expected_students = query.scalar() or 0
 
     return templates.TemplateResponse("admin/sessions.html", {
         "request": request, "user": user,
@@ -916,6 +940,9 @@ async def attendance_list(
         if selected_session and selected_session.activity.eligible_grades:
             grades = [g.strip() for g in selected_session.activity.eligible_grades.split(",")]
             student_query = student_query.filter(Student.grade.in_(grades))
+        if selected_session and selected_session.activity.eligible_rooms:
+            rooms = [r.strip() for r in selected_session.activity.eligible_rooms.split(",")]
+            student_query = student_query.filter(Student.room.in_(rooms))
             
         if grade:
             student_query = student_query.filter(Student.grade == grade)
@@ -1111,6 +1138,9 @@ async def export_attendance(
         if session.activity.eligible_grades:
             grades_list = [g.strip() for g in session.activity.eligible_grades.split(",")]
             student_query = student_query.filter(Student.grade.in_(grades_list))
+        if session.activity.eligible_rooms:
+            rooms_list = [r.strip() for r in session.activity.eligible_rooms.split(",")]
+            student_query = student_query.filter(Student.room.in_(rooms_list))
         if grade:
             student_query = student_query.filter(Student.grade == grade)
         if room:
@@ -1220,6 +1250,9 @@ async def export_attendance(
         if activity.eligible_grades:
             grades_list = [g.strip() for g in activity.eligible_grades.split(",")]
             student_query = student_query.filter(Student.grade.in_(grades_list))
+        if activity.eligible_rooms:
+            rooms_list = [r.strip() for r in activity.eligible_rooms.split(",")]
+            student_query = student_query.filter(Student.room.in_(rooms_list))
         if grade:
             student_query = student_query.filter(Student.grade == grade)
         students = student_query.order_by(Student.grade, cast(Student.room, Integer), Student.student_id).all()
@@ -1390,6 +1423,9 @@ async def generate_pdf_report(
         if session.activity.eligible_grades:
             grades_list = [g.strip() for g in session.activity.eligible_grades.split(",")]
             student_query = student_query.filter(Student.grade.in_(grades_list))
+        if session.activity.eligible_rooms:
+            rooms_list = [r.strip() for r in session.activity.eligible_rooms.split(",")]
+            student_query = student_query.filter(Student.room.in_(rooms_list))
         if grade:
             student_query = student_query.filter(Student.grade == grade)
         if room:
@@ -1420,6 +1456,9 @@ async def generate_pdf_report(
         if activity.eligible_grades:
             grades_list = [g.strip() for g in activity.eligible_grades.split(",")]
             student_query = student_query.filter(Student.grade.in_(grades_list))
+        if activity.eligible_rooms:
+            rooms_list = [r.strip() for r in activity.eligible_rooms.split(",")]
+            student_query = student_query.filter(Student.room.in_(rooms_list))
         if grade:
             student_query = student_query.filter(Student.grade == grade)
         if room:

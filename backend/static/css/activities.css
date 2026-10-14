@@ -200,15 +200,29 @@
     border-radius: var(--radius-lg);
     border: 1px solid var(--border);
     padding: 0;
-    transition: box-shadow var(--transition), transform var(--transition);
+    transition: box-shadow var(--transition), transform var(--transition), border-color var(--transition);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    cursor: pointer;
+    position: relative;
+    outline: none;
 }
 
 .act-card:hover {
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.05);
     transform: translateY(-3px);
+    border-color: rgba(225, 29, 72, 0.35);
+}
+
+.act-card:hover .act-card-title {
+    color: var(--primary);
+    transition: color var(--transition);
+}
+
+.act-card:focus-visible {
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.25);
+    border-color: var(--primary);
 }
 
 .act-card-status-strip {
@@ -309,6 +323,18 @@
     border-radius: 6px;
     background: var(--primary-bg);
     color: var(--primary);
+}
+
+.act-grade-tag.act-room-tag {
+    background: #F1F5F9;
+    color: #475569;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+[data-theme="dark"] .act-grade-tag.act-room-tag {
+    background: rgba(255, 255, 255, 0.08);
+    color: #94A3B8;
+    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .act-card-stats {

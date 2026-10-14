@@ -152,13 +152,21 @@ async def verify_student(
         joinedload(ActivitySession.activity)
     ).filter(ActivitySession.id == cs.session_id).first()
 
-    if activity_session and activity_session.activity.eligible_grades:
-        eligible = [g.strip() for g in activity_session.activity.eligible_grades.split(",")]
-        if student.grade not in eligible:
-            return JSONResponse(status_code=400, content={
-                "success": False,
-                "message": "คุณไม่มีสิทธิ์เข้าร่วมกิจกรรมนี้"
-            })
+    if activity_session and activity_session.activity:
+        if activity_session.activity.eligible_grades:
+            eligible = [g.strip() for g in activity_session.activity.eligible_grades.split(",")]
+            if student.grade not in eligible:
+                return JSONResponse(status_code=400, content={
+                    "success": False,
+                    "message": "คุณไม่มีสิทธิ์เข้าร่วมกิจกรรมนี้"
+                })
+        if activity_session.activity.eligible_rooms:
+            eligible_r = [r.strip() for r in activity_session.activity.eligible_rooms.split(",")]
+            if student.room not in eligible_r:
+                return JSONResponse(status_code=400, content={
+                    "success": False,
+                    "message": "คุณไม่มีสิทธิ์เข้าร่วมกิจกรรมนี้"
+                })
 
     return {
         "success": True,
@@ -235,6 +243,9 @@ async def confirm_attendance(
     if activity_session.activity.eligible_grades:
         grades = [g.strip() for g in activity_session.activity.eligible_grades.split(",")]
         total_query = total_query.filter(Student.grade.in_(grades))
+    if activity_session.activity.eligible_rooms:
+        rooms = [r.strip() for r in activity_session.activity.eligible_rooms.split(",")]
+        total_query = total_query.filter(Student.room.in_(rooms))
     total = total_query.scalar()
 
     present = db.query(func.count(AttendanceRecord.id)).filter(

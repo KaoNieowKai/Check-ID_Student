@@ -113,23 +113,62 @@
                     </div>
                 </div>
 
-                <!-- Eligible Grades -->
-                <div class="form-group" style="margin-bottom: 8px;">
-                    <label style="font-weight: 600; font-size: 14px; margin-bottom: 8px; display: block;" data-i18n="lbl_eligible_grades">
-                        ระดับชั้นที่มีสิทธิ์เข้าร่วม
+                <!-- Eligible Grades & Rooms -->
+                <div class="form-group" style="margin-bottom: 12px;">
+                    <label style="font-weight: 600; font-size: 14px; margin-bottom: 10px; display: block;" data-i18n="lbl_eligible_grades">
+                        ระดับชั้นและห้องที่เข้าร่วม
                     </label>
-                    <div class="act-grade-checkbox-group">
-                        {% set selected_grades = activity.eligible_grades.split(',') if activity and activity.eligible_grades else [] %}
-                        {% for g in grades %}
-                        <label class="act-grade-checkbox">
-                            <input type="checkbox" name="eligible_grades" value="{{ g }}" {% if g in selected_grades %}checked{% endif %}>
-                            <span>{{ g|replace('M.', 'ม.') }}</span>
-                        </label>
-                        {% endfor %}
+
+                    <!-- Grades Sub-group -->
+                    <div style="margin-bottom: 14px;">
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;" data-i18n="lbl_grades_sub">
+                            เลือกระดับชั้น (เว้นว่างไว้หากเข้าร่วมได้ทุกระดับชั้น)
+                        </div>
+                        <div class="act-grade-checkbox-group">
+                            {% set selected_grades = activity.eligible_grades.split(',') if activity and activity.eligible_grades else [] %}
+                            {% for g in grades %}
+                            <label class="act-grade-checkbox">
+                                <input type="checkbox" name="eligible_grades" value="{{ g }}" {% if g in selected_grades %}checked{% endif %}>
+                                <span>{{ g|replace('M.', 'ม.') }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px; margin-bottom: 0;" data-i18n="eligible_grades_hint">
+                            * หากไม่เลือก จะหมายถึงทุกระดับชั้น
+                        </p>
                     </div>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 8px; margin-bottom: 0;" data-i18n="eligible_grades_hint">
-                        * หากไม่เลือก จะหมายถึงทุกระดับชั้น
-                    </p>
+
+                    <!-- Rooms Sub-group -->
+                    <div style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--border);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                            <div style="font-size: 13px; font-weight: 600; color: var(--text-secondary);" data-i18n="lbl_rooms_sub">
+                                เลือกห้อง (กำหนดห้องเฉพาะหรือไม่)
+                            </div>
+                            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; color: var(--primary); font-weight: 600; user-select: none;">
+                                <input type="checkbox" id="toggleSpecifyRooms" onchange="toggleRoomsSection()" {% if activity and activity.eligible_rooms %}checked{% endif %}>
+                                <span data-i18n="lbl_specify_rooms">กำหนดห้องเฉพาะ</span>
+                            </label>
+                        </div>
+
+                        <div id="roomsContainer" style="{% if not activity or not activity.eligible_rooms %}display: none;{% endif %} margin-top: 10px;">
+                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                                <button type="button" class="btn btn-outline" onclick="selectAllRooms(true)" style="padding: 4px 10px; font-size: 12px; line-height: 1;" data-i18n="btn_select_all_rooms">เลือกทุกห้อง</button>
+                                <button type="button" class="btn btn-outline" onclick="selectAllRooms(false)" style="padding: 4px 10px; font-size: 12px; line-height: 1;" data-i18n="btn_clear_rooms">ล้างห้อง</button>
+                            </div>
+                            <div class="act-grade-checkbox-group">
+                                {% set selected_rooms = activity.eligible_rooms.split(',') if activity and activity.eligible_rooms else [] %}
+                                {% for r in rooms %}
+                                <label class="act-grade-checkbox">
+                                    <input type="checkbox" name="eligible_rooms" class="room-checkbox" value="{{ r }}" {% if r in selected_rooms %}checked{% endif %}>
+                                    <span>ห้อง {{ r }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            <p style="font-size: 12px; color: var(--text-muted); margin-top: 6px; margin-bottom: 0;" data-i18n="eligible_rooms_hint">
+                                * หากไม่เลือกห้องใดเลย จะหมายถึงทุกห้องของระดับชั้นที่เลือก
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -156,9 +195,31 @@
 
 {% block extra_js %}
 <script>
+function toggleRoomsSection() {
+    const isChecked = document.getElementById('toggleSpecifyRooms').checked;
+    const container = document.getElementById('roomsContainer');
+    if (isChecked) {
+        container.style.display = 'block';
+    } else {
+        container.style.display = 'none';
+        document.querySelectorAll('.room-checkbox').forEach(cb => cb.checked = false);
+    }
+}
+
+function selectAllRooms(select) {
+    document.querySelectorAll('.room-checkbox').forEach(cb => cb.checked = select);
+}
+
 function saveAsDraft() {
     document.getElementById('status').value = 'draft';
     document.getElementById('activityForm').submit();
 }
+
+document.getElementById('activityForm')?.addEventListener('submit', function() {
+    const isChecked = document.getElementById('toggleSpecifyRooms')?.checked;
+    if (!isChecked) {
+        document.querySelectorAll('.room-checkbox').forEach(cb => cb.checked = false);
+    }
+});
 </script>
 {% endblock %}

@@ -90,7 +90,17 @@
     {% for activity in activities %}
     {% set sess_cnt = activity_session_counts.get(activity.id, 0) %}
     {% set att_stat = activity_attendance_stats.get(activity.id, {'checked_in': 0, 'expected': 0}) %}
-    <div class="act-card" data-name="{{ activity.name|lower }}" data-date="{{ activity.start_date or '' }}" data-updated="{{ activity.updated_at.isoformat() if activity.updated_at else '' }}">
+    <div class="act-card" 
+         data-name="{{ activity.name|lower }}" 
+         data-date="{{ activity.start_date or '' }}" 
+         data-updated="{{ activity.updated_at.isoformat() if activity.updated_at else '' }}"
+         onclick="navigateToSessions(event, '/admin/activities/{{ activity.id }}/sessions')"
+         onkeydown="handleCardKeyDown(event, '/admin/activities/{{ activity.id }}/sessions')"
+         tabindex="0"
+         role="button"
+         data-i18n-title="tooltip_manage_sessions"
+         title="คลิกเพื่อจัดการรอบกิจกรรม"
+         aria-label="จัดการรอบกิจกรรม {{ activity.name }}">
         <div class="act-card-status-strip status-{{ activity.status }}"></div>
         <div class="act-card-body">
             <div class="act-card-top">
@@ -144,11 +154,22 @@
                         {% for grade in activity.eligible_grades.split(',') %}
                             {% set g_clean = grade.strip() %}
                             {% if g_clean %}
-                            <span class="act-grade-tag">{{ g_clean }}</span>
+                            <span class="act-grade-tag">{{ g_clean|replace('M.', 'ม.') }}</span>
                             {% endif %}
                         {% endfor %}
                     {% else %}
                         <span class="act-grade-tag" data-i18n="all_grades">ทุกระดับชั้น</span>
+                    {% endif %}
+
+                    {% if activity.eligible_rooms %}
+                        {% for r in activity.eligible_rooms.split(',') %}
+                            {% set r_clean = r.strip() %}
+                            {% if r_clean %}
+                            <span class="act-grade-tag act-room-tag">ห้อง {{ r_clean }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <span class="act-grade-tag act-room-tag" data-i18n="all_rooms">ทุกห้อง</span>
                     {% endif %}
                 </div>
             </div>
@@ -358,6 +379,34 @@ function closeDeleteModal() {
 window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeDeleteModal();
 });
+
+// Navigate to sessions when clicking card background
+function navigateToSessions(event, url) {
+    // Prevent navigation if clicking interactive controls inside card
+    if (event.target.closest('a, button, input, select, textarea, .act-more-wrapper, .act-more-menu')) {
+        return;
+    }
+    // Don't navigate if user is selecting text
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim().length > 0) {
+        return;
+    }
+    if (event.ctrlKey || event.metaKey || event.button === 1) {
+        window.open(url, '_blank');
+    } else {
+        window.location.href = url;
+    }
+}
+
+function handleCardKeyDown(event, url) {
+    if (event.key === 'Enter' || event.key === ' ') {
+        if (event.target.closest('a, button, input, select, textarea, .act-more-wrapper, .act-more-menu')) {
+            return;
+        }
+        event.preventDefault();
+        window.location.href = url;
+    }
+}
 
 // Dropdown menu toggle
 function toggleMenu(event, menuId) {
