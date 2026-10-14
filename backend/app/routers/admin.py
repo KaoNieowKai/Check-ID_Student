@@ -619,9 +619,57 @@ async def activities_list(
     elif error:
         error_msg = error
 
+    # Status counts for filter badges
+    status_counts = {}
+    all_activities = db.query(Activity).all()
+    for act in all_activities:
+        status_counts[act.status] = status_counts.get(act.status, 0) + 1
+    status_counts["all"] = len(all_activities)
+
+    # Session counts and attendance stats per activity
+    activity_session_counts = {}
+    activity_attendance_stats = {}
+    activity_ids = [a.id for a in activities]
+    if activity_ids:
+        session_count_rows = db.query(
+            ActivitySession.activity_id, func.count(ActivitySession.id)
+        ).filter(ActivitySession.activity_id.in_(activity_ids)).group_by(
+            ActivitySession.activity_id
+        ).all()
+        for aid, cnt in session_count_rows:
+            activity_session_counts[aid] = cnt
+
+        # Attendance counts per activity (sum across all sessions)
+        att_rows = db.query(
+            ActivitySession.activity_id, func.count(AttendanceRecord.id)
+        ).join(AttendanceRecord, AttendanceRecord.session_id == ActivitySession.id
+        ).filter(ActivitySession.activity_id.in_(activity_ids)
+        ).group_by(ActivitySession.activity_id).all()
+        for aid, cnt in att_rows:
+            activity_attendance_stats[aid] = cnt
+
+        # Expected students per activity (based on eligible grades)
+        for act in activities:
+            if act.eligible_grades:
+                grades = [g.strip() for g in act.eligible_grades.split(",") if g.strip()]
+                expected = db.query(func.count(Student.id)).filter(
+                    Student.grade.in_(grades), Student.is_active == True
+                ).scalar()
+            else:
+                expected = db.query(func.count(Student.id)).filter(Student.is_active == True).scalar()
+            n_sessions = activity_session_counts.get(act.id, 0)
+            activity_attendance_stats.setdefault(act.id, 0)
+            activity_attendance_stats[act.id] = {
+                "checked_in": activity_attendance_stats.get(act.id, 0) if isinstance(activity_attendance_stats.get(act.id), int) else activity_attendance_stats[act.id],
+                "expected": expected * n_sessions if n_sessions > 0 else expected,
+            }
+
     return templates.TemplateResponse("admin/activities.html", {
         "request": request, "user": user, "activities": activities,
         "status_filter": status_filter, "error": error_msg,
+        "status_counts": status_counts,
+        "activity_session_counts": activity_session_counts,
+        "activity_attendance_stats": activity_attendance_stats,
     })
 
 
@@ -751,10 +799,20 @@ async def sessions_list(
         ).scalar()
         session_stats[sess.id] = count
 
+    # Expected students
+    if activity.eligible_grades:
+        grades = [g.strip() for g in activity.eligible_grades.split(",") if g.strip()]
+        expected_students = db.query(func.count(Student.id)).filter(
+            Student.grade.in_(grades), Student.is_active == True
+        ).scalar() or 0
+    else:
+        expected_students = db.query(func.count(Student.id)).filter(Student.is_active == True).scalar() or 0
+
     return templates.TemplateResponse("admin/sessions.html", {
         "request": request, "user": user,
         "activity": activity, "sessions": sessions,
         "session_stats": session_stats,
+        "expected_students": expected_students,
     })
 
 

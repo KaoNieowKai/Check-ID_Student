@@ -2,6 +2,11 @@
 {% block title %}จัดการกิจกรรม — ผู้ดูแลระบบ{% endblock %}
 {% block page_title %}<span data-i18n="title_activities">จัดการกิจกรรม</span>{% endblock %}
 
+{% block extra_css %}
+{{ super() }}
+<link rel="stylesheet" href="/static/css/activities.css?v=20261014">
+{% endblock %}
+
 {% block content %}
 {% if error %}
 <div class="alert alert-error" style="margin-bottom: 20px;">
@@ -10,78 +15,322 @@
         <line x1="15" y1="9" x2="9" y2="15"/>
         <line x1="9" y1="9" x2="15" y2="15"/>
     </svg>
-    {{ error }}
+    <span>{{ error }}</span>
 </div>
 {% endif %}
 
-<div class="toolbar">
-    <div class="filter-form">
-        <a href="/admin/activities" class="btn btn-sm {% if not status_filter %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_all">ทั้งหมด</a>
-        <a href="/admin/activities?status=draft" class="btn btn-sm {% if status_filter == 'draft' %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_draft">แบบร่าง</a>
-        <a href="/admin/activities?status=active" class="btn btn-sm {% if status_filter == 'active' %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_active">กำลังใช้งาน</a>
-        <a href="/admin/activities?status=scheduled" class="btn btn-sm {% if status_filter == 'scheduled' %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_scheduled">กำหนดการแล้ว</a>
-        <a href="/admin/activities?status=completed" class="btn btn-sm {% if status_filter == 'completed' %}btn-primary{% else %}btn-outline{% endif %}" data-i18n="filter_completed">เสร็จสิ้น</a>
+<!-- ─── Header ────────────────────────────────────────── -->
+<div class="act-page-header">
+    <div class="act-page-header-text">
+        <h1>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="28" height="28" style="color: var(--primary);">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+                <polyline points="9 16 11 18 15 14"/>
+            </svg>
+            <span data-i18n="title_activities">จัดการกิจกรรม</span>
+        </h1>
+        <p data-i18n="activity_subtitle">สร้างกิจกรรมใหม่ หรือจัดการกิจกรรมที่มีอยู่ เพื่อเริ่มการเช็กชื่อได้อย่างง่ายดาย</p>
     </div>
-    <a href="/admin/activities/add" class="btn btn-primary">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+    <a href="/admin/activities/add" class="act-btn-create btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
         <span data-i18n="btn_create_activity">สร้างกิจกรรมใหม่</span>
     </a>
 </div>
 
-<div class="cards-grid">
+<!-- ─── Status Filter Tabs ───────────────────────────── -->
+<div class="act-filter-bar">
+    <a href="/admin/activities" class="act-filter-tab {% if not status_filter %}active{% endif %}">
+        <span data-i18n="filter_all">ทั้งหมด</span>
+        <span class="act-filter-count">{{ status_counts.get('all', activities|length) }}</span>
+    </a>
+    <a href="/admin/activities?status=draft" class="act-filter-tab {% if status_filter == 'draft' %}active{% endif %}">
+        <span data-i18n="filter_draft">แบบร่าง</span>
+        <span class="act-filter-count">{{ status_counts.get('draft', 0) }}</span>
+    </a>
+    <a href="/admin/activities?status=scheduled" class="act-filter-tab {% if status_filter == 'scheduled' %}active{% endif %}">
+        <span data-i18n="filter_scheduled">กำหนดการแล้ว</span>
+        <span class="act-filter-count">{{ status_counts.get('scheduled', 0) }}</span>
+    </a>
+    <a href="/admin/activities?status=active" class="act-filter-tab {% if status_filter == 'active' %}active{% endif %}">
+        <span data-i18n="filter_active">กำลังใช้งาน</span>
+        <span class="act-filter-count">{{ status_counts.get('active', 0) }}</span>
+    </a>
+    <a href="/admin/activities?status=completed" class="act-filter-tab {% if status_filter == 'completed' %}active{% endif %}">
+        <span data-i18n="filter_completed">เสร็จสิ้น</span>
+        <span class="act-filter-count">{{ status_counts.get('completed', 0) }}</span>
+    </a>
+</div>
+
+<!-- ─── Search & Sort Toolbar ────────────────────────── -->
+<div class="act-search-bar">
+    <div class="act-search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="actSearchInput" placeholder="ค้นหากิจกรรม..." data-i18n-placeholder="search_activity_placeholder" oninput="filterActivities()">
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+        <select id="actSortSelect" class="act-sort-select" onchange="sortActivities()">
+            <option value="latest" data-i18n="sort_latest">เรียงล่าสุด</option>
+            <option value="name" data-i18n="sort_name_asc">ชื่อ ก-ฮ</option>
+            <option value="date" data-i18n="sort_date">วันที่จัด</option>
+        </select>
+    </div>
+</div>
+
+<!-- ─── Activity Cards Grid ──────────────────────────── -->
+<div class="act-cards-grid" id="actCardsContainer">
     {% for activity in activities %}
-    <div class="activity-card">
-        <div class="activity-card-header">
-            <h3>{{ activity.name }}</h3>
-            <span class="status-badge status-{{ activity.status }}" data-i18n="status_{{ activity.status }}">{{ activity.status|thai_status }}</span>
-        </div>
-        {% if activity.description %}
-        <p class="activity-desc">{{ activity.description[:120] }}{% if activity.description|length > 120 %}...{% endif %}</p>
-        {% endif %}
-        <div class="activity-meta">
-            {% if activity.start_date %}
-            <span>📅 {{ activity.start_date|to_bangkok_date }}{% if activity.end_date %} — {{ activity.end_date|to_bangkok_date }}{% endif %}</span>
-            {% endif %}
-            {% if activity.eligible_grades %}
-            <span>🎓 {{ activity.eligible_grades }}</span>
+    {% set sess_cnt = activity_session_counts.get(activity.id, 0) %}
+    {% set att_stat = activity_attendance_stats.get(activity.id, {'checked_in': 0, 'expected': 0}) %}
+    <div class="act-card" data-name="{{ activity.name|lower }}" data-date="{{ activity.start_date or '' }}" data-updated="{{ activity.updated_at.isoformat() if activity.updated_at else '' }}">
+        <div class="act-card-status-strip status-{{ activity.status }}"></div>
+        <div class="act-card-body">
+            <div class="act-card-top">
+                <div class="act-card-icon status-{{ activity.status }}">
+                    {% if 'กีฬา' in activity.name %}
+                    🚩
+                    {% elif 'ไหว้ครู' in activity.name %}
+                    🙏
+                    {% elif 'อบรม' in activity.name or 'วิชาการ' in activity.name %}
+                    📖
+                    {% elif 'วิทย์' in activity.name or 'ค่าย' in activity.name %}
+                    🧪
+                    {% elif 'เด็ก' in activity.name %}
+                    ⚽
+                    {% else %}
+                    🎯
+                    {% endif %}
+                </div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px;">
+                        <h3 class="act-card-title">{{ activity.name }}</h3>
+                        <span class="status-badge status-{{ activity.status }}" data-i18n="status_{{ activity.status }}">{{ activity.status|thai_status }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {% if activity.description %}
+            <p class="act-card-desc">{{ activity.description }}</p>
             {% else %}
-            <span>🎓 <span data-i18n="all_grades">ทุกระดับชั้น</span></span>
+            <p class="act-card-desc" style="font-style: italic; opacity: 0.6;">ไม่มีรายละเอียดเพิ่มเติม</p>
             {% endif %}
-        </div>
-        <div class="activity-actions">
-            <a href="/admin/activities/{{ activity.id }}/sessions" class="btn btn-sm btn-primary" data-i18n="btn_sessions">รอบกิจกรรม</a>
-            <a href="/admin/activities/{{ activity.id }}/edit" class="btn btn-sm btn-outline" data-i18n="btn_edit">แก้ไข</a>
-            <button type="button" class="btn btn-sm btn-danger-outline" onclick="openDeleteModal({{ activity.id }}, '{{ activity.name|escape }}')" data-i18n="btn_delete">ลบ</button>
+
+            <div class="act-card-meta">
+                <div class="act-card-meta-row">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                    <span>
+                        {% if activity.start_date %}
+                            {{ activity.start_date|to_bangkok_date }}{% if activity.end_date and activity.end_date != activity.start_date %} — {{ activity.end_date|to_bangkok_date }}{% endif %}
+                        {% else %}
+                            <span style="color: var(--text-muted);">ไม่ได้ระบุวันที่</span>
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="act-card-grades">
+                    {% if activity.eligible_grades %}
+                        {% for grade in activity.eligible_grades.split(',') %}
+                            {% set g_clean = grade.strip() %}
+                            {% if g_clean %}
+                            <span class="act-grade-tag">{{ g_clean }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <span class="act-grade-tag" data-i18n="all_grades">ทุกระดับชั้น</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Stats & Quick Actions -->
+            <div class="act-card-stats">
+                <div class="act-card-stat" title="จำนวนรอบกิจกรรม">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                        <polyline points="2 17 12 22 22 17"/>
+                        <polyline points="2 12 12 17 22 12"/>
+                    </svg>
+                    {% if sess_cnt > 0 %}
+                    <span><strong>{{ sess_cnt }}</strong> <span data-i18n="session_count_suffix">รอบกิจกรรม</span></span>
+                    {% else %}
+                    <span style="color: var(--text-muted);" data-i18n="no_sessions_yet">ยังไม่มีรอบกิจกรรม</span>
+                    {% endif %}
+                </div>
+
+                <div class="act-card-stat" style="margin-left: auto;" title="สถิติการเช็กชื่อ">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                    <span><span data-i18n="checked_in_stat">เช็กชื่อแล้ว</span> <strong>{{ att_stat.checked_in if att_stat is mapping else 0 }}</strong>{% if att_stat is mapping and att_stat.expected > 0 %} / {{ att_stat.expected }}{% endif %} <span data-i18n="person_unit">คน</span></span>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 4px; margin-left: 10px;">
+                    <a href="/admin/activities/{{ activity.id }}/sessions" class="act-more-btn" title="ดูรอบกิจกรรม">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                    </a>
+                    <a href="/admin/activities/{{ activity.id }}/edit" class="act-more-btn" title="แก้ไข">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </a>
+                    <div class="act-more-wrapper">
+                        <button type="button" class="act-more-btn" onclick="toggleMenu(event, 'menu-{{ activity.id }}')" title="ตัวเลือกเพิ่มเติม">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                                <circle cx="12" cy="12" r="1"/>
+                                <circle cx="12" cy="5" r="1"/>
+                                <circle cx="12" cy="19" r="1"/>
+                            </svg>
+                        </button>
+                        <div id="menu-{{ activity.id }}" class="act-more-menu">
+                            <a href="/admin/activities/{{ activity.id }}/sessions" class="act-more-menu-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <polygon points="12 2 2 7 12 12 22 7 12 2"/>
+                                    <polyline points="2 17 12 22 22 17"/>
+                                    <polyline points="2 12 12 17 22 12"/>
+                                </svg>
+                                <span data-i18n="btn_sessions">รอบกิจกรรม</span>
+                            </a>
+                            <a href="/admin/activities/{{ activity.id }}/edit" class="act-more-menu-item">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                </svg>
+                                <span data-i18n="btn_edit">แก้ไขข้อมูล</span>
+                            </a>
+                            <div class="act-more-menu-divider"></div>
+                            <button type="button" class="act-more-menu-item danger" onclick="openDeleteModal({{ activity.id }}, '{{ activity.name|escape }}')">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                    <line x1="10" y1="11" x2="10" y2="17"/>
+                                    <line x1="14" y1="11" x2="14" y2="17"/>
+                                </svg>
+                                <span data-i18n="btn_delete">ลบกิจกรรม</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     {% endfor %}
+
     {% if not activities %}
-    <div class="empty-state-card">
-        <p data-i18n="empty_activities">ยังไม่มีกิจกรรมในระบบ</p>
-        <a href="/admin/activities/add" class="btn btn-primary" data-i18n="btn_create_first_activity">สร้างกิจกรรมแรก</a>
+    <div class="act-empty-state">
+        <div class="act-empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="32" height="32">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+        </div>
+        <h3 data-i18n="empty_activities">ยังไม่มีกิจกรรมในระบบ</h3>
+        <p>สร้างกิจกรรมแรกเพื่อเริ่มเปิดจุดเช็กชื่อและบันทึกการเข้าร่วมของนักเรียน</p>
+        <a href="/admin/activities/add" class="act-btn-create btn" style="display: inline-flex;" data-i18n="btn_create_first_activity">
+            สร้างกิจกรรมแรก
+        </a>
     </div>
     {% endif %}
 </div>
 
-<!-- Modal ยืนยันการลบกิจกรรม -->
-<div id="deleteModal" class="modal" style="display: none;">
-    <div class="modal-backdrop" onclick="closeDeleteModal()"></div>
-    <div class="modal-card">
-        <div class="modal-header">
+<!-- ─── Pagination Footer ────────────────────────────── -->
+{% if activities %}
+<div class="act-pagination">
+    <div class="act-pagination-info">
+        <span data-i18n="showing_prefix">แสดง</span>
+        <span id="actVisibleCount">{{ activities|length }}</span>
+        <span data-i18n="of_prefix">จาก</span>
+        <span>{{ activities|length }}</span>
+        <span data-i18n="items_suffix">รายการ</span>
+    </div>
+    <div class="act-pagination-controls">
+        <button type="button" class="act-page-btn" disabled>&lt;</button>
+        <button type="button" class="act-page-btn active">1</button>
+        <button type="button" class="act-page-btn" disabled>&gt;</button>
+    </div>
+</div>
+{% endif %}
+
+<!-- ─── Workflow Guide (Mockup Reference) ────────────── -->
+<div style="margin-top: 40px; padding-top: 24px; border-top: 1px dashed var(--border);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" style="color: var(--accent);">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+            <h4 style="font-size: 15px; font-weight: 700; color: var(--text); margin: 0;">ขั้นตอนการจัดการกิจกรรม (Workflow Guide)</h4>
+        </div>
+        <button type="button" class="act-guide-toggle" onclick="toggleGuide(this)">
+            <span>ย่อ/ขยาย</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                <polyline points="6 9 12 15 18 9"/>
+            </svg>
+        </button>
+    </div>
+
+    <div class="act-guide" id="actGuideSteps">
+        <div class="act-guide-step">
+            <span class="act-guide-number">1</span>
+            <h4 data-i18n="guide_step1_title">1. สร้างกิจกรรมใหม่</h4>
+            <p data-i18n="guide_step1_desc">กรอกข้อมูลกิจกรรมให้ครบถ้วน กำหนดวันและระดับชั้นที่เข้าร่วม</p>
+        </div>
+        <div class="act-guide-step">
+            <span class="act-guide-number">2</span>
+            <h4 data-i18n="guide_step2_title">2. จัดการรอบกิจกรรม</h4>
+            <p data-i18n="guide_step2_desc">เพิ่มรอบกิจกรรม เช่น ช่วงเช้า/ช่วงบ่าย เพื่อให้ครูเปิดจุดเช็กชื่อ</p>
+        </div>
+        <div class="act-guide-step">
+            <span class="act-guide-number">3</span>
+            <h4 data-i18n="guide_step3_title">3. พร้อมใช้งาน</h4>
+            <p data-i18n="guide_step3_desc">ครูเลือกรอบกิจกรรมที่กำหนดไว้ ไปเปิดจุดเช็กชื่อด้วย QR Code ได้ทันที</p>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Delete Confirmation Modal ────────────────────── -->
+<div id="deleteModal" class="act-modal">
+    <div class="act-modal-backdrop" onclick="closeDeleteModal()"></div>
+    <div class="act-modal-card">
+        <div class="act-modal-header">
             <h3 data-i18n="modal_delete_activity_title">ยืนยันการลบกิจกรรม</h3>
-            <button type="button" class="modal-close" onclick="closeDeleteModal()">&times;</button>
+            <button type="button" class="act-modal-close" onclick="closeDeleteModal()">&times;</button>
         </div>
-        <div class="modal-body">
-            <p class="modal-warning">
-                <span data-i18n="modal_delete_activity_prefix">⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรม</span> <strong id="deleteActivityName"></strong>?
-            </p>
-            <p style="color: var(--text-muted); font-size: 14px; margin-top: 8px;" data-i18n="modal_delete_activity_warning">
-                การดำเนินการนี้จะลบข้อมูลรอบกิจกรรม ประวัติการเช็กชื่อ และ QR Code ทั้งหมดที่เกี่ยวข้องกับกิจกรรมนี้อย่างถาวร
-            </p>
+        <div class="act-modal-warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div>
+                <span data-i18n="modal_delete_activity_prefix">คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรม</span>
+                <strong id="deleteActivityName" style="display: block; margin-top: 4px; font-size: 15px;"></strong>
+            </div>
         </div>
-        <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+        <p class="act-modal-info" data-i18n="modal_delete_activity_warning">
+            การดำเนินการนี้จะลบข้อมูลรอบกิจกรรม ประวัติการเช็กชื่อ และ QR Code ทั้งหมดที่เกี่ยวข้องกับกิจกรรมนี้อย่างถาวร
+        </p>
+        <div class="act-modal-footer">
             <button type="button" class="btn btn-outline" onclick="closeDeleteModal()" data-i18n="btn_cancel">ยกเลิก</button>
             <form id="deleteActivityForm" method="POST" style="margin: 0;">
                 <button type="submit" class="btn btn-danger" data-i18n="btn_confirm_delete">ยืนยันการลบ</button>
@@ -96,15 +345,98 @@
 function openDeleteModal(activityId, activityName) {
     document.getElementById('deleteActivityName').textContent = activityName;
     document.getElementById('deleteActivityForm').action = '/admin/activities/' + activityId + '/delete';
-    document.getElementById('deleteModal').style.display = 'flex';
+    const modal = document.getElementById('deleteModal');
+    modal.classList.add('show');
+    closeAllMenus();
 }
 
 function closeDeleteModal() {
-    document.getElementById('deleteModal').style.display = 'none';
+    const modal = document.getElementById('deleteModal');
+    modal.classList.remove('show');
 }
 
 window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeDeleteModal();
 });
+
+// Dropdown menu toggle
+function toggleMenu(event, menuId) {
+    event.stopPropagation();
+    const menu = document.getElementById(menuId);
+    const isOpen = menu.classList.contains('show');
+    closeAllMenus();
+    if (!isOpen) {
+        menu.classList.add('show');
+    }
+}
+
+function closeAllMenus() {
+    document.querySelectorAll('.act-more-menu.show').forEach(m => m.classList.remove('show'));
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.act-more-wrapper')) {
+        closeAllMenus();
+    }
+});
+
+// Client-side search filtering
+function filterActivities() {
+    const query = (document.getElementById('actSearchInput').value || '').trim().toLowerCase();
+    const cards = document.querySelectorAll('#actCardsContainer .act-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+        const name = card.getAttribute('data-name') || '';
+        const desc = (card.querySelector('.act-card-desc')?.textContent || '').toLowerCase();
+        if (name.includes(query) || desc.includes(query)) {
+            card.style.display = 'flex';
+            visible++;
+        } else {
+            card.style.display = 'none';
+        }
+    });
+
+    const counter = document.getElementById('actVisibleCount');
+    if (counter) counter.textContent = visible;
+}
+
+// Client-side sorting
+function sortActivities() {
+    const sortVal = document.getElementById('actSortSelect').value;
+    const container = document.getElementById('actCardsContainer');
+    const cards = Array.from(container.querySelectorAll('.act-card'));
+
+    cards.sort((a, b) => {
+        if (sortVal === 'name') {
+            const nameA = a.getAttribute('data-name') || '';
+            const nameB = b.getAttribute('data-name') || '';
+            return nameA.localeCompare(nameB, 'th');
+        } else if (sortVal === 'date') {
+            const dateA = a.getAttribute('data-date') || '';
+            const dateB = b.getAttribute('data-date') || '';
+            return dateB.localeCompare(dateA);
+        } else {
+            // Latest updated
+            const upA = a.getAttribute('data-updated') || '';
+            const upB = b.getAttribute('data-updated') || '';
+            return upB.localeCompare(upA);
+        }
+    });
+
+    cards.forEach(card => container.appendChild(card));
+}
+
+// Workflow guide collapse toggle
+function toggleGuide(btn) {
+    const steps = document.getElementById('actGuideSteps');
+    if (steps.style.display === 'none') {
+        steps.style.display = 'grid';
+        btn.classList.remove('collapsed');
+    } else {
+        steps.style.display = 'none';
+        btn.classList.add('collapsed');
+    }
+}
 </script>
 {% endblock %}

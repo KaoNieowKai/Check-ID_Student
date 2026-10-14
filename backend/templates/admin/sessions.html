@@ -2,79 +2,239 @@
 {% block title %}รอบกิจกรรม — {{ activity.name }} — ผู้ดูแลระบบ{% endblock %}
 {% block page_title %}<span data-i18n="title_sessions">รอบกิจกรรม</span> — {{ activity.name }}{% endblock %}
 
+{% block extra_css %}
+{{ super() }}
+<link rel="stylesheet" href="/static/css/activities.css?v=20261014">
+{% endblock %}
+
 {% block content %}
-<div class="breadcrumb" style="margin-bottom: 16px;">
-    <a href="/admin/activities" data-i18n="breadcrumb_activities">รายการกิจกรรม</a> &gt; <strong>{{ activity.name }}</strong>
+<div class="sess-breadcrumb">
+    <a href="/admin/activities" data-i18n="nav_activities">รายการกิจกรรม</a>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+        <polyline points="9 18 15 12 9 6"/>
+    </svg>
+    <span>{{ activity.name }}</span>
 </div>
 
-<div class="two-column-layout">
-    <div class="column-main">
+<div class="sess-activity-header">
+    <div>
+        <h2 class="sess-activity-title" style="display: flex; align-items: center; gap: 10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="26" height="26" style="color: var(--primary);">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <span>จัดการรอบกิจกรรม — {{ activity.name }}</span>
+        </h2>
+        <p style="font-size: 14px; color: var(--text-muted); margin: 4px 0 0 36px;">
+            ดูแลและจัดการรอบกิจกรรม เพื่อให้ครูเปิดจุดเช็กชื่อ
+        </p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="status-badge status-{{ activity.status }}" data-i18n="status_{{ activity.status }}">{{ activity.status|thai_status }}</span>
+        <button type="button" class="act-btn-create btn" id="toggleSessionFormBtn" onclick="toggleSessionForm()" style="padding: 9px 18px; font-size: 13px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span data-i18n="btn_add_session">เพิ่มรอบกิจกรรม</span>
+        </button>
+    </div>
+</div>
+
+<div class="sess-layout" id="sessLayout">
+    <!-- ─── Left Column: Sessions List ────────────────────── -->
+    <div class="sess-list-column">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: var(--text); margin: 0;">
+                <span>รอบกิจกรรม</span>
+                <span class="sess-count-badge" style="margin-left: 8px;">{{ sessions|length }} รอบ</span>
+            </h3>
+        </div>
+
         {% if sessions %}
-        <div class="sessions-list">
+        <div class="sess-list">
             {% for session in sessions %}
-            <div class="session-card">
-                <div class="session-header">
-                    <div>
-                        <h3>{{ session.name }}</h3>
-                        <div class="session-meta">
-                            <span>📅 {{ session.date|to_bangkok_date }}</span>
-                            {% if session.start_time %}
-                            <span>🕐 {{ session.start_time.strftime('%H:%M') }}{% if session.end_time %}–{{ session.end_time.strftime('%H:%M') }}{% endif %}</span>
-                            {% endif %}
-                            <span>👤 <span data-i18n="checked_in_prefix">เช็กชื่อแล้ว</span> {{ session_stats.get(session.id, 0) }} <span data-i18n="person_unit">คน</span></span>
-                        </div>
+            <div class="sess-card" id="session-card-{{ session.id }}">
+                <div class="sess-card-info">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                        <h4 class="sess-card-name" style="margin: 0;">{{ session.name }}</h4>
+                        <span class="status-badge status-{{ session.status }}" data-i18n="status_{{ session.status }}">{{ session.status|thai_status }}</span>
                     </div>
-                    <span class="status-badge status-{{ session.status }}" data-i18n="status_{{ session.status }}">{{ session.status|thai_status }}</span>
+                    <div class="sess-card-meta">
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                            {{ session.date|to_bangkok_date }}
+                        </span>
+                        {% if session.start_time %}
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            {{ session.start_time.strftime('%H:%M') }}{% if session.end_time %} - {{ session.end_time.strftime('%H:%M') }}{% endif %}
+                        </span>
+                        {% endif %}
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                <circle cx="9" cy="7" r="4"/>
+                            </svg>
+                            <span data-i18n="checked_in_stat">เช็กชื่อแล้ว</span>
+                            <strong>{{ session_stats.get(session.id, 0) }}</strong>{% if expected_students > 0 %} / {{ expected_students }}{% endif %}
+                            <span data-i18n="person_unit">คน</span>
+                        </span>
+                    </div>
                 </div>
-                <div class="session-actions">
-                    <button class="btn btn-sm btn-outline" onclick="editSession({{ session.id }}, '{{ session.name|escape }}', '{{ session.date }}', '{{ session.start_time.strftime('%H:%M') if session.start_time else '' }}', '{{ session.end_time.strftime('%H:%M') if session.end_time else '' }}', '{{ session.status }}')" data-i18n="btn_edit">แก้ไข</button>
-                    <form method="POST" action="/admin/sessions/{{ session.id }}/delete" style="display:inline" onsubmit="return confirm(t('modal_delete_session_confirm', 'คุณแน่ใจหรือไม่ว่าต้องการลบรอบกิจกรรมนี้?'))">
-                        <button type="submit" class="btn btn-sm btn-danger" data-i18n="btn_delete">ลบ</button>
+
+                <div class="sess-card-right">
+                    <button type="button" class="act-more-btn" title="แก้ไข"
+                            onclick="editSession({{ session.id }}, '{{ session.name|escape }}', '{{ session.date }}', '{{ session.start_time.strftime('%H:%M') if session.start_time else '' }}', '{{ session.end_time.strftime('%H:%M') if session.end_time else '' }}', '{{ session.status }}')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                    </button>
+                    <form method="POST" action="/admin/sessions/{{ session.id }}/delete" style="display:inline; margin:0;"
+                          onsubmit="return confirm(t('modal_delete_session_confirm', 'คุณแน่ใจหรือไม่ว่าต้องการลบรอบกิจกรรมนี้?'))">
+                        <button type="submit" class="act-more-btn" title="ลบ" style="color: var(--danger);">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                        </button>
                     </form>
                 </div>
             </div>
             {% endfor %}
         </div>
         {% else %}
-        <div class="empty-state-card">
-            <p data-i18n="empty_sessions">ยังไม่มีรอบกิจกรรมสำหรับกิจกรรมนี้ กรุณาเพิ่มรอบกิจกรรมจากแบบฟอร์มด้านขวา</p>
+        <div class="sess-empty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            <h4 style="font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px;" data-i18n="no_sessions_yet">ยังไม่มีรอบกิจกรรม</h4>
+            <p data-i18n="empty_sessions">กรุณาเพิ่มรอบกิจกรรม เพื่อกำหนดช่วงเวลาและเริ่มให้ครูเปิดเช็กชื่อ</p>
+            <button type="button" class="act-btn-create btn" onclick="openNewSessionForm()" style="margin-top: 16px; display: inline-flex;" data-i18n="btn_add_session">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                <span>เพิ่มรอบกิจกรรมใหม่</span>
+            </button>
         </div>
         {% endif %}
+
+        <!-- ─── Ready State Banner (Mockup Step 3) ────────────── -->
+        <div style="margin-top: 28px; background: linear-gradient(135deg, rgba(37,99,235,0.04) 0%, rgba(236,72,153,0.06) 100%); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <div style="width: 52px; height: 52px; border-radius: 14px; background: var(--accent); color: white; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.35);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                </div>
+                <div>
+                    <h4 style="font-size: 16px; font-weight: 800; color: var(--text); margin: 0 0 4px;" data-i18n="activity_ready_title">
+                        กิจกรรมพร้อมใช้งานแล้ว!
+                    </h4>
+                    <p style="font-size: 13px; color: var(--text-muted); margin: 0;" data-i18n="activity_ready_desc">
+                        ครูสามารถเลือกรอบกิจกรรม ที่กำหนดไว้ ไปเปิดจุดเช็กชื่อด้วย QR Code ได้
+                    </p>
+                </div>
+            </div>
+            <a href="/admin/attendance" class="btn btn-outline" style="white-space: nowrap;">
+                <span data-i18n="sec_attendance">จัดการการเข้าร่วม</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </a>
+        </div>
     </div>
 
-    <div class="column-side">
-        <div class="form-card" id="sessionForm">
-            <h3 id="formTitle" data-i18n="add_new_session_title">เพิ่มรอบกิจกรรมใหม่</h3>
+    <!-- ─── Right Column: Add/Edit Session Form (Collapsible) ────────────── -->
+    <div class="sess-form-column" id="sessionFormColumn" style="display: none;">
+        <div class="sess-form-card" id="sessionFormCard">
+            <div class="sess-form-header" style="justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <h3 id="formTitle" data-i18n="add_new_session_title" style="margin: 0;">เพิ่มรอบกิจกรรมใหม่</h3>
+                </div>
+                <button type="button" class="act-modal-close" onclick="closeSessionForm()" title="ปิด" style="width: 28px; height: 28px; font-size: 16px; cursor: pointer;">&times;</button>
+            </div>
             <form method="POST" id="sessionFormEl" action="/admin/activities/{{ activity.id }}/sessions/add">
-                <div class="form-group">
-                    <label for="name"><span data-i18n="lbl_session_name">ชื่อรอบกิจกรรม</span> <span style="color: var(--danger);">*</span></label>
-                    <input type="text" id="sessionName" name="name" required placeholder="เช่น ช่วงเช้า วันที่ 1" data-i18n-placeholder="ph_session_name">
-                </div>
-                <div class="form-group">
-                    <label for="session_date"><span data-i18n="lbl_session_date">วันที่</span> <span style="color: var(--danger);">*</span></label>
-                    <input type="date" id="sessionDate" name="session_date" required>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="start_time" data-i18n="lbl_start_time">เวลาเริ่มต้น</label>
-                        <input type="time" id="startTime" name="start_time">
+                <div class="sess-form-body">
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="sessionName" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">
+                            <span data-i18n="lbl_session_name">ชื่อรอบกิจกรรม</span>
+                            <span style="color: var(--accent);">*</span>
+                        </label>
+                        <input type="text" id="sessionName" name="name" required
+                               placeholder="เช่น ช่วงเช้า วันที่ 1" data-i18n-placeholder="ph_session_name"
+                               style="width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit;">
                     </div>
-                    <div class="form-group">
-                        <label for="end_time" data-i18n="lbl_end_time">เวลาสิ้นสุด</label>
-                        <input type="time" id="endTime" name="end_time">
+
+                    <div class="form-group" style="margin-bottom: 16px;">
+                        <label for="sessionDate" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;">
+                            <span data-i18n="lbl_session_date">วันที่จัด</span>
+                            <span style="color: var(--accent);">*</span>
+                        </label>
+                        <input type="date" id="sessionDate" name="session_date" required
+                               value="{{ activity.start_date if activity.start_date else '' }}"
+                               style="width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                        <div class="form-group">
+                            <label for="startTime" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;" data-i18n="lbl_start_time">
+                                เวลาเริ่มต้น
+                            </label>
+                            <input type="time" id="startTime" name="start_time"
+                                   style="width: 100%; padding: 10px 12px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit;">
+                        </div>
+                        <div class="form-group">
+                            <label for="endTime" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;" data-i18n="lbl_end_time">
+                                เวลาสิ้นสุด
+                            </label>
+                            <input type="time" id="endTime" name="end_time"
+                                   style="width: 100%; padding: 10px 12px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit;">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 8px;">
+                        <label for="sessionStatus" style="font-weight: 600; font-size: 13px; margin-bottom: 6px; display: block;" data-i18n="lbl_status">
+                            สถานะ
+                        </label>
+                        <select id="sessionStatus" name="status" class="form-select"
+                                style="width: 100%; padding: 10px 14px; border: 2px solid var(--border); border-radius: var(--radius-sm); font-size: 14px; background: var(--surface); color: var(--text); font-family: inherit;">
+                            <option value="draft" data-i18n="status_draft">แบบร่าง</option>
+                            <option value="scheduled" data-i18n="status_scheduled">กำหนดการแล้ว</option>
+                            <option value="active" selected data-i18n="status_active">กำลังใช้งาน</option>
+                            <option value="completed" data-i18n="status_completed">เสร็จสิ้น</option>
+                        </select>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="status" data-i18n="lbl_status">สถานะ</label>
-                    <select id="sessionStatus" name="status" class="form-select">
-                        <option value="draft" data-i18n="status_draft">แบบร่าง</option>
-                        <option value="scheduled" data-i18n="status_scheduled">กำหนดการแล้ว</option>
-                        <option value="active" selected data-i18n="status_active">กำลังใช้งาน</option>
-                        <option value="completed" data-i18n="status_completed">เสร็จสิ้น</option>
-                    </select>
+
+                <div class="sess-form-actions">
+                    <button type="button" class="btn btn-outline" id="cancelFormBtn" onclick="closeSessionForm()" data-i18n="btn_cancel">
+                        ยกเลิก
+                    </button>
+                    <button type="submit" class="act-btn-create btn" id="formSubmitBtn" style="width: 100%; justify-content: center;" data-i18n="btn_save_activity">
+                        บันทึก
+                    </button>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block" id="formSubmitBtn" data-i18n="add_new_session_title">เพิ่มรอบกิจกรรมใหม่</button>
-                <button type="button" class="btn btn-outline btn-block" id="cancelEditBtn" style="display:none; margin-top: 8px;" onclick="resetForm()" data-i18n="btn_cancel_edit">ยกเลิกการแก้ไข</button>
             </form>
         </div>
     </div>
@@ -83,28 +243,79 @@
 
 {% block extra_js %}
 <script>
+let currentEditId = null;
+
+function toggleSessionForm() {
+    const layout = document.getElementById('sessLayout');
+    const isFormOpen = layout.classList.contains('has-form');
+    if (!isFormOpen) {
+        openNewSessionForm();
+    } else if (currentEditId !== null) {
+        // Was in edit mode, switch to new session mode
+        openNewSessionForm();
+    } else {
+        closeSessionForm();
+    }
+}
+
+function openNewSessionForm() {
+    currentEditId = null;
+    const layout = document.getElementById('sessLayout');
+    const col = document.getElementById('sessionFormColumn');
+    layout.classList.add('has-form');
+    if (col) col.style.display = 'block';
+
+    document.getElementById('formTitle').textContent = t('add_new_session_title', 'เพิ่มรอบกิจกรรมใหม่');
+    document.getElementById('formSubmitBtn').textContent = t('btn_save_activity', 'บันทึก');
+    document.getElementById('sessionFormEl').action = '/admin/activities/{{ activity.id }}/sessions/add';
+    document.getElementById('sessionFormEl').reset();
+
+    const card = document.getElementById('sessionFormCard');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => {
+        document.getElementById('sessionName').focus();
+    }, 120);
+}
+
+function closeSessionForm() {
+    currentEditId = null;
+    const layout = document.getElementById('sessLayout');
+    const col = document.getElementById('sessionFormColumn');
+    layout.classList.remove('has-form');
+    if (col) col.style.display = 'none';
+    document.getElementById('sessionFormEl').reset();
+}
+
 function editSession(id, name, date, startTime, endTime, status) {
-    document.getElementById('formTitle').setAttribute('data-i18n', 'edit_session_title');
+    currentEditId = id;
+    const layout = document.getElementById('sessLayout');
+    const col = document.getElementById('sessionFormColumn');
+    layout.classList.add('has-form');
+    if (col) col.style.display = 'block';
+
     document.getElementById('formTitle').textContent = t('edit_session_title', 'แก้ไขรอบกิจกรรม');
-    document.getElementById('formSubmitBtn').setAttribute('data-i18n', 'btn_save_changes');
     document.getElementById('formSubmitBtn').textContent = t('btn_save_changes', 'บันทึกการเปลี่ยนแปลง');
-    document.getElementById('cancelEditBtn').style.display = 'block';
     document.getElementById('sessionFormEl').action = '/admin/sessions/' + id + '/edit';
     document.getElementById('sessionName').value = name;
     document.getElementById('sessionDate').value = date;
     document.getElementById('startTime').value = startTime;
     document.getElementById('endTime').value = endTime;
     document.getElementById('sessionStatus').value = status;
-    document.getElementById('sessionForm').scrollIntoView({ behavior: 'smooth' });
+
+    const card = document.getElementById('sessionFormCard');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    setTimeout(() => {
+        document.getElementById('sessionName').focus();
+    }, 120);
 }
-function resetForm() {
-    document.getElementById('formTitle').setAttribute('data-i18n', 'add_new_session_title');
-    document.getElementById('formTitle').textContent = t('add_new_session_title', 'เพิ่มรอบกิจกรรมใหม่');
-    document.getElementById('formSubmitBtn').setAttribute('data-i18n', 'add_new_session_title');
-    document.getElementById('formSubmitBtn').textContent = t('add_new_session_title', 'เพิ่มรอบกิจกรรมใหม่');
-    document.getElementById('cancelEditBtn').style.display = 'none';
-    document.getElementById('sessionFormEl').action = '/admin/activities/{{ activity.id }}/sessions/add';
-    document.getElementById('sessionFormEl').reset();
-}
+
+window.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const layout = document.getElementById('sessLayout');
+        if (layout && layout.classList.contains('has-form')) {
+            closeSessionForm();
+        }
+    }
+});
 </script>
 {% endblock %}

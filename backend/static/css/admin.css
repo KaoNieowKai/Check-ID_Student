@@ -318,3 +318,43 @@
         padding: 20px;
     }
 }
+
+/* ─── Collapsible Side Column Layout ─────────── */
+.two-column-layout.collapsible-side {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+    transition: all var(--transition);
+}
+
+.two-column-layout.collapsible-side.has-form {
+    grid-template-columns: 1fr 380px;
+}
+
+.two-column-layout.collapsible-side .column-side {
+    display: none;
+}
+
+.two-column-layout.collapsible-side.has-form .column-side {
+    display: block;
+    animation: sideFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sideFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 1024px) {
+    .two-column-layout.collapsible-side,
+    .two-column-layout.collapsible-side.has-form {
+        grid-template-columns: 1fr;
+    }
+}
+
