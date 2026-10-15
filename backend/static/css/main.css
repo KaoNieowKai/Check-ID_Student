@@ -55,6 +55,12 @@
     /* Transitions */
     --transition: 0.2s ease;
     --transition-slow: 0.3s ease;
+
+    /* Mobile Safe Area Insets */
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-right: env(safe-area-inset-right, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --safe-left: env(safe-area-inset-left, 0px);
 }
 
 /* ─── Reset & Base ────────────────────────────── */
@@ -69,6 +75,8 @@
 html {
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    overflow-x: hidden;
 }
 
 body {
@@ -77,6 +85,13 @@ body {
     background: var(--bg);
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    min-width: 320px;
+    width: 100%;
+}
+
+img, svg {
+    max-width: 100%;
 }
 
 a {
@@ -424,17 +439,43 @@ label {
     color: var(--success);
 }
 
+.status-absent {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.status-leave {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
+.status-sick_leave,
+.status-sick {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+}
+
+.status-late {
+    background: var(--warning-bg);
+    color: var(--warning);
+}
+
 /* ─── Tables ──────────────────────────────────── */
 .table-container {
     background: var(--surface);
     border-radius: var(--radius);
     border: 1px solid var(--border);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
 }
 
 .data-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 520px;
 }
 
 .data-table th {
@@ -761,7 +802,11 @@ code {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 1100;
+    padding: 16px;
+    padding-top: max(16px, var(--safe-top));
+    padding-bottom: max(16px, var(--safe-bottom));
+    overflow-y: auto;
 }
 
 .modal-card {
@@ -770,12 +815,25 @@ code {
     padding: 32px;
     width: 100%;
     max-width: 480px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
     box-shadow: var(--shadow-xl);
+    margin: auto;
 }
 
 .modal-card h3 {
     font-size: 20px;
     margin-bottom: 16px;
+}
+
+.top-right-controls {
+    position: fixed;
+    top: max(16px, var(--safe-top));
+    right: max(16px, var(--safe-right));
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 1000;
 }
 
 /* ─── Import ──────────────────────────────────── */
@@ -1207,10 +1265,17 @@ code {
     .toolbar {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
     }
 
     .filter-form {
         flex-direction: column;
+        width: 100%;
+        gap: 10px;
+    }
+
+    .search-box {
+        width: 100%;
     }
 
     .search-box input {
@@ -1219,19 +1284,27 @@ code {
 
     .toolbar-actions {
         justify-content: stretch;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
     }
 
     .toolbar-actions .btn {
-        flex: 1;
+        flex: 1 1 calc(50% - 4px);
+        min-width: 120px;
+        justify-content: center;
+        text-align: center;
     }
 
     .form-row {
         grid-template-columns: 1fr;
+        gap: 12px;
     }
 
     .student-info-card {
         flex-direction: column;
-        gap: 8px;
+        gap: 10px;
+        padding: 16px;
     }
 
     .session-card {
@@ -1241,6 +1314,86 @@ code {
 
     .session-actions {
         margin-left: 0;
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    /* Prevent auto zoom on mobile inputs in iOS Safari */
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="number"],
+    input[type="date"],
+    input[type="time"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .toolbar-actions .btn {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+    .modal-card {
+        padding: 20px 16px;
+    }
+    .modal-card .form-actions,
+    .modal-card .modal-actions {
+        flex-direction: column-reverse;
+        gap: 8px;
+    }
+    .modal-card .form-actions .btn,
+    .modal-card .modal-actions .btn {
+        width: 100%;
+    }
+    .login-card {
+        padding: 24px 18px;
+        border-radius: var(--radius);
+    }
+    .login-container {
+        padding: 16px 12px;
+        padding-top: max(56px, calc(var(--safe-top) + 48px));
+    }
+    .top-right-controls {
+        top: max(8px, var(--safe-top));
+        right: max(8px, var(--safe-right));
+        gap: 6px;
+    }
+    .pagination {
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+    .pagination .page-info {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+@media (max-width: 360px) {
+    .btn {
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+    .table-info {
+        font-size: 12px;
+    }
+/* ─── Export Actions Row ──────────────────────── */
+.export-actions-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+@media (max-width: 600px) {
+    .export-actions-row {
+        flex-direction: column;
+    }
+    .export-actions-row .btn {
+        width: 100% !important;
+        flex: 1 1 100% !important;
     }
 }
 

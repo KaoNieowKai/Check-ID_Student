@@ -7,10 +7,11 @@
     <a href="/admin/students" data-i18n="breadcrumb_students">รายชื่อนักเรียน</a> &gt; <strong>{{ student.full_name }}</strong>
 </div>
 
-<div class="student-info-card" style="background: white; border-radius: var(--border-radius); padding: 20px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: flex; gap: 30px;">
-    <div class="info-row"><strong data-i18n="lbl_history_student_id">รหัสนักเรียน:</strong> <code>{{ student.student_id }}</code></div>
-    <div class="info-row"><strong data-i18n="lbl_history_grade">ระดับชั้น:</strong> <span class="badge">{{ student.grade }}</span></div>
-    <div class="info-row"><strong data-i18n="lbl_history_room">ห้อง:</strong> {{ student.room }}</div>
+<div class="student-info-card" style="background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 24px; margin-bottom: 20px; box-shadow: var(--shadow-sm); display: flex; gap: 20px 36px; flex-wrap: wrap; align-items: center;">
+    <div class="info-row"><strong data-i18n="lbl_fullname">ชื่อ-นามสกุล:</strong> <span style="font-weight: 600; margin-left: 6px;">{{ student.full_name }}</span></div>
+    <div class="info-row"><strong data-i18n="lbl_history_student_id">รหัสนักเรียน:</strong> <code style="margin-left: 6px;">{{ student.student_id }}</code></div>
+    <div class="info-row"><strong data-i18n="lbl_history_grade">ระดับชั้น:</strong> <span class="badge" style="margin-left: 6px;">{{ student.grade }}</span></div>
+    <div class="info-row"><strong data-i18n="lbl_history_room">ห้อง:</strong> <span style="margin-left: 6px;">{{ student.room }}</span></div>
 </div>
 
 <div class="table-container">
@@ -31,15 +32,15 @@
                 <td><strong>{{ rec.session.activity.name }}</strong></td>
                 <td>{{ rec.session.name }}</td>
                 <td>{{ rec.session.date|to_bangkok_date }}</td>
-                <td><span class="status-badge status-active" data-i18n="status_{{ rec.status }}">{{ rec.status|thai_status }}</span></td>
+                <td><span class="status-badge status-{{ rec.status }}" data-i18n="status_{{ rec.status }}">{{ rec.status|thai_status }}</span></td>
                 <td>{{ rec.checked_in_at|to_bangkok }}</td>
                 <td>
-                    {% if rec.checked_in_method == 'qr' %}
+                    {% if rec.checked_in_method == 'qr' or rec.checked_in_method == 'admin_manual' %}
                     <span class="badge" style="background: var(--primary-bg); color: var(--primary);" data-i18n="method_qr">สแกน QR</span>
                     {% elif rec.checked_in_method == 'manual' %}
-                    <span class="badge" style="background: var(--surface); color: var(--text-muted);" data-i18n="method_manual">โดยครูผู้สอน</span>
+                    <span class="badge" style="background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border);" data-i18n="method_manual">โดยครูผู้สอน</span>
                     {% else %}
-                    {{ rec.checked_in_method }}
+                    <span class="badge" style="background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border);">{{ rec.checked_in_method or '-' }}</span>
                     {% endif %}
                 </td>
             </tr>

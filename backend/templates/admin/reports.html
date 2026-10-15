@@ -5,7 +5,7 @@
 {% block content %}
 <div class="reports-container" style="max-width: 650px;">
     <div class="form-card">
-        <h3 data-i18n="export_excel_heading">ส่งออกข้อมูลการเช็กชื่อเป็นไฟล์ Excel</h3>
+        <h3 data-i18n="export_excel_heading">ส่งออกข้อมูลการเช็กชื่อเป็นไฟล์ Excel & PDF</h3>
         <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;" data-i18n="export_excel_desc">
             เลือกกิจกรรมหรือรอบกิจกรรมที่ต้องการดาวน์โหลดรายงานสรุปการเข้าร่วมของนักเรียน
         </p>
@@ -40,8 +40,8 @@
                     <input type="text" name="room" class="form-input" placeholder="เช่น 7" data-i18n-placeholder="ph_room_filter">
                 </div>
             </div>
-            <div style="display: flex; gap: 12px; margin-top: 10px;">
-                <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+            <div class="export-actions-row" style="display: flex; gap: 12px; margin-top: 10px; flex-wrap: wrap;">
+                <button type="submit" class="btn btn-primary btn-lg" style="flex: 1 1 200px;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                         <polyline points="7 10 12 15 17 10"/>

@@ -9,7 +9,7 @@
     .teacher-header { background-color: var(--surface) !important; border-bottom: 1px solid var(--border) !important; }
     .reports-container { max-width: 860px; margin: 0 auto; padding: 0 20px; }
     .reports-content { padding: 32px 0 60px; display: flex; flex-direction: column; gap: 28px; }
-    .reports-subtitle { color: #64748B; font-size: 0.95rem; margin-top: 4px; }
+    .reports-subtitle { color: var(--text-secondary); font-size: 0.95rem; margin-top: 4px; }
 
     .session-card {
         background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
@@ -91,6 +91,16 @@
         display: none; align-items: center; gap: 7px;
     }
     .session-required-hint.show { display: flex; }
+
+    @media (max-width: 600px) {
+        .btn-download-blue, .btn-download-pink {
+            width: 100%;
+            justify-content: center;
+        }
+        .session-card, .report-card {
+            padding: 20px 16px;
+        }
+    }
 </style>
 {% endblock %}
 

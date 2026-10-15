@@ -237,12 +237,20 @@
     .attendance-body {
         grid-template-columns: 1fr;
     }
-    .qr-section { padding: 24px; border-right: none; border-bottom: 1px solid var(--border); }
-    .qr-image { width: 250px; height: 250px; }
+    .qr-section {
+        padding: 24px 16px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+    .qr-image {
+        width: min(280px, calc(100vw - 64px));
+        height: auto;
+    }
     .stats-section {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        padding: 24px;
+        padding: 24px 16px;
+        gap: 16px;
     }
     .last-checkin { grid-column: span 2; }
 }
@@ -250,17 +258,96 @@
 @media (max-width: 768px) {
     .teacher-header {
         flex-direction: column;
-        gap: 12px;
+        gap: 14px;
         text-align: center;
-        padding: 16px;
+        padding: 16px 14px;
+        padding-top: max(16px, var(--safe-top));
+    }
+    .teacher-header > div:last-child {
+        justify-content: center;
+        flex-wrap: wrap;
     }
     .attendance-header {
         flex-direction: column;
-        gap: 12px;
-        padding: 16px;
+        gap: 14px;
+        padding: 16px 14px;
+        padding-top: max(16px, var(--safe-top));
+        text-align: center;
     }
-    .header-actions { flex-wrap: wrap; justify-content: center; }
-    .stat-big .stat-number { font-size: 36px; }
-    .stats-section { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .header-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        gap: 8px;
+    }
+    .header-actions .btn {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 120px;
+        justify-content: center;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+    .stat-big .stat-number { font-size: 32px; }
+    .stats-section {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 20px 14px;
+    }
     .last-checkin { grid-column: span 2; }
+    .select-card {
+        padding: 20px 16px;
+    }
+    .activity-btn, .session-btn {
+        padding: 14px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-actions .btn {
+        flex: 1 1 100%;
+        width: 100%;
+    }
+    .qr-section {
+        padding: 20px 12px;
+    }
+    .qr-code {
+        padding: 12px;
+    }
+    .qr-image {
+        width: min(240px, calc(100vw - 48px));
+    }
+    .qr-loading {
+        width: min(240px, calc(100vw - 48px));
+        height: min(240px, calc(100vw - 48px));
+    }
+    .stats-section {
+        padding: 16px 10px;
+        gap: 10px;
+    }
+    .stat-big {
+        padding: 16px 12px;
+    }
+    .stat-big .stat-number {
+        font-size: 26px;
+    }
+    .stat-big .stat-label {
+        font-size: 13px;
+    }
+    .activity-btn, .session-btn {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}
+
+@media (max-width: 360px) {
+    .stats-section {
+        grid-template-columns: 1fr;
+    }
+    .last-checkin {
+        grid-column: span 1;
+    }
+    .qr-image {
+        width: min(210px, calc(100vw - 40px));
+    }
 }

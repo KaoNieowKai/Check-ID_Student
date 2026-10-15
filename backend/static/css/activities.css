@@ -1194,6 +1194,7 @@
 
     .act-btn-create {
         width: 100%;
+        justify-content: center;
     }
 
     .act-cards-grid {
@@ -1203,16 +1204,33 @@
     .act-search-bar {
         flex-direction: column;
         align-items: stretch;
+        gap: 10px;
     }
 
     .act-search-box {
         max-width: 100%;
     }
 
+    .act-search-bar > div:last-child {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+
+    .act-sort-select {
+        width: 100%;
+    }
+
     .act-filter-bar {
         overflow-x: auto;
         flex-wrap: nowrap;
         -webkit-overflow-scrolling: touch;
+        padding-bottom: 6px;
+    }
+
+    .act-filter-tab {
+        white-space: nowrap;
+        flex-shrink: 0;
+        min-height: 40px;
     }
 
     .act-card-actions {
@@ -1223,9 +1241,24 @@
         min-width: calc(50% - 4px);
     }
 
+    .act-card-stats {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .act-card-stats > div:last-child {
+        width: 100%;
+        justify-content: flex-end;
+        margin-left: 0 !important;
+        margin-top: 4px;
+        padding-top: 8px;
+        border-top: 1px dashed var(--border);
+    }
+
     .sess-card {
         flex-direction: column;
         align-items: flex-start;
+        gap: 12px;
     }
 
     .sess-card-right {
@@ -1233,12 +1266,56 @@
         justify-content: space-between;
     }
 
+    .sess-activity-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 14px;
+    }
+
+    .sess-activity-header > div:last-child {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+
     .act-form-actions {
         flex-direction: column-reverse;
+    }
+
+    .act-form-actions .btn {
+        width: 100%;
+        justify-content: center;
     }
 
     .act-pagination {
         flex-direction: column;
         gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .act-page-header-text h1 {
+        font-size: 20px;
+    }
+    .act-card-title {
+        font-size: 16px;
+    }
+    .act-grade-checkbox-group {
+        gap: 6px;
+    }
+    .act-grade-checkbox {
+        padding: 6px 12px;
+        font-size: 13px;
+        min-height: 40px;
+    }
+    .act-modal-card {
+        padding: 20px 16px;
+        max-width: calc(100vw - 24px);
+        margin: 12px;
+    }
+    .sess-card-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
     }
 }
