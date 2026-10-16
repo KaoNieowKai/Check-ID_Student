@@ -62,10 +62,10 @@
             
             switcher.innerHTML = `
                 <div class="theme-switcher-container" style="position: relative;">
-                    <button class="theme-btn" onclick="document.getElementById('${dropdownId}').classList.toggle('show')">
+                    <button class="theme-btn" onclick="const dd = document.getElementById('${dropdownId}'); const isOpen = dd.classList.contains('show') || dd.style.display === 'flex'; dd.classList.toggle('show'); dd.style.display = isOpen ? 'none' : 'flex';">
                         ${currentIcon}
                     </button>
-                    <div id="${dropdownId}" class="theme-dropdown">
+                    <div id="${dropdownId}" class="theme-dropdown" style="display: none;">
                         <button class="theme-option ${currentTheme === 'light' ? 'selected' : ''}" onclick="setTheme('light')">
                             ${sunIcon} <span>${getThemeLabel('light')}</span>
                             ${currentTheme === 'light' ? '<svg class="check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
@@ -86,10 +86,11 @@
 
     // close dropdown when clicking outside
     document.addEventListener('click', function(event) {
-        document.querySelectorAll('.theme-dropdown.show').forEach(dropdown => {
+        document.querySelectorAll('.theme-dropdown').forEach(dropdown => {
             const container = dropdown.closest('.theme-switcher-container');
             if (container && !container.contains(event.target)) {
                 dropdown.classList.remove('show');
+                dropdown.style.display = 'none';
             }
         });
     });
