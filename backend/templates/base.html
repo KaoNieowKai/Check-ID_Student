@@ -13,10 +13,85 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/main.css?v=4">
+    <link rel="stylesheet" href="/static/css/main.css?v=6">
+    <style id="critical-nav-styles">
+        /* Critical Language & Theme Switcher Styles (immune to browser caching) */
+        .lang-switcher { position: relative; display: inline-block; user-select: none; vertical-align: middle; }
+        .lang-trigger-btn {
+            display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 10px; height: 38px;
+            border-radius: 9999px; border: 1.5px solid #FF2E79; background: rgba(18, 14, 28, 0.7);
+            box-shadow: 0 0 10px rgba(255, 46, 121, 0.45); color: #FFFFFF; font-size: 13.5px; font-weight: 700;
+            font-family: inherit; letter-spacing: 0.5px; cursor: pointer; transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            outline: none; line-height: 1; box-sizing: border-box;
+        }
+        .lang-trigger-btn:hover { box-shadow: 0 0 16px rgba(255, 46, 121, 0.65); border-color: #FF4D8D; transform: translateY(-1px); }
+        .lang-trigger-btn.open { box-shadow: 0 0 18px rgba(255, 46, 121, 0.75); border-color: #FF4D8D; }
+        .lang-trigger-btn .lang-chevron { transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); color: inherit; flex-shrink: 0; }
+        .lang-trigger-btn.open .lang-chevron { transform: rotate(180deg); }
+        .lang-flag-badge {
+            width: 20px; height: 20px; min-width: 20px; border-radius: 50%; overflow: hidden;
+            display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4); background: #000;
+        }
+        .lang-flag-badge svg { width: 100%; height: 100%; display: block; }
+        .lang-code-current { font-size: 13px; font-weight: 700; line-height: 1; }
+        .lang-dropdown-menu {
+            position: absolute; top: calc(100% + 8px); right: 0; min-width: 165px; padding: 6px;
+            background: rgba(22, 17, 34, 0.96); border: 1px solid rgba(255, 46, 121, 0.35); border-radius: 14px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 16px rgba(255, 46, 121, 0.18);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); display: none; flex-direction: column;
+            gap: 4px; z-index: 10000; box-sizing: border-box;
+        }
+        .lang-dropdown-menu.show { display: flex !important; }
+        .lang-option {
+            display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px;
+            border-radius: 10px; border: 1px solid transparent; background: transparent; color: #F8FAFC;
+            font-size: 13.5px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 0.15s ease;
+            text-align: left; outline: none; user-select: none; box-sizing: border-box;
+        }
+        .lang-option:hover { background: rgba(255, 255, 255, 0.08); }
+        .lang-option.active { background: rgba(255, 46, 121, 0.16); border-color: rgba(255, 46, 121, 0.35); color: #FFFFFF; font-weight: 600; }
+        .lang-option-label { flex: 1; white-space: nowrap; }
+        .lang-check { color: #FF2E79; flex-shrink: 0; display: none; }
+        .lang-option.active .lang-check { display: block; }
+
+        :root:not([data-theme="dark"]) .lang-trigger-btn { background: rgba(255, 255, 255, 0.95); color: #0F172A; border-color: #EC4899; box-shadow: 0 0 8px rgba(236, 72, 153, 0.3); }
+        :root:not([data-theme="dark"]) .lang-trigger-btn:hover { background: #FFFFFF; box-shadow: 0 0 12px rgba(236, 72, 153, 0.5); border-color: #DB2777; }
+        :root:not([data-theme="dark"]) .lang-trigger-btn.open { box-shadow: 0 0 14px rgba(236, 72, 153, 0.6); }
+        :root:not([data-theme="dark"]) .lang-dropdown-menu { background: rgba(255, 255, 255, 0.98); border-color: rgba(236, 72, 153, 0.25); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), 0 0 14px rgba(236, 72, 153, 0.15); }
+        :root:not([data-theme="dark"]) .lang-option { color: #1E293B; }
+        :root:not([data-theme="dark"]) .lang-option:hover { background: #F1F5F9; }
+        :root:not([data-theme="dark"]) .lang-option.active { background: rgba(236, 72, 153, 0.1); border-color: rgba(236, 72, 153, 0.3); color: #0F172A; }
+        :root:not([data-theme="dark"]) .lang-check { color: #EC4899; }
+
+        /* Theme Switcher Styles */
+        .theme-switcher-container { position: relative; display: inline-block; vertical-align: middle; }
+        .theme-btn {
+            background: rgba(59, 130, 246, 0.15); border: 1px solid #60A5FA; color: #3B82F6;
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex;
+            align-items: center; justify-content: center; transition: all 0.2s ease; padding: 0; box-sizing: border-box;
+        }
+        .theme-btn:hover { background: #3B82F6; color: white; border-color: #3B82F6; box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3); }
+        .theme-dropdown {
+            position: absolute; top: calc(100% + 12px); right: 0; background: var(--surface, #FFFFFF);
+            border: 1px solid var(--border, #E2E8F0); border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            min-width: 180px; z-index: 9999; display: none; flex-direction: column; padding: 8px; box-sizing: border-box;
+        }
+        .theme-dropdown.show { display: flex !important; }
+        .theme-option {
+            background: transparent; border: none; padding: 10px 14px; text-align: left; width: 100%;
+            cursor: pointer; font-size: 14px; font-family: inherit; color: var(--text, #1E293B);
+            border-radius: 8px; display: flex; align-items: center; gap: 10px; transition: background 0.2s ease;
+            box-sizing: border-box;
+        }
+        .theme-option:hover { background: var(--bg, #F8FAFC); }
+        .theme-option.selected { background: rgba(59, 130, 246, 0.15); color: #3B82F6; font-weight: 600; }
+        .theme-option span { flex: 1; }
+        .theme-option .check { color: #3B82F6; }
+    </style>
     {% block extra_css %}{% endblock %}
-    <script src="/static/js/theme.js?v=2"></script>
-    <script src="/static/js/i18n.js?v=20261011_3"></script>
+    <script src="/static/js/theme.js?v=3"></script>
+    <script src="/static/js/i18n.js?v=20261016_2"></script>
 </head>
 
 <body class="{% block body_class %}{% endblock %}">

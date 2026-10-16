@@ -1223,7 +1223,62 @@ function applyTranslations() {
 }
 
 /**
- * Update active state on language switcher buttons
+ * Render circular SVG flag badge
+ */
+function getFlagSvg(lang) {
+    if (lang === 'th') {
+        return `<span class="lang-flag-badge" aria-hidden="true" style="width:20px;height:20px;min-width:20px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 30 20" width="20" height="20" preserveAspectRatio="none" style="width:100%;height:100%;display:block;"><rect width="30" height="20" fill="#ED1C24"/><rect y="3.33" width="30" height="13.34" fill="#FFFFFF"/><rect y="6.67" width="30" height="6.66" fill="#241D4F"/></svg></span>`;
+    }
+    // US flag circular badge for English
+    return `<span class="lang-flag-badge" aria-hidden="true" style="width:20px;height:20px;min-width:20px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;"><svg viewBox="0 0 30 20" width="20" height="20" preserveAspectRatio="none" style="width:100%;height:100%;display:block;"><rect width="30" height="20" fill="#B22234"/><path d="M0 1.54h30 M0 4.62h30 M0 7.69h30 M0 10.77h30 M0 13.85h30 M0 16.92h30" stroke="#FFFFFF" stroke-width="1.54"/><rect width="13" height="10.77" fill="#3C3B6E"/><g fill="#FFFFFF" transform="scale(0.9) translate(1, 0.8)"><circle cx="2" cy="1.6" r="0.65"/><circle cx="5.5" cy="1.6" r="0.65"/><circle cx="9" cy="1.6" r="0.65"/><circle cx="3.75" cy="3.6" r="0.65"/><circle cx="7.25" cy="3.6" r="0.65"/><circle cx="2" cy="5.6" r="0.65"/><circle cx="5.5" cy="5.6" r="0.65"/><circle cx="9" cy="5.6" r="0.65"/><circle cx="3.75" cy="7.6" r="0.65"/><circle cx="7.25" cy="7.6" r="0.65"/><circle cx="2" cy="9.6" r="0.65"/><circle cx="5.5" cy="9.6" r="0.65"/><circle cx="9" cy="9.6" r="0.65"/></g></svg></span>`;
+}
+
+/**
+ * Toggle language dropdown
+ */
+function toggleLangDropdown(event, btn) {
+    if (event) event.stopPropagation();
+    const container = btn.closest('.lang-switcher');
+    if (!container) return;
+    const dropdown = container.querySelector('.lang-dropdown-menu');
+    const isShowing = dropdown && dropdown.classList.contains('show');
+    
+    closeAllLangDropdowns();
+    
+    if (dropdown && !isShowing) {
+        dropdown.classList.add('show');
+        dropdown.style.display = 'flex';
+        btn.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+}
+window.toggleLangDropdown = toggleLangDropdown;
+
+/**
+ * Close all open language dropdowns
+ */
+function closeAllLangDropdowns() {
+    document.querySelectorAll('.lang-dropdown-menu').forEach(d => {
+        d.classList.remove('show');
+        d.style.display = 'none';
+        const trigger = d.closest('.lang-switcher')?.querySelector('.lang-trigger-btn');
+        if (trigger) {
+            trigger.classList.remove('open');
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+    });
+}
+window.closeAllLangDropdowns = closeAllLangDropdowns;
+
+// Close dropdown on outside click
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.lang-switcher')) {
+        closeAllLangDropdowns();
+    }
+});
+
+/**
+ * Update active state on language switcher buttons and trigger button
  */
 function updateSwitcherButtons() {
     document.querySelectorAll('.lang-switcher').forEach(switcher => {
@@ -1231,21 +1286,49 @@ function updateSwitcherButtons() {
         const enBtn = switcher.querySelector('[data-lang="en"]');
         if (thBtn) thBtn.classList.toggle('active', currentLang === 'th');
         if (enBtn) enBtn.classList.toggle('active', currentLang === 'en');
+
+        const flagEl = switcher.querySelector('.lang-flag-current');
+        if (flagEl) flagEl.innerHTML = getFlagSvg(currentLang);
+
+        const codeEl = switcher.querySelector('.lang-code-current');
+        if (codeEl) codeEl.textContent = currentLang.toUpperCase();
+
+        const textEl = switcher.querySelector('.lang-text');
+        if (textEl) textEl.textContent = currentLang === 'th' ? 'ไทย' : 'English';
     });
 }
 
 /**
- * Create language switcher HTML element
+ * Create language switcher HTML element (Modern Neon Pill Dropdown)
  */
 function createLanguageSwitcherHTML(extraClass = '') {
+    const cur = currentLang === 'en' ? 'en' : 'th';
     return `
         <div class="lang-switcher ${extraClass}">
-            <button type="button" class="lang-btn ${currentLang === 'th' ? 'active' : ''}" data-lang="th" onclick="setLanguage('th')">
-                <span class="flag">🇹🇭</span> TH
+            <button type="button" class="lang-trigger-btn" aria-haspopup="true" aria-expanded="false" onclick="toggleLangDropdown(event, this)">
+                <span class="lang-flag-current">${getFlagSvg(cur)}</span>
+                <span class="lang-code-current">${cur.toUpperCase()}</span>
+                <svg class="lang-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
             </button>
-            <button type="button" class="lang-btn ${currentLang === 'en' ? 'active' : ''}" data-lang="en" onclick="setLanguage('en')">
-                <span class="flag">🇬🇧</span> EN
-            </button>
+            <div class="lang-dropdown-menu" style="display: none;">
+                <button type="button" class="lang-option lang-btn ${cur === 'en' ? 'active' : ''}" data-lang="en" onclick="setLanguage('en'); closeAllLangDropdowns();">
+                    ${getFlagSvg('en')}
+                    <span class="lang-option-label">English</span>
+                    <svg class="lang-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </button>
+                <button type="button" class="lang-option lang-btn ${cur === 'th' ? 'active' : ''}" data-lang="th" onclick="setLanguage('th'); closeAllLangDropdowns();">
+                    ${getFlagSvg('th')}
+                    <span class="lang-option-label">ไทย</span>
+                    <svg class="lang-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <span class="lang-text" style="display:none;">${cur === 'th' ? 'ไทย' : 'English'}</span>
         </div>
     `;
 }
