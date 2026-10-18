@@ -6,11 +6,18 @@
 /* ─── Admin Layout ────────────────────────────── */
 .admin-layout {
     background: var(--bg);
+    /* ป้องกัน browser zoom เมื่อ content กว้างกว่า viewport */
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
 }
 
 .admin-wrapper {
     display: flex;
     min-height: 100vh;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* ─── Sidebar ─────────────────────────────────── */
@@ -156,6 +163,9 @@
     flex: 1;
     margin-left: 260px;
     min-height: 100vh;
+    /* กัน content ล้นออก viewport → browser ไม่ zoom */
+    overflow-x: hidden;
+    min-width: 0;
 }
 
 .admin-topbar {
@@ -186,6 +196,8 @@
 
 .admin-content {
     padding: 32px;
+    overflow-x: hidden;
+    box-sizing: border-box;
 }
 
 /* ─── Stat Cards ──────────────────────────────── */
@@ -246,7 +258,10 @@
         transform: translateX(0);
     }
     .admin-main {
-        margin-left: 0;
+        margin-left: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
     }
     .sidebar-toggle {
         display: block;
@@ -488,7 +503,6 @@
 }
 
 @media (min-width: 481px) and (max-width: 768px) and (orientation: portrait) {
-
     .sidebar-toggle {
         width: 44px;
         height: 44px;
@@ -506,6 +520,93 @@
 
     .admin-topbar {
         padding: 14px 20px;
+    }
+}
+
+/* ══════════════════════════════════════════════
+   ADMIN — Universal Responsive & Anti-Zoom Fixes
+   ══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    /* ป้องกัน Browser ซูมจออัตโนมัติเมื่อแตะช่องกรอกข้อมูล (iOS/Android Safari & Chrome) */
+    input, select, textarea,
+    .form-input, .form-select, .form-input-sm,
+    .search-box input {
+        font-size: 16px !important;
+        touch-action: manipulation;
+    }
+
+    /* ตารางทุกหน้าฝั่ง Admin ให้เลื่อนในกรอบของตาราง ไม่ดันโครงสร้างหน้าจอให้ล้น */
+    .table-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+        box-sizing: border-box !important;
+        border-radius: var(--radius);
+        margin-bottom: 20px;
+    }
+
+    .data-table {
+        min-width: 580px !important;
+        width: 100% !important;
+    }
+
+    /* แถบเครื่องมือค้นหา และปุ่มคัดกรองทุกหน้า (รายชื่อนักเรียน, รายชื่อครู, การเช็กชื่อ) */
+    .toolbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        gap: 12px !important;
+    }
+
+    .filter-form {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        width: 100% !important;
+        gap: 10px !important;
+    }
+
+    .filter-form .search-box,
+    .filter-form select,
+    .filter-form input,
+    .filter-form button {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        min-height: 44px !important;
+        box-sizing: border-box !important;
+    }
+
+    .toolbar-actions {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+        gap: 8px !important;
+    }
+
+    .toolbar-actions .btn,
+    .toolbar-actions a.btn,
+    .toolbar-actions button.btn {
+        flex: 1 1 calc(50% - 8px) !important;
+        min-height: 44px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-sizing: border-box !important;
+        margin-left: 0 !important;
+    }
+
+    .page-title {
+        font-size: 17px !important;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .admin-content {
+        padding: 16px 12px !important;
     }
 }
 
