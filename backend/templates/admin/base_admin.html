@@ -6,11 +6,13 @@
 {% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="/static/css/admin.css?v=4">
+<link rel="stylesheet" href="/static/css/admin.css?v=6">
 {% endblock %}
 
 {% block body %}
 <div class="admin-wrapper">
+    <!-- Sidebar Overlay (กดเพื่อปิด Sidebar บนมือถือ) -->
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -118,7 +120,7 @@
     <!-- Main Content -->
     <main class="admin-main">
         <header class="admin-topbar">
-            <button class="sidebar-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="24" height="24">
                     <line x1="3" y1="12" x2="21" y2="12" />
                     <line x1="3" y1="6" x2="21" y2="6" />
@@ -170,11 +172,38 @@
         </div>
     </main>
 </div>
+
+<!-- ── Sidebar Scripts (ต้องอยู่นอก block extra_js เพื่อไม่ให้หน้าลูก override ได้) ── -->
+<script src="/static/js/admin.js"></script>
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const isOpen = sidebar.classList.toggle('open');
+        if (overlay) overlay.classList.toggle('active', isOpen);
+    }
+
+    function closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.remove('open');
+        if (overlay) overlay.classList.remove('active');
+    }
+
+    /* ปิด Sidebar เมื่อคลิก nav item บนมือถือ */
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.nav-item').forEach(function(item) {
+            item.addEventListener('click', function() {
+                if (window.innerWidth <= 1024) closeSidebar();
+            });
+        });
+    });
+</script>
 {% endblock %}
 
 {% block extra_js %}
-<script src="/static/js/admin.js"></script>
 <script>
+    /* ── Close Profile Dropdown on outside click ── */
     document.addEventListener('click', function(event) {
         const wrapper = event.target.closest('.profile-dropdown-wrapper');
         if (!wrapper) {

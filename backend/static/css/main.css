@@ -1614,3 +1614,320 @@ code {
 .theme-option .check {
     color: var(--accent);
 }
+
+/* ══════════════════════════════════════════════
+   MOBILE PORTRAIT OPTIMIZATIONS
+   ปรับปุ่มและ UI สำหรับมือถือแนวตั้ง (Portrait Mode)
+   รองรับ ครู / นักเรียน / Admin
+   ══════════════════════════════════════════════ */
+
+/* ─── Touch Target Baseline (applies to all screens) ─── */
+/* Minimum 44×44px touch target per Apple HIG / WCAG 2.5.5 */
+.btn,
+button:not(.sidebar-toggle):not(.password-toggle):not(.theme-btn):not(.lang-trigger-btn):not(.lang-option) {
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* ─── Mobile Portrait: ≤ 480px ──────────────────── */
+@media (max-width: 480px) and (orientation: portrait) {
+
+    /* ── Global Button Sizing ── */
+    .btn {
+        padding: 13px 18px;
+        font-size: 15px;
+        min-height: 48px;
+        border-radius: var(--radius);
+        gap: 10px;
+    }
+
+    .btn-sm {
+        padding: 10px 14px;
+        font-size: 14px;
+        min-height: 44px;
+    }
+
+    .btn-lg {
+        padding: 16px 24px;
+        font-size: 17px;
+        min-height: 52px;
+    }
+
+    .btn-xl {
+        padding: 18px 24px;
+        font-size: 18px;
+        min-height: 56px;
+        border-radius: var(--radius-lg);
+    }
+
+    /* ── Block Buttons: ใช้เต็มความกว้างบนจอแคบ ── */
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* ── Toolbar Actions ── */
+    .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .toolbar-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .toolbar-actions .btn {
+        flex: 1;
+        justify-content: center;
+        font-size: 14px;
+        padding: 12px 10px;
+    }
+
+    /* ── Search Box ── */
+    .search-box {
+        width: 100%;
+    }
+
+    .search-box input {
+        width: 100%;
+        font-size: 16px; /* ป้องกัน iOS zoom เมื่อ focus */
+    }
+
+    /* ── Filter Form ── */
+    .filter-form {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .filter-form select,
+    .filter-form input {
+        font-size: 16px; /* ป้องกัน iOS zoom */
+        min-height: 44px;
+        padding: 10px 14px;
+    }
+
+    /* ── Form Inputs ── */
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"],
+    textarea,
+    select,
+    .form-select,
+    .form-input {
+        font-size: 16px; /* ป้องกัน iOS Safari zoom อัตโนมัติ */
+        min-height: 44px;
+        padding: 12px 14px;
+    }
+
+    /* ── Login Page ── */
+    .login-container {
+        padding: 16px;
+        max-width: 100%;
+    }
+
+    .login-card {
+        padding: 28px 20px;
+    }
+
+    .login-header h1 {
+        font-size: 20px;
+    }
+
+    .login-form .btn-primary {
+        min-height: 52px;
+        font-size: 17px;
+    }
+
+    /* ── Modal ── */
+    .modal-card {
+        padding: 24px 18px;
+        margin: 12px;
+        max-width: calc(100vw - 24px);
+    }
+
+    .modal-card .modal-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .modal-card .modal-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* ── Pagination ── */
+    .pagination .btn {
+        min-height: 44px;
+        padding: 10px 14px;
+    }
+
+    /* ── Activity Cards ── */
+    .activity-actions {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .activity-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .cards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* ── Session Cards ── */
+    .session-card {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .session-actions {
+        margin-left: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .session-actions .btn {
+        justify-content: center;
+    }
+
+    /* ── Admin Topbar: ซ่อน Search บนมือถือแคบ ── */
+    .admin-topbar form[action="/admin/students"] {
+        display: none;
+    }
+
+    /* ── Admin Content Padding ── */
+    .admin-content {
+        padding: 14px;
+    }
+
+    /* ── Dashboard Grid ── */
+    .dashboard-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* ── Two-Column: Stack ── */
+    .two-column-layout,
+    .two-column-layout.has-form {
+        grid-template-columns: 1fr;
+    }
+
+    /* ── Table: ปรับขนาด Action Buttons ── */
+    .actions-cell {
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .actions-cell .btn {
+        width: 100%;
+        justify-content: center;
+        font-size: 13px;
+        padding: 10px 12px;
+    }
+
+    /* ── Import/Export Buttons ── */
+    .confirm-form .btn,
+    .export-form .btn {
+        width: 100%;
+        min-height: 52px;
+        font-size: 16px;
+    }
+
+    /* ── Student Import Drop Zone ── */
+    .file-drop-zone {
+        padding: 32px 16px;
+    }
+}
+
+/* ─── Mobile Portrait: 481px – 768px ────────────── */
+@media (min-width: 481px) and (max-width: 768px) and (orientation: portrait) {
+
+    .btn {
+        padding: 12px 18px;
+        font-size: 15px;
+        min-height: 46px;
+    }
+
+    .btn-sm {
+        min-height: 42px;
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+
+    .btn-xl {
+        min-height: 54px;
+        font-size: 18px;
+    }
+
+    .toolbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .toolbar-actions .btn {
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .session-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .form-actions {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="date"],
+    input[type="time"],
+    input[type="number"],
+    select,
+    .form-select,
+    .form-input {
+        font-size: 16px;
+        min-height: 44px;
+    }
+}
+
+/* ─── Safe Area: รองรับ iPhone Notch / Dynamic Island ── */
+@supports (padding: env(safe-area-inset-bottom)) {
+    @media (max-width: 768px) {
+        .admin-topbar,
+        .teacher-header,
+        .attendance-header {
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+        }
+
+        .login-container {
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+
+        .admin-content {
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+    }
+}
