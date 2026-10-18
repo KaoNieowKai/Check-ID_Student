@@ -259,3 +259,104 @@
     margin-top: 12px;
     color: var(--text-muted);
 }
+
+/* ══════════════════════════════════════════════
+   STUDENT — Mobile Portrait Optimizations
+   ══════════════════════════════════════════════ */
+@media (max-width: 480px) and (orientation: portrait) {
+
+    /* ── Container ── */
+    .checkin-container {
+        padding: 14px;
+    }
+
+    /* ── Step Card ── */
+    .checkin-step {
+        padding: 24px 16px;
+    }
+
+    .checkin-step h2 {
+        font-size: 17px;
+        margin-bottom: 20px;
+    }
+
+    /* ── Grade Grid: 2 columns, bigger buttons ── */
+    .grade-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .grade-btn {
+        padding: 22px 12px;
+        font-size: 22px;
+        min-height: 68px;
+        border-radius: var(--radius-lg);
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+    }
+
+    /* ── Student ID Input ── */
+    .id-input-group input {
+        padding: 20px 16px;
+        font-size: 24px;
+        min-height: 64px;
+        border-radius: var(--radius-lg);
+    }
+
+    /* ── Confirm Button (เช็กชื่อ) ── */
+    .checkin-step .btn-xl {
+        padding: 20px;
+        font-size: 18px;
+        min-height: 58px;
+    }
+
+    .checkin-step .btn-success {
+        font-size: 20px;
+        padding: 20px;
+        min-height: 62px;
+    }
+
+    .checkin-step .btn-outline {
+        min-height: 48px;
+        font-size: 15px;
+    }
+
+    /* ── Student Info Display ── */
+    .student-info-display {
+        padding: 16px;
+    }
+
+    .info-value {
+        font-size: 15px;
+    }
+
+    /* ── Header ── */
+    .checkin-header {
+        margin-bottom: 20px;
+    }
+
+    .checkin-header h1 {
+        font-size: 20px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) and (orientation: portrait) {
+
+    .grade-btn {
+        padding: 20px 14px;
+        font-size: 20px;
+        min-height: 62px;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .checkin-step .btn-xl,
+    .checkin-step .btn-success {
+        min-height: 54px;
+        font-size: 18px;
+    }
+
+    .id-input-group input {
+        font-size: 22px;
+        min-height: 58px;
+    }
+}
