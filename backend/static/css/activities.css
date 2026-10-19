@@ -761,6 +761,12 @@
     gap: 12px;
 }
 
+#dupNewName:focus,
+#dupStatus:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px var(--primary-bg) !important;
+}
+
 /* ─── Activity Form (Redesigned) ──────────────── */
 .act-form-container {
     max-width: 720px;

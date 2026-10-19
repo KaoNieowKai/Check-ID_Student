@@ -193,3 +193,144 @@ def test_activity_create_and_edit_with_rooms(admin_client, db):
     db.refresh(act)
     assert act.eligible_grades == "M.4"
     assert act.eligible_rooms == "1"
+
+
+def test_activity_duplicate_flow(admin_client, db):
+    # Create base activity with a session
+    act = Activity(
+        name="ฟิสิกส์ ม.6 ต้นฉบับ",
+        description="คลาสเรียนฟิสิกส์",
+        start_date=date(2026, 10, 1),
+        end_date=date(2026, 10, 31),
+        status="active",
+        eligible_grades="M.6",
+        eligible_rooms="1,2"
+    )
+    db.add(act)
+    db.commit()
+    db.refresh(act)
+
+    sess = ActivitySession(
+        activity_id=act.id,
+        name="รอบเช้า สัปดาห์ 1",
+        date=date(2026, 10, 5),
+        start_time=time(8, 30),
+        end_time=time(10, 30),
+        status="active"
+    )
+    db.add(sess)
+    db.commit()
+
+    # Verify UI contains duplicate button and modal
+    list_res = admin_client.get("/admin/activities")
+    assert list_res.status_code == 200
+    assert "openDuplicateModal" in list_res.text
+    assert "duplicateModal" in list_res.text
+    assert "ทำซ้ำ" in list_res.text
+
+    # Test duplicating with sessions
+    dup_res = admin_client.post(f"/admin/activities/{act.id}/duplicate", data={
+        "new_name": "ฟิสิกส์ ม.6 สัปดาห์ที่ 2",
+        "copy_sessions": "true",
+        "status": "draft"
+    }, follow_redirects=True)
+    assert dup_res.status_code == 200
+    assert "ทำซ้ำกิจกรรมสำเร็จแล้ว" in dup_res.text
+
+    # Verify new activity in database
+    duplicated_act = db.query(Activity).filter(Activity.name == "ฟิสิกส์ ม.6 สัปดาห์ที่ 2").first()
+    assert duplicated_act is not None
+    assert duplicated_act.id != act.id
+    assert duplicated_act.description == act.description
+    assert duplicated_act.start_date == act.start_date
+    assert duplicated_act.end_date == act.end_date
+    assert duplicated_act.status == "draft"
+    assert duplicated_act.eligible_grades == "M.6"
+    assert duplicated_act.eligible_rooms == "1,2"
+
+    # Verify sessions were duplicated
+    dup_sessions = db.query(ActivitySession).filter(ActivitySession.activity_id == duplicated_act.id).all()
+    assert len(dup_sessions) == 1
+    assert dup_sessions[0].name == "รอบเช้า สัปดาห์ 1"
+    assert dup_sessions[0].status == "draft"  # Cloned session should be draft
+
+    # Test duplicating without custom name (default to (สำเนา)) and without sessions
+    dup_res2 = admin_client.post(f"/admin/activities/{act.id}/duplicate", data={
+        "new_name": "",
+        "copy_sessions": "false",
+        "status": "draft"
+    }, follow_redirects=True)
+    assert dup_res2.status_code == 200
+
+    copy_act = db.query(Activity).filter(Activity.name == f"{act.name} (สำเนา)").first()
+    assert copy_act is not None
+    copy_sessions = db.query(ActivitySession).filter(ActivitySession.activity_id == copy_act.id).all()
+    assert len(copy_sessions) == 0
+
+
+def test_session_duplicate_flow(admin_client, db):
+    # Setup activity and a session
+    act = Activity(
+        name="เคมี ม.5 ทดลอง",
+        start_date=date(2026, 11, 1),
+        status="active"
+    )
+    db.add(act)
+    db.commit()
+    db.refresh(act)
+
+    sess = ActivitySession(
+        activity_id=act.id,
+        name="ปฏิบัติการกลุ่มที่ 1",
+        date=date(2026, 11, 2),
+        start_time=time(9, 0),
+        end_time=time(11, 0),
+        status="active"
+    )
+    db.add(sess)
+    db.commit()
+    db.refresh(sess)
+
+    # 1. Verify UI renders duplicate button and modal
+    sess_ui = admin_client.get(f"/admin/activities/{act.id}/sessions")
+    assert sess_ui.status_code == 200
+    assert "openDuplicateSessionModal" in sess_ui.text
+    assert "duplicateSessionModal" in sess_ui.text
+
+    # 2. Duplicate session with custom name and date
+    dup_res = admin_client.post(f"/admin/sessions/{sess.id}/duplicate", data={
+        "name": "ปฏิบัติการกลุ่มที่ 2",
+        "session_date": "2026-11-03",
+        "start_time": "13:00",
+        "end_time": "15:00",
+        "status": "draft"
+    }, follow_redirects=True)
+    assert dup_res.status_code == 200
+    assert "ทำซ้ำรอบกิจกรรมสำเร็จแล้ว" in dup_res.text
+
+    # Verify duplicated session in DB
+    dup_sess = db.query(ActivitySession).filter(ActivitySession.name == "ปฏิบัติการกลุ่มที่ 2").first()
+    assert dup_sess is not None
+    assert dup_sess.id != sess.id
+    assert dup_sess.activity_id == act.id
+    assert dup_sess.date == date(2026, 11, 3)
+    assert dup_sess.start_time == time(13, 0)
+    assert dup_sess.end_time == time(15, 0)
+    assert dup_sess.status == "draft"
+
+    # 3. Duplicate without custom name (defaults to (สำเนา))
+    dup_res2 = admin_client.post(f"/admin/sessions/{sess.id}/duplicate", data={
+        "name": "",
+        "session_date": "",
+        "start_time": "",
+        "end_time": "",
+        "status": "draft"
+    }, follow_redirects=True)
+    assert dup_res2.status_code == 200
+
+    auto_copy = db.query(ActivitySession).filter(ActivitySession.name == f"{sess.name} (สำเนา)").first()
+    assert auto_copy is not None
+    assert auto_copy.date == sess.date
+    assert auto_copy.start_time == sess.start_time
+    assert auto_copy.end_time == sess.end_time
+

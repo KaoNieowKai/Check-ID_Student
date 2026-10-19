@@ -624,6 +624,7 @@ async def activities_list(
     request: Request,
     status_filter: str = Query("", alias="status"),
     error: str = Query(None),
+    success: str = Query(None),
     db: Session = Depends(get_db),
     user: User = Depends(require_admin)
 ):
@@ -636,6 +637,12 @@ async def activities_list(
         error_msg = "ไม่สามารถลบกิจกรรมที่มีรอบกำลังเปิดใช้งานอยู่ได้"
     elif error:
         error_msg = error
+
+    success_msg = None
+    if success == "duplicated":
+        success_msg = "ทำซ้ำกิจกรรมสำเร็จแล้ว สามารถตรวจสอบและเปิดใช้งานได้ทันที"
+    elif success:
+        success_msg = success
 
     # Status counts for filter badges
     status_counts = {}
@@ -685,7 +692,7 @@ async def activities_list(
 
     return templates.TemplateResponse("admin/activities.html", {
         "request": request, "user": user, "activities": activities,
-        "status_filter": status_filter, "error": error_msg,
+        "status_filter": status_filter, "error": error_msg, "success": success_msg,
         "status_counts": status_counts,
         "activity_session_counts": activity_session_counts,
         "activity_attendance_stats": activity_attendance_stats,
@@ -800,11 +807,74 @@ async def activity_delete(
     return RedirectResponse(url="/admin/activities", status_code=303)
 
 
+@router.post("/activities/{id}/duplicate")
+async def activity_duplicate(
+    id: int,
+    request: Request,
+    new_name: str = Form(""),
+    copy_sessions: Optional[str] = Form(None),
+    status: str = Form("draft"),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    activity = db.query(Activity).filter(Activity.id == id).first()
+    if not activity:
+        raise HTTPException(status_code=404, detail="Activity not found")
+
+    duplicated_name = new_name.strip() if new_name and new_name.strip() else f"{activity.name} (สำเนา)"
+    initial_status = status if status in ["draft", "scheduled", "active", "completed"] else "draft"
+
+    new_activity = Activity(
+        name=duplicated_name,
+        description=activity.description,
+        start_date=activity.start_date,
+        end_date=activity.end_date,
+        status=initial_status,
+        eligible_grades=activity.eligible_grades,
+        eligible_rooms=activity.eligible_rooms,
+    )
+    db.add(new_activity)
+    db.flush()
+
+    copied_sessions_count = 0
+    should_copy_sessions = copy_sessions in ["true", "on", "1", "yes"]
+    if should_copy_sessions:
+        sessions = db.query(ActivitySession).filter(ActivitySession.activity_id == id).order_by(ActivitySession.id).all()
+        for sess in sessions:
+            new_sess = ActivitySession(
+                activity_id=new_activity.id,
+                name=sess.name,
+                date=sess.date,
+                start_time=sess.start_time,
+                end_time=sess.end_time,
+                status="draft",
+            )
+            db.add(new_sess)
+            copied_sessions_count += 1
+
+    db.commit()
+    db.refresh(new_activity)
+
+    create_audit_log(
+        db, user.id, "activity_duplicated", "activity", str(new_activity.id),
+        new_value=json.dumps({
+            "original_id": id,
+            "original_name": activity.name,
+            "new_name": new_activity.name,
+            "copied_sessions": copied_sessions_count
+        })
+    )
+
+    return RedirectResponse(url="/admin/activities?success=duplicated", status_code=303)
+
+
 # ─── Session Management ──────────────────────────────────────────────
 
 @router.get("/activities/{activity_id}/sessions", response_class=HTMLResponse)
 async def sessions_list(
     activity_id: int, request: Request,
+    error: Optional[str] = Query(None),
+    success: Optional[str] = Query(None),
     db: Session = Depends(get_db), user: User = Depends(require_admin)
 ):
     activity = db.query(Activity).filter(Activity.id == activity_id).first()
@@ -832,11 +902,19 @@ async def sessions_list(
         query = query.filter(Student.room.in_(rooms))
     expected_students = query.scalar() or 0
 
+    success_msg = None
+    if success == "duplicated":
+        success_msg = "ทำซ้ำรอบกิจกรรมสำเร็จแล้ว สามารถตรวจทานหรือเปิดใช้งานได้ทันที"
+    elif success:
+        success_msg = success
+
     return templates.TemplateResponse("admin/sessions.html", {
         "request": request, "user": user,
         "activity": activity, "sessions": sessions,
         "session_stats": session_stats,
         "expected_students": expected_students,
+        "error": error,
+        "success": success_msg,
     })
 
 
@@ -900,6 +978,53 @@ async def session_delete(
     db.delete(session)
     db.commit()
     return RedirectResponse(url=f"/admin/activities/{activity_id}/sessions", status_code=303)
+
+
+@router.post("/sessions/{id}/duplicate")
+async def session_duplicate(
+    id: int,
+    request: Request,
+    name: str = Form(""),
+    session_date: str = Form(""),
+    start_time: str = Form(""),
+    end_time: str = Form(""),
+    status: str = Form("draft"),
+    db: Session = Depends(get_db),
+    user: User = Depends(require_admin)
+):
+    session = db.query(ActivitySession).filter(ActivitySession.id == id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+
+    duplicated_name = name.strip() if name and name.strip() else f"{session.name} (สำเนา)"
+    target_date = date.fromisoformat(session_date) if session_date else session.date
+    target_start = time.fromisoformat(start_time) if start_time else session.start_time
+    target_end = time.fromisoformat(end_time) if end_time else session.end_time
+    initial_status = status if status in ["draft", "scheduled", "active", "completed"] else "draft"
+
+    new_session = ActivitySession(
+        activity_id=session.activity_id,
+        name=duplicated_name,
+        date=target_date,
+        start_time=target_start,
+        end_time=target_end,
+        status=initial_status,
+    )
+    db.add(new_session)
+    db.commit()
+    db.refresh(new_session)
+
+    create_audit_log(
+        db, user.id, "session_duplicated", "session", str(new_session.id),
+        new_value=json.dumps({
+            "original_id": id,
+            "original_name": session.name,
+            "new_name": new_session.name,
+            "activity_id": session.activity_id
+        })
+    )
+
+    return RedirectResponse(url=f"/admin/activities/{session.activity_id}/sessions?success=duplicated", status_code=303)
 
 
 # ─── Attendance Management ───────────────────────────────────────────
