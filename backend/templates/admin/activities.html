@@ -19,6 +19,16 @@
 </div>
 {% endif %}
 
+{% if success %}
+<div class="alert alert-success" style="margin-bottom: 20px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    <span>{{ success }}</span>
+</div>
+{% endif %}
+
 <!-- ─── Header ────────────────────────────────────────── -->
 <div class="act-page-header">
     <div class="act-page-header-text">
@@ -200,18 +210,18 @@
                 </div>
 
                 <div style="display: flex; align-items: center; gap: 4px; margin-left: 10px;">
-                    <a href="/admin/activities/{{ activity.id }}/sessions" class="act-more-btn" title="ดูรอบกิจกรรม">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                            <circle cx="12" cy="12" r="3"/>
-                        </svg>
-                    </a>
-                    <a href="/admin/activities/{{ activity.id }}/edit" class="act-more-btn" title="แก้ไข">
+                    <a href="/admin/activities/{{ activity.id }}/edit" class="act-more-btn" title="แก้ไข" data-i18n-title="btn_edit">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                         </svg>
                     </a>
+                    <button type="button" class="act-more-btn" onclick="openDuplicateModal(event, {{ activity.id }}, '{{ activity.name|escape }}', {{ sess_cnt }})" title="ทำซ้ำ" data-i18n-title="btn_duplicate">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                    </button>
                     <div class="act-more-wrapper">
                         <button type="button" class="act-more-btn" onclick="toggleMenu(event, 'menu-{{ activity.id }}')" title="ตัวเลือกเพิ่มเติม">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
@@ -236,6 +246,13 @@
                                 </svg>
                                 <span data-i18n="btn_edit">แก้ไขข้อมูล</span>
                             </a>
+                            <button type="button" class="act-more-menu-item" onclick="openDuplicateModal(event, {{ activity.id }}, '{{ activity.name|escape }}', {{ sess_cnt }})">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                                </svg>
+                                <span data-i18n="btn_duplicate">ทำซ้ำ (duplicate)</span>
+                            </button>
                             <div class="act-more-menu-divider"></div>
                             <button type="button" class="act-more-menu-item danger" onclick="openDeleteModal({{ activity.id }}, '{{ activity.name|escape }}')">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
@@ -359,6 +376,79 @@
         </div>
     </div>
 </div>
+
+<!-- ─── Duplicate Activity Modal ──────────────────────── -->
+<div id="duplicateModal" class="act-modal">
+    <div class="act-modal-backdrop" onclick="closeDuplicateModal()"></div>
+    <div class="act-modal-card">
+        <div class="act-modal-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(59, 130, 246, 0.12); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 data-i18n="modal_duplicate_activity_title" style="margin: 0; font-size: 18px; font-weight: 700; color: var(--text);">ทำซ้ำกิจกรรม</h3>
+                    <p style="margin: 2px 0 0 0; font-size: 12.5px; color: var(--text-muted);" data-i18n="modal_duplicate_activity_desc">คัดลอกการตั้งค่าและกลุ่มเป้าหมายเพื่อสร้างกิจกรรมใหม่</p>
+                </div>
+            </div>
+            <button type="button" class="act-modal-close" onclick="closeDuplicateModal()">&times;</button>
+        </div>
+
+        <form id="duplicateActivityForm" method="POST" style="margin: 0;">
+            <div style="background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 16px;">
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 3px;" data-i18n="modal_dup_source">กิจกรรมต้นฉบับ</div>
+                <strong id="duplicateSourceName" style="font-size: 14.5px; color: var(--text); word-break: break-word;"></strong>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label for="dupNewName" style="display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 6px; color: var(--text);" data-i18n="label_new_activity_name">
+                    ชื่อกิจกรรมใหม่ <span style="color: var(--danger);">*</span>
+                </label>
+                <input type="text" id="dupNewName" name="new_name" required 
+                       style="width: 100%; box-sizing: border-box; padding: 10px 14px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 14px; outline: none; transition: border-color var(--transition);">
+            </div>
+
+            <div style="margin-bottom: 16px; background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.18); border-radius: var(--radius-sm); padding: 12px 14px;">
+                <label style="display: flex; align-items: flex-start; gap: 10px; cursor: pointer; user-select: none; margin: 0;">
+                    <input type="checkbox" id="dupCopySessions" name="copy_sessions" value="true" checked style="margin-top: 3px; accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer;">
+                    <div>
+                        <div style="font-size: 13.5px; font-weight: 600; color: var(--text);" id="dupSessionsLabel" data-i18n="label_copy_sessions">
+                            คัดลอกรอบกิจกรรมทั้งหมดด้วย
+                        </div>
+                        <div style="font-size: 12px; color: var(--text-muted); margin-top: 3px; line-height: 1.4;" data-i18n="label_copy_sessions_hint">
+                            รอบกิจกรรมจะถูกคัดลอกเป็นแบบร่าง (ไม่รวมประวัติการเช็กชื่อและ QR Code)
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <div style="margin-bottom: 22px;">
+                <label for="dupStatus" style="display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text);" data-i18n="label_initial_status">
+                    สถานะกิจกรรมใหม่
+                </label>
+                <select id="dupStatus" name="status" style="width: 100%; box-sizing: border-box; padding: 9px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: 13.5px; outline: none;">
+                    <option value="draft" selected data-i18n="status_draft">แบบร่าง (Draft) — แนะนำ</option>
+                    <option value="scheduled" data-i18n="status_scheduled">กำหนดการแล้ว (Scheduled)</option>
+                    <option value="active" data-i18n="status_active">กำลังใช้งาน (Active)</option>
+                </select>
+            </div>
+
+            <div class="act-modal-footer">
+                <button type="button" class="btn btn-outline" onclick="closeDuplicateModal()" data-i18n="btn_cancel">ยกเลิก</button>
+                <button type="submit" class="btn btn-primary" id="btnConfirmDup">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                    <span data-i18n="btn_confirm_duplicate">ยืนยันทำซ้ำ</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -376,14 +466,53 @@ function closeDeleteModal() {
     modal.classList.remove('show');
 }
 
+function openDuplicateModal(event, activityId, activityName, sessionCount) {
+    if (event) {
+        event.stopPropagation();
+        event.preventDefault();
+    }
+    document.getElementById('duplicateSourceName').textContent = activityName;
+    const input = document.getElementById('dupNewName');
+    input.value = activityName + ' (สำเนา)';
+    
+    const sessLabel = document.getElementById('dupSessionsLabel');
+    const chk = document.getElementById('dupCopySessions');
+    if (sessionCount > 0) {
+        sessLabel.textContent = `คัดลอกรอบกิจกรรมทั้งหมดด้วย (${sessionCount} รอบ)`;
+        chk.disabled = false;
+        chk.checked = true;
+    } else {
+        sessLabel.textContent = 'คัดลอกรอบกิจกรรม (ไม่มีรอบกิจกรรมในต้นฉบับ)';
+        chk.disabled = true;
+        chk.checked = false;
+    }
+    
+    document.getElementById('duplicateActivityForm').action = '/admin/activities/' + activityId + '/duplicate';
+    const modal = document.getElementById('duplicateModal');
+    modal.classList.add('show');
+    closeAllMenus();
+    setTimeout(() => {
+        input.focus();
+        input.select();
+    }, 60);
+}
+
+function closeDuplicateModal() {
+    const modal = document.getElementById('duplicateModal');
+    if (modal) modal.classList.remove('show');
+}
+
 window.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeDeleteModal();
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+        closeDuplicateModal();
+    }
 });
 
 // Navigate to sessions when clicking card background
 function navigateToSessions(event, url) {
     // Prevent navigation if clicking interactive controls inside card
-    if (event.target.closest('a, button, input, select, textarea, .act-more-wrapper, .act-more-menu')) {
+    if (event.target.closest('a, button, input, select, textarea, .act-more-wrapper, .act-more-menu, .act-more-btn')) {
         return;
     }
     // Don't navigate if user is selecting text
@@ -400,7 +529,7 @@ function navigateToSessions(event, url) {
 
 function handleCardKeyDown(event, url) {
     if (event.key === 'Enter' || event.key === ' ') {
-        if (event.target.closest('a, button, input, select, textarea, .act-more-wrapper, .act-more-menu')) {
+        if (event.target.closest('a, button, input, select, textarea, .act-more-wrapper, .act-more-menu, .act-more-btn')) {
             return;
         }
         event.preventDefault();
