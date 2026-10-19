@@ -4,7 +4,7 @@
 
 {% block extra_css %}
 {{ super() }}
-<link rel="stylesheet" href="/static/css/activities.css?v=20261018">
+<link rel="stylesheet" href="/static/css/activities.css?v=20261019">
 {% endblock %}
 
 {% block content %}
@@ -101,15 +101,16 @@
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                         </svg>
                     </button>
-                    <form method="POST" action="/admin/sessions/{{ session.id }}/delete" style="display:inline; margin:0;"
-                          onsubmit="return confirm(t('modal_delete_session_confirm', 'คุณแน่ใจหรือไม่ว่าต้องการลบรอบกิจกรรมนี้?'))">
-                        <button type="submit" class="act-more-btn" title="ลบ" style="color: var(--danger);">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
-                                <polyline points="3 6 5 6 21 6"/>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-                            </svg>
-                        </button>
-                    </form>
+                    <button type="button" class="act-more-btn" title="ลบ" style="color: var(--danger);"
+                            data-session-id="{{ session.id }}"
+                            data-session-name="{{ session.name }}"
+                            data-session-date="{{ session.date|to_bangkok_date }}"
+                            onclick="openDeleteSessionModal(this.dataset.sessionId, this.dataset.sessionName, this.dataset.sessionDate)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                            <polyline points="3 6 5 6 21 6"/>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
             {% endfor %}
@@ -239,6 +240,52 @@
         </div>
     </div>
 </div>
+
+<!-- ─── Delete Session Confirmation Modal ────────────────────── -->
+<div id="deleteSessionModal" class="act-modal" role="dialog" aria-modal="true" aria-labelledby="deleteSessionModalTitle">
+    <div class="act-modal-backdrop" onclick="closeDeleteSessionModal()"></div>
+    <div class="act-modal-card">
+        <div class="act-modal-header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 38px; height: 38px; border-radius: 10px; background: var(--danger-bg); color: var(--danger); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="18" height="18">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                </div>
+                <h3 id="deleteSessionModalTitle" data-i18n="modal_delete_session_title" style="margin: 0; font-size: 18px; font-weight: 700; color: var(--text);">ยืนยันการลบรอบกิจกรรม</h3>
+            </div>
+            <button type="button" class="act-modal-close" onclick="closeDeleteSessionModal()" aria-label="Close" title="ปิด">&times;</button>
+        </div>
+        <div class="act-modal-warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22" style="flex-shrink: 0; margin-top: 1px;">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div style="flex: 1; min-width: 0;">
+                <span data-i18n="modal_delete_session_prefix" style="font-size: 13px; color: var(--text-muted);">คุณแน่ใจหรือไม่ว่าต้องการลบรอบกิจกรรม</span>
+                <strong id="deleteSessionName" style="display: block; margin-top: 4px; font-size: 15px; color: var(--text); word-break: break-word;"></strong>
+                <span id="deleteSessionMeta" style="display: block; margin-top: 3px; font-size: 12.5px; color: var(--text-muted);"></span>
+            </div>
+        </div>
+        <p class="act-modal-info" data-i18n="modal_delete_session_warning">
+            การดำเนินการนี้จะลบข้อมูลรอบกิจกรรมและประวัติการเช็กชื่อของรอบนี้ทั้งหมดอย่างถาวร ไม่สามารถกู้คืนได้
+        </p>
+        <div class="act-modal-footer">
+            <button type="button" class="btn btn-outline" onclick="closeDeleteSessionModal()" data-i18n="btn_cancel">ยกเลิก</button>
+            <form id="deleteSessionForm" method="POST" style="margin: 0;">
+                <button type="submit" class="btn btn-danger-solid" style="background: var(--danger); color: #fff; border-color: var(--danger); display: inline-flex; align-items: center; gap: 7px; font-weight: 600; padding: 9px 18px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    <span data-i18n="btn_confirm_delete">ยืนยันการลบ</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -309,8 +356,29 @@ function editSession(id, name, date, startTime, endTime, status) {
     }, 120);
 }
 
+function openDeleteSessionModal(sessionId, sessionName, sessionDate) {
+    document.getElementById('deleteSessionName').textContent = sessionName;
+    const metaEl = document.getElementById('deleteSessionMeta');
+    if (metaEl) {
+        metaEl.textContent = sessionDate ? ((window.t ? t('lbl_session_date', 'วันที่') : 'วันที่') + ': ' + sessionDate) : '';
+    }
+    document.getElementById('deleteSessionForm').action = '/admin/sessions/' + sessionId + '/delete';
+    const modal = document.getElementById('deleteSessionModal');
+    if (modal) modal.classList.add('show');
+}
+
+function closeDeleteSessionModal() {
+    const modal = document.getElementById('deleteSessionModal');
+    if (modal) modal.classList.remove('show');
+}
+
 window.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
+        const delModal = document.getElementById('deleteSessionModal');
+        if (delModal && delModal.classList.contains('show')) {
+            closeDeleteSessionModal();
+            return;
+        }
         const layout = document.getElementById('sessLayout');
         if (layout && layout.classList.contains('has-form')) {
             closeSessionForm();

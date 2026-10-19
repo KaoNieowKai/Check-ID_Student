@@ -297,6 +297,10 @@ const I18N_DICTIONARY = {
         'ph_session_name': 'เช่น ช่วงเช้า วันที่ 1',
         'checked_in_prefix': 'เช็กชื่อแล้ว',
         'empty_sessions': 'ยังไม่มีรอบกิจกรรมสำหรับกิจกรรมนี้ กรุณาเพิ่มรอบกิจกรรมจากแบบฟอร์มด้านขวา',
+        'modal_delete_session_title': 'ยืนยันการลบรอบกิจกรรม',
+        'modal_delete_session_warning': 'การดำเนินการนี้จะลบข้อมูลรอบกิจกรรมและประวัติการเช็กชื่อของรอบนี้ทั้งหมดอย่างถาวร ไม่สามารถกู้คืนได้',
+        'modal_delete_session_prefix': 'คุณแน่ใจหรือไม่ว่าต้องการลบรอบกิจกรรม',
+        'modal_delete_session_confirm': 'คุณแน่ใจหรือไม่ว่าต้องการลบรอบกิจกรรมนี้?',
 
         // Attendance Management
         'opt_select_activity': 'เลือกกิจกรรม',
@@ -762,6 +766,10 @@ const I18N_DICTIONARY = {
         'ph_session_name': 'e.g. Day 1 Morning',
         'checked_in_prefix': 'Checked in',
         'empty_sessions': 'No sessions yet. Add one using the form on the right.',
+        'modal_delete_session_title': 'Confirm Session Deletion',
+        'modal_delete_session_warning': 'This will permanently delete this activity session and all its attendance check-in records. This action cannot be undone.',
+        'modal_delete_session_prefix': 'Are you sure you want to delete session',
+        'modal_delete_session_confirm': 'Are you sure you want to delete this session?',
 
         // Attendance Management
         'opt_select_activity': 'Select Activity',
