@@ -346,12 +346,31 @@ async def update_attendance_status(
 @router.get("/reports", response_class=HTMLResponse)
 async def teacher_reports(
     request: Request,
+    session_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     user: User = Depends(require_teacher)
 ):
     """PDF attendance report download page for teachers."""
+    selected_session = None
+    if session_id:
+        selected_session = db.query(ActivitySession).options(
+            joinedload(ActivitySession.activity)
+        ).filter(ActivitySession.id == session_id).first()
+    
+    # If no session_id provided or not found, auto-select latest active/scheduled session
+    if not selected_session:
+        selected_session = db.query(ActivitySession).options(
+            joinedload(ActivitySession.activity)
+        ).filter(
+            ActivitySession.status.in_(["active", "scheduled"])
+        ).order_by(ActivitySession.date.desc(), ActivitySession.id.desc()).first()
+
     return templates.TemplateResponse("teacher/reports.html", {
-        "request": request, "user": user,
+        "request": request,
+        "user": user,
+        "selected_session": selected_session,
+        "selected_session_id": selected_session.id if selected_session else None,
+        "selected_activity_id": selected_session.activity_id if selected_session else None,
     })
 
 

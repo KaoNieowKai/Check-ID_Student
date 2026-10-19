@@ -185,3 +185,22 @@ def test_activities_list_includes_eligible_grades(teacher_client, sample_activit
     assert act_data["eligible_grades"] == "M.6"
     assert act_data["eligible_rooms"] == "7"
 
+
+def test_teacher_reports_page_renders_with_auto_session(teacher_client, sample_activity, db):
+    """Test /teacher/reports page renders with auto-selected session or queried session."""
+    activity, sessions = sample_activity
+    session = sessions[0]
+
+    # Test with explicit session_id
+    resp = teacher_client.get(f"/teacher/reports?session_id={session.id}")
+    assert resp.status_code == 200
+    assert activity.name in resp.text
+    assert session.name in resp.text
+    assert f"/teacher/attendance/{session.id}" in resp.text
+
+    # Test without session_id (should auto-select latest active session)
+    resp_auto = teacher_client.get("/teacher/reports")
+    assert resp_auto.status_code == 200
+    assert activity.name in resp_auto.text
+
+
