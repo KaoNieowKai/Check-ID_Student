@@ -149,6 +149,7 @@
                     </svg>
                 </span>
                 <span data-i18n="rpt_section_a_title">1. ดาวน์โหลดตามชั้นและห้อง</span>
+                <span id="gradeRestrictionBadgeA" class="badge" style="display:none; margin-left:auto; font-size:0.8rem; font-weight:600; padding:4px 10px; border-radius:999px; background:#EFF6FF; color:#2563EB; border:1px solid #BFDBFE;"></span>
             </div>
             <p class="card-desc" data-i18n="rpt_section_a_desc">เลือกระดับชั้นและห้องที่ต้องการ แล้วกดดาวน์โหลดเพื่อรับไฟล์ PDF รายงานการเช็คชื่อ</p>
             <div class="dropdowns-row">
@@ -194,8 +195,9 @@
                     </svg>
                 </span>
                 <span data-i18n="rpt_section_b_title">2. ดาวน์โหลดข้อมูลทั้งหมด</span>
+                <span id="gradeRestrictionBadge" class="badge" style="display:none; margin-left:auto; font-size:0.8rem; font-weight:600; padding:4px 10px; border-radius:999px; background:#FCE7F3; color:#DB2777; border:1px solid #FBCFE8;"></span>
             </div>
-            <p class="card-desc" data-i18n="rpt_section_b_desc">รวมข้อมูลนักเรียนทุกชั้นและทุกห้องไว้ในไฟล์ PDF เดียว</p>
+            <p class="card-desc" id="allDesc" data-i18n="rpt_section_b_desc">รวมข้อมูลนักเรียนทุกชั้นและทุกห้องไว้ในไฟล์ PDF เดียว</p>
             <button id="btnDownloadAll" class="btn-download-pink" onclick="downloadAllPdf()" disabled>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
@@ -214,6 +216,7 @@ let currentSessionId = null;
 let currentGrade = "";
 let currentRoom = "all";
 let roomsCache = {};
+let activitiesMap = {};
 
 async function loadActivities() {
     try {
@@ -221,7 +224,10 @@ async function loadActivities() {
         if (!res.ok) throw new Error('Failed');
         const activities = await res.json();
         const sel = document.getElementById('activitySelect');
+        sel.innerHTML = '<option value="" data-i18n="rpt_opt_select_activity">' + t('rpt_opt_select_activity', 'เลือกกิจกรรม') + '</option>';
+        activitiesMap = {};
         activities.forEach(a => {
+            activitiesMap[a.id] = a;
             const opt = document.createElement('option');
             opt.value = a.id;
             opt.textContent = a.name;
@@ -233,6 +239,73 @@ async function loadActivities() {
     }
 }
 
+function updateGradesForActivity(act) {
+    const gradeSel = document.getElementById('gradeSelect');
+    const badgeA = document.getElementById('gradeRestrictionBadgeA');
+    const badgeB = document.getElementById('gradeRestrictionBadge');
+    const allDesc = document.getElementById('allDesc');
+    const lang = document.documentElement.lang || 'th';
+
+    let allowedGrades = ['M.1', 'M.2', 'M.3', 'M.4', 'M.5', 'M.6'];
+    let isRestricted = false;
+
+    if (act && act.eligible_grades) {
+        const grades = act.eligible_grades.split(',').map(g => g.trim()).filter(Boolean);
+        if (grades.length > 0) {
+            allowedGrades = grades;
+            isRestricted = true;
+        }
+    }
+
+    const selectGradeLabel = t('rpt_opt_select_grade', '— เลือกระดับชั้น —');
+    let html = `<option value="">${selectGradeLabel}</option>`;
+    allowedGrades.forEach(g => {
+        const num = g.replace('M.', '').replace('ม.', '');
+        const label = lang === 'th' ? `ม.${num}` : `Grade ${num}`;
+        html += `<option value="${g}">${label}</option>`;
+    });
+    gradeSel.innerHTML = html;
+
+    const gradeNamesTh = allowedGrades.map(g => g.replace('M.', 'ม.').replace('m.', 'ม.')).join(', ');
+    const gradeNamesEn = allowedGrades.map(g => g.replace('M.', 'Grade ')).join(', ');
+
+    if (isRestricted) {
+        const badgeText = lang === 'th' ? `เฉพาะชั้น ${gradeNamesTh}` : `${gradeNamesEn} only`;
+        if (badgeA) {
+            badgeA.textContent = badgeText;
+            badgeA.style.display = 'inline-flex';
+        }
+        if (badgeB) {
+            badgeB.textContent = badgeText;
+            badgeB.style.display = 'inline-flex';
+        }
+        if (allDesc) {
+            allDesc.textContent = lang === 'th' 
+                ? `รวมข้อมูลนักเรียนเฉพาะชั้น ${gradeNamesTh} ทุกห้องไว้ในไฟล์ PDF เดียว (ตามเงื่อนไขกิจกรรม)` 
+                : `Combine attendance records for ${gradeNamesEn} into a single PDF file (activity restricted)`;
+        }
+    } else {
+        if (badgeA) badgeA.style.display = 'none';
+        if (badgeB) badgeB.style.display = 'none';
+        if (allDesc) {
+            allDesc.textContent = t('rpt_section_b_desc', 'รวมข้อมูลนักเรียนทุกชั้นและทุกห้องไว้ในไฟล์ PDF เดียว');
+        }
+    }
+
+    currentGrade = "";
+    currentRoom = "all";
+    const roomSel = document.getElementById('roomSelect');
+    roomSel.innerHTML = '<option value="all" data-i18n="rpt_opt_all_rooms_in_grade">' + t('rpt_opt_all_rooms_in_grade', 'ทุกห้องในชั้นนี้') + '</option>';
+    roomSel.disabled = true;
+    updatePreview();
+
+    // Auto-select if only 1 grade is eligible
+    if (isRestricted && allowedGrades.length === 1) {
+        gradeSel.value = allowedGrades[0];
+        onGradeChange();
+    }
+}
+
 async function onActivityChange() {
     const actId = document.getElementById('activitySelect').value;
     const sessionSel = document.getElementById('sessionSelect');
@@ -241,6 +314,10 @@ async function onActivityChange() {
     currentSessionId = null;
     disableDownloadButtons();
     document.getElementById('sessionHint').classList.remove('show');
+
+    const act = activitiesMap[actId];
+    updateGradesForActivity(act);
+
     if (!actId) return;
     try {
         const res = await fetch('/teacher/api/sessions/' + actId);
@@ -266,17 +343,21 @@ function onSessionChange() {
 async function onGradeChange() {
     currentGrade = document.getElementById('gradeSelect').value;
     const roomSel = document.getElementById('roomSelect');
+    const actId = document.getElementById('activitySelect').value;
     currentRoom = "all";
     if (!currentGrade) {
         roomSel.innerHTML = '<option value="all" data-i18n="rpt_opt_all_rooms_in_grade">' + t('rpt_opt_all_rooms_in_grade', 'ทุกห้องในชั้นนี้') + '</option>';
         roomSel.disabled = true;
         updatePreview(); refreshDownloadButtons(); return;
     }
-    if (roomsCache[currentGrade]) { populateRooms(roomsCache[currentGrade]); return; }
+    const cacheKey = currentGrade + '_' + (actId || '');
+    if (roomsCache[cacheKey]) { populateRooms(roomsCache[cacheKey]); return; }
     try {
-        const res = await fetch('/teacher/api/classrooms?grade=' + encodeURIComponent(currentGrade));
+        let url = '/teacher/api/classrooms?grade=' + encodeURIComponent(currentGrade);
+        if (actId) url += '&activity_id=' + encodeURIComponent(actId);
+        const res = await fetch(url);
         const data = await res.json();
-        roomsCache[currentGrade] = data.rooms;
+        roomsCache[cacheKey] = data.rooms;
         populateRooms(data.rooms);
     } catch(e) { console.error('Failed to fetch classrooms', e); roomSel.disabled = false; }
 }
@@ -408,15 +489,18 @@ async function downloadAllPdf() {
 }
 
 window.addEventListener('languagechange', () => {
-    if (currentGrade) updatePreview();
+    const actId = document.getElementById('activitySelect').value;
+    const act = activitiesMap[actId];
+    const prevGrade = currentGrade;
+    updateGradesForActivity(act);
+    if (prevGrade) {
+        document.getElementById('gradeSelect').value = prevGrade;
+        currentGrade = prevGrade;
+        updatePreview();
+    }
     const roomSel = document.getElementById('roomSelect');
     const firstOpt = roomSel.querySelector('option[value="all"]');
     if (firstOpt) firstOpt.textContent = t('rpt_opt_all_rooms_in_grade', '\u0e17\u0e38\u0e01\u0e2b\u0e49\u0e2d\u0e07\u0e43\u0e19\u0e0a\u0e31\u0e49\u0e19\u0e19\u0e35\u0e49');
-    document.querySelectorAll('#gradeSelect option[value]').forEach(opt => {
-        const v = opt.value; if (!v) return;
-        const num = v.replace('M.', '');
-        opt.textContent = document.documentElement.lang === 'th' ? '\u0e21.' + num : 'M.' + num;
-    });
 });
 
 loadActivities();

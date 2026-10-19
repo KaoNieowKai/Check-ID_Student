@@ -3,6 +3,7 @@
 import io
 import base64
 import secrets
+from typing import Optional
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect, Query, HTTPException, Body
 from pydantic import BaseModel
@@ -60,7 +61,15 @@ async def activities_list(db: Session = Depends(get_db), user: User = Depends(re
     activities = db.query(Activity).filter(
         Activity.status.in_(["active", "scheduled"])
     ).order_by(Activity.name).all()
-    return [{"id": a.id, "name": a.name} for a in activities]
+    return [
+        {
+            "id": a.id,
+            "name": a.name,
+            "eligible_grades": a.eligible_grades,
+            "eligible_rooms": a.eligible_rooms,
+        }
+        for a in activities
+    ]
 
 
 
@@ -349,16 +358,21 @@ async def teacher_reports(
 @router.get("/api/classrooms")
 async def get_classrooms(
     grade: str = Query(...),
+    activity_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
     user: User = Depends(require_teacher)
 ):
     """Return sorted list of distinct classrooms for a given grade."""
-    rooms = (
+    student_query = (
         db.query(Student.room)
         .filter(Student.grade == grade, Student.is_active == True)
-        .distinct()
-        .all()
     )
+    if activity_id:
+        activity = db.query(Activity).filter(Activity.id == activity_id).first()
+        if activity and activity.eligible_rooms:
+            allowed_rooms = [r.strip() for r in activity.eligible_rooms.split(",") if r.strip()]
+            student_query = student_query.filter(Student.room.in_(allowed_rooms))
+    rooms = student_query.distinct().all()
     room_list = sorted(
         [r[0] for r in rooms],
         key=lambda x: int(x) if str(x).isdigit() else 0
@@ -485,13 +499,27 @@ async def attendance_pdf_by_grade_room(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
+    # If the activity limits grades, ensure requested grade is eligible
+    if session.activity.eligible_grades:
+        allowed_grades = [g.strip() for g in session.activity.eligible_grades.split(",") if g.strip()]
+        if grade not in allowed_grades:
+            raise HTTPException(status_code=400, detail="Grade not eligible for this activity")
+
     # Build student query filtered server-side by grade (and optionally room)
     student_query = db.query(Student).filter(
         Student.is_active == True,
         Student.grade == grade
     )
     if room != "all":
+        if session.activity.eligible_rooms:
+            allowed_rooms = [r.strip() for r in session.activity.eligible_rooms.split(",") if r.strip()]
+            if room not in allowed_rooms:
+                raise HTTPException(status_code=400, detail="Classroom not eligible for this activity")
         student_query = student_query.filter(Student.room == room)
+    elif session.activity.eligible_rooms:
+        allowed_rooms = [r.strip() for r in session.activity.eligible_rooms.split(",") if r.strip()]
+        student_query = student_query.filter(Student.room.in_(allowed_rooms))
+
     eligible_students = student_query.all()
 
     records = db.query(AttendanceRecord).options(
@@ -561,7 +589,7 @@ async def attendance_pdf_all_students(
     db: Session = Depends(get_db),
     user: User = Depends(require_teacher)
 ):
-    """Generate PDF containing all active students across every grade and classroom."""
+    """Generate PDF containing active students across every eligible grade and classroom."""
     from fastapi.responses import StreamingResponse
     import urllib.parse
 
@@ -571,7 +599,15 @@ async def attendance_pdf_all_students(
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
 
-    eligible_students = db.query(Student).filter(Student.is_active == True).all()
+    student_query = db.query(Student).filter(Student.is_active == True)
+    if session.activity.eligible_grades:
+        grades = [g.strip() for g in session.activity.eligible_grades.split(",") if g.strip()]
+        student_query = student_query.filter(Student.grade.in_(grades))
+    if session.activity.eligible_rooms:
+        rooms = [r.strip() for r in session.activity.eligible_rooms.split(",") if r.strip()]
+        student_query = student_query.filter(Student.room.in_(rooms))
+
+    eligible_students = student_query.all()
 
     records = db.query(AttendanceRecord).options(
         joinedload(AttendanceRecord.student)
@@ -602,14 +638,31 @@ async def attendance_pdf_all_students(
 
     safe_activity_name = session.activity.name.replace("/", "-").replace("\\", "-")
 
-    if lang == "th":
-        title = "สรุปการเข้าร่วมกิจกรรม"
-        subtitle = f"รายงานนักเรียนทุกชั้นและทุกห้อง — {session.activity.name} ({session.date})"
-        filename = f"สรุปเช็คชื่อ_{safe_activity_name}_รวมทุกชั้น_{session.date}.pdf"
+    if session.activity.eligible_grades:
+        grades_list = [g.strip() for g in session.activity.eligible_grades.split(",") if g.strip()]
+        grade_labels_th = [g.replace("M.", "ม.").replace("m.", "ม.") for g in grades_list]
+        grade_labels_en = [g.replace("M.", "Grade ").replace("m.", "Grade ") for g in grades_list]
+        grades_th_str = ", ".join(grade_labels_th)
+        grades_en_str = ", ".join(grade_labels_en)
+        file_grades_tag = "_".join(grade_labels_th)
+
+        if lang == "th":
+            title = "สรุปการเข้าร่วมกิจกรรม"
+            subtitle = f"รายงานนักเรียนชั้น {grades_th_str} ทุกห้อง — {session.activity.name} ({session.date})"
+            filename = f"สรุปเช็คชื่อ_{safe_activity_name}_{file_grades_tag}_{session.date}.pdf"
+        else:
+            title = "Attendance Summary"
+            subtitle = f"{grades_en_str} (All rooms) — {session.activity.name} ({session.date})"
+            filename = f"Attendance_{safe_activity_name}_{file_grades_tag}_{session.date}.pdf"
     else:
-        title = "Attendance Summary"
-        subtitle = f"All grades and classrooms — {session.activity.name} ({session.date})"
-        filename = f"Attendance_{safe_activity_name}_AllStudents_{session.date}.pdf"
+        if lang == "th":
+            title = "สรุปการเข้าร่วมกิจกรรม"
+            subtitle = f"รายงานนักเรียนทุกชั้นและทุกห้อง — {session.activity.name} ({session.date})"
+            filename = f"สรุปเช็คชื่อ_{safe_activity_name}_รวมทุกชั้น_{session.date}.pdf"
+        else:
+            title = "Attendance Summary"
+            subtitle = f"All grades and classrooms — {session.activity.name} ({session.date})"
+            filename = f"Attendance_{safe_activity_name}_AllStudents_{session.date}.pdf"
 
     base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     pdf_bytes = _build_attendance_pdf(students_data, lang, title, subtitle, base_dir)
