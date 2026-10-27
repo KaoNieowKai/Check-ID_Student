@@ -200,15 +200,37 @@
         </div>
     </div>
 
-    <!-- iOS Fallback Modal -->
-    <div id="iosImageModal" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; padding: 20px;">
-        <p style="color: white; text-align: center; margin-bottom: 20px; font-size: 16px; font-family: 'Prompt', sans-serif;">
-            กดค้างที่รูปภาพแล้วเลือก <strong>"บันทึกรูปภาพ"</strong> เพื่อเก็บภาพการเช็กชื่อ
-        </p>
-        <img id="iosImagePreview" style="max-width: 100%; max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5);" />
-        <button class="btn btn-primary" style="margin-top: 30px;" onclick="document.getElementById('iosImageModal').style.display = 'none'">
-            ปิดหน้าต่าง
-        </button>
+    <!-- Evidence Image Preview Modal (for iOS / In-App Browser / Fallback) -->
+    <div id="iosImageModal" style="display:none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 9999; flex-direction: column; justify-content: center; align-items: center; padding: 16px; overflow-y: auto;">
+        <div style="background: white; border-radius: 16px; max-width: 420px; width: 100%; padding: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); display: flex; flex-direction: column; align-items: center; position: relative;">
+            <!-- Close Button Top Right -->
+            <button type="button" onclick="document.getElementById('iosImageModal').style.display = 'none'" 
+                    style="position: absolute; top: 12px; right: 12px; background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #64748b; font-weight: bold;">
+                ✕
+            </button>
+
+            <h3 style="margin: 0 0 10px 0; font-size: 18px; color: #1e293b; font-weight: 600;">
+                📸 บันทึกภาพการเช็กชื่อ
+            </h3>
+
+            <!-- Helpful instructions banner -->
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 10px; font-size: 13px; text-align: center; margin-bottom: 14px; width: 100%; box-sizing: border-box; line-height: 1.5;">
+                💡 <strong>แตะค้างที่รูปภาพ</strong> แล้วเลือก <strong>"บันทึกรูปภาพ"</strong> เพื่อเก็บภาพลงแกลเลอรี
+            </div>
+
+            <!-- Preview Image -->
+            <img id="iosImagePreview" alt="Attendance Evidence" style="max-width: 100%; max-height: 52vh; border-radius: 10px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 16px; object-fit: contain;" />
+
+            <!-- Action Buttons -->
+            <div style="display: flex; gap: 10px; width: 100%;">
+                <button type="button" id="modalDownloadBtn" class="btn btn-outline" style="flex: 1; padding: 10px 12px; font-size: 14px;">
+                    📥 ดาวน์โหลดไฟล์
+                </button>
+                <button type="button" class="btn btn-primary" style="flex: 1; padding: 10px 12px; font-size: 14px;" onclick="document.getElementById('iosImageModal').style.display = 'none'">
+                    ปิดหน้าต่าง
+                </button>
+            </div>
+        </div>
     </div>
 
     {% else %}
@@ -400,51 +422,58 @@ async function downloadEvidence() {
         canvas.toBlob(async function(blob) {
             const filename = `Attendance_${verifiedStudent.student.student_id}.png`;
             const imageStr = canvas.toDataURL('image/png');
-            let shared = false;
             
-            // Try Web Share API with File
-            if (navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: 'image/png' })] })) {
+            // Detect iOS (iPhone, iPad, iPod)
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            
+            // 1. On iOS: Web Share API allows direct saving to Apple Photos (Save Image action)
+            if (isIOS && navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: 'image/png' })] })) {
                 try {
                     await navigator.share({
                         files: [new File([blob], filename, { type: 'image/png' })],
                         title: 'บันทึกภาพการเช็กชื่อ',
                     });
-                    shared = true;
+                    btn.innerHTML = '<span>✓ ' + t('evidence_saved', 'บันทึกภาพการเช็กชื่อแล้ว') + '</span>';
+                    resetBtn(btn, originalText);
+                    return;
                 } catch (e) {
                     if (e.name !== 'AbortError') {
-                        console.error('Share failed', e);
-                    } else {
-                        // User cancelled sharing
-                        resetBtn(btn, originalText);
-                        return;
+                        console.error('iOS Share failed', e);
                     }
+                    // If user cancelled or share failed, show preview modal so user can long-press to save
+                    showImageModal(imageStr, blob, filename);
+                    resetBtn(btn, originalText);
+                    return;
                 }
             }
             
-            if (!shared) {
-                // Fallback
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-                if (isIOS) {
-                    // Show modal with the image for manual save
-                    const modal = document.getElementById('iosImageModal');
-                    const imgPreview = document.getElementById('iosImagePreview');
-                    imgPreview.src = imageStr;
-                    modal.style.display = 'flex';
-                } else {
-                    // Normal download for Android/Desktop
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    setTimeout(() => URL.revokeObjectURL(url), 100);
-                }
+            // 2. On iOS Fallback (e.g., in LINE or in-app browser where Web Share is restricted)
+            if (isIOS) {
+                showImageModal(imageStr, blob, filename);
+                btn.innerHTML = '<span>✓ ' + t('evidence_saved', 'บันทึกภาพการเช็กชื่อแล้ว') + '</span>';
+                resetBtn(btn, originalText);
+                return;
             }
             
-            btn.innerHTML = '<span data-i18n="evidence_saved">' + t('evidence_saved', 'บันทึกภาพการเช็กชื่อแล้ว') + '</span>';
-            resetBtn(btn, originalText);
+            // 3. Desktop (Windows/Mac/Linux) & Android: Direct download (1-click immediate download, no share sheet)
+            try {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                
+                btn.innerHTML = '<span>✓ ' + t('evidence_saved', 'บันทึกภาพการเช็กชื่อแล้ว') + '</span>';
+                resetBtn(btn, originalText);
+            } catch (err) {
+                console.error("Direct download failed, showing modal fallback", err);
+                showImageModal(imageStr, blob, filename);
+                resetBtn(btn, originalText);
+            }
         }, 'image/png');
         
     } catch (err) {
@@ -452,6 +481,28 @@ async function downloadEvidence() {
         alert(t('err_gen_evidence', 'เกิดข้อผิดพลาดในการสร้างภาพการเช็กชื่อ'));
         resetBtn(btn, originalText);
     }
+}
+
+function showImageModal(imageStr, blob, filename) {
+    const modal = document.getElementById('iosImageModal');
+    const imgPreview = document.getElementById('iosImagePreview');
+    if (imgPreview) imgPreview.src = imageStr;
+    
+    const dlBtn = document.getElementById('modalDownloadBtn');
+    if (dlBtn && blob) {
+        dlBtn.onclick = function() {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename || 'Attendance.png';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
+    }
+    
+    if (modal) modal.style.display = 'flex';
 }
 
 function resetBtn(btn, originalText) {
